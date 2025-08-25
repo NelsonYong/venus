@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Docker 卷数据（如果有本地映射）
+/database/data/
+
+# 日志
+*.log
+
+
+/lib/generated/prisma

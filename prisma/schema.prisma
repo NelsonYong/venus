@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String
+  avatar          String?
+  createdAt       DateTime       @default(now())
+  emailVerified   Boolean        @default(false)
+  emailVerifiedAt DateTime?
+  language        String         @default("zh-CN")
+  password        String
+  theme           String         @default("system")
+  updatedAt       DateTime       @updatedAt
+  conversations   Conversation[]
+  messages        Message[]
+
+  @@map("users")
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  title      String    @default("新对话")
+  userId     String
+  model      String    @default("openai/gpt-4o")
+  isArchived Boolean   @default(false)
+  isPinned   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  settings   Json?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@index([userId, createdAt])
+  @@index([userId, isPinned])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  role           String
+  content        String
+  createdAt      DateTime     @default(now())
+  tokenCount     Int?
+  model          String?
+  temperature    Float?
+  finishReason   String?
+  tools          Json?
+  attachments    Json?
+  sources        Json?
+  reasoning      String?
+  isEdited       Boolean      @default(false)
+  editedAt       DateTime?
+  parentId       String?
+  isDeleted      Boolean      @default(false)
+  deletedAt      DateTime?
+  rating         Int?
+  feedback       String?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  parent         Message?     @relation("MessageThread", fields: [parentId], references: [id])
+  children       Message[]    @relation("MessageThread")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([role, createdAt])
+  @@map("messages")
+}
+
+model ApiUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  model        String
+  tokensUsed   Int
+  cost         Float?
+  endpoint     String
+  createdAt    DateTime @default(now())
+  requestData  Json?
+  responseData Json?
+
+  @@index([userId, createdAt])
+  @@index([model, createdAt])
+  @@map("api_usage")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+  device    String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  type        String   @default("string")
+  updatedAt   DateTime @updatedAt
+  description String?
+  isPublic    Boolean  @default(false)
+
+  @@map("system_settings")
+}

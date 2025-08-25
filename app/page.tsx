@@ -34,7 +34,10 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
+
 import { Loader } from "@/components/ai-elements/loader";
+import { Weather, WeatherProps } from "./tools/Weather";
+// import { ThemeToggle } from "./components/theme-toggle";
 
 const models = [
   {
@@ -52,6 +55,8 @@ const ChatBotDemo = () => {
   const [model, setModel] = useState<string>(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
   const { messages, sendMessage, status } = useChat();
+
+  console.log("messages", messages);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +117,13 @@ const ChatBotDemo = () => {
                             <Response key={`${message.id}-${i}`}>
                               {part.text}
                             </Response>
+                          );
+                        case "tool-weather":
+                          return (
+                            <Weather
+                              key={`${message.id}-${i}`}
+                              {...(part.output as WeatherProps)}
+                            />
                           );
                         case "reasoning":
                           return (

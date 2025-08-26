@@ -48,12 +48,8 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 
 const models = [
   {
-    name: "GPT 4o",
-    value: "openai/gpt-4o",
-  },
-  {
-    name: "Deepseek R1",
-    value: "deepseek/deepseek-r1",
+    name: "Deepseek V3",
+    value: "deepseek/deepseek-v3",
   },
 ];
 

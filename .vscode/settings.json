@@ -1,6 +1,5 @@
 {
-  "i18n-ally.localesPaths": [
-    "lib/i18n",
-    "public/locales"
-  ]
+  "i18n-ally.localesPaths": ["locales"],
+  "i18n-ally.sourceLanguage": "en-US",
+  "i18n-ally.displayLanguage": "zh-CN"
 }

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { PanelLeftIcon, EditIcon, StarIcon, CheckIcon, XIcon, ChevronDownIcon } from "lucide-react";
+import {
+  PanelLeftIcon,
+  EditIcon,
+  StarIcon,
+  CheckIcon,
+  XIcon,
+  ChevronDownIcon,
+} from "lucide-react";
 import { UserMenu } from "./user-menu";
 import { ThemeToggle } from "../theme-toggle";
 import { useAuth } from "@/app/contexts/auth-context";
@@ -26,19 +33,19 @@ interface NavbarProps {
   onStarToggle?: () => void;
 }
 
-export function Navbar({ 
-  onSidebarToggle, 
-  conversationTitle, 
+export function Navbar({
+  onSidebarToggle,
+  conversationTitle,
   isStarred = false,
   onTitleUpdate,
-  onStarToggle 
+  onStarToggle,
 }: NavbarProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigation = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(conversationTitle || "");
-  
+
   const redirectChat = () => {
     // 获取当前的路径
     const pathname = window.location.pathname;
@@ -63,9 +70,9 @@ export function Navbar({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSaveEdit();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       handleCancelEdit();
     }
   };
@@ -87,7 +94,7 @@ export function Navbar({
                 <PanelLeftIcon className="h-4 w-4" />
               </Button>
             )}
-            
+
             {/* Logo and Brand / Conversation Title */}
             <div className="flex items-center space-x-2 flex-1 min-w-0">
               {conversationTitle ? (
@@ -127,7 +134,7 @@ export function Navbar({
                             {isStarred && (
                               <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
                             )}
-                            <h1 
+                            <h1
                               className="text-lg font-semibold text-foreground truncate flex-1 min-w-0"
                               title={conversationTitle}
                             >
@@ -139,19 +146,19 @@ export function Navbar({
                         <DropdownMenuContent align="start" className="w-48">
                           <DropdownMenuItem onClick={handleStartEdit}>
                             <EditIcon className="mr-2 h-4 w-4" />
-                            {t('navbar.rename')}
+                            {t("navbar.rename")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={onStarToggle}>
-                            <StarIcon 
+                            <StarIcon
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                isStarred 
-                                  ? "fill-yellow-400 text-yellow-400" 
+                                isStarred
+                                  ? "fill-yellow-400 text-yellow-400"
                                   : "text-muted-foreground"
-                              )} 
+                              )}
                             />
-                            {isStarred ? t('navbar.unstar') : t('navbar.star')}
+                            {isStarred ? t("navbar.unstar") : t("navbar.star")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -164,7 +171,9 @@ export function Navbar({
                   className="flex items-center cursor-pointer"
                   onClick={redirectChat}
                 >
-                  <h1 className="text-xl font-bold text-foreground">{t('navbar.brand')}</h1>
+                  <h1 className="text-xl font-bold text-foreground">
+                    {t("navbar.brand")}
+                  </h1>
                 </div>
               )}
             </div>
@@ -185,7 +194,7 @@ export function Navbar({
                     window.location.href = "/login";
                   }}
                 >
-                  {t('navbar.login')}
+                  {t("navbar.login")}
                 </Button>
                 <Button
                   size="sm"
@@ -193,7 +202,7 @@ export function Navbar({
                     window.location.href = "/login";
                   }}
                 >
-                  {t('navbar.register')}
+                  {t("navbar.register")}
                 </Button>
               </div>
             )}

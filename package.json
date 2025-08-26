@@ -9,7 +9,7 @@
     "db:down": "docker-compose down",
     "db:logs": "docker-compose logs postgres",
     "db:reset": "docker-compose down -v && docker-compose up -d postgres",
-    "db:pgadmin": "docker-compose up -d pgadmin",
+    "prisma-studio": "npx prisma studio",
     "start": "next start",
     "lint": "eslint"
   },

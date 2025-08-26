@@ -19,9 +19,8 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
-import { useChatHistory } from "./hooks/use-chat-history";
 import { Response } from "@/components/ai-elements/response";
 import { GlobeIcon } from "lucide-react";
 import {
@@ -41,6 +40,10 @@ import { Weather, WeatherProps } from "./tools/Weather";
 import { ProtectedRoute } from "./components/auth/protected-route";
 import { Navbar } from "./components/ui/navbar";
 import { ChatSidebar } from "./components/sidebar/chat-sidebar";
+import { useChatHistory } from "./hooks/use-conversations";
+import { useAutoSummary } from "./hooks/use-auto-summary";
+import { useConversationActions } from "./hooks/use-conversation-actions";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const models = [
   {
@@ -65,40 +68,82 @@ const ChatBotDemo = () => {
     isLoading,
     saveChatSession,
     loadChatSession,
+    updateChatTitle,
     deleteChatSession,
     startNewChat,
+    getCurrentChat,
   } = useChatHistory();
 
-  console.log("messages", messages);
+  const { toggleStar, updateTitle: updateTitleMutation } = useConversationActions();
 
-  // Save chat session when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      saveChatSession(messages, currentChatId || undefined).then(chatId => {
-        console.log("Saved chat session:", chatId);
-      }).catch(error => {
-        console.error("Failed to save chat session:", error);
-      });
-    }
-  }, [messages, saveChatSession, currentChatId]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isMounted = useRef(false);
+  const isNewChat = useRef(false);
+  const lastSavedMessagesLength = useRef(0);
+
+  // Auto-summary hook for generating titles
+  const { resetSummaryStatus } = useAutoSummary({
+    messages,
+    currentChatId,
+    status,
+    isNewChat: isNewChat.current,
+    updateChatTitle
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      sendMessage(
-        { text: input },
-        {
-          body: {
-            model: model,
-            webSearch: webSearch,
-          },
-        }
-      );
+      // 如果没有 chatId，则生成一个
+      if (!searchParams.get("chatId")) {
+        saveChatSession([]).then((chatId) => {
+          router.push(`/?chatId=${chatId}`, { scroll: false });
+          if (chatId)
+            sendMessage(
+              { text: input },
+              {
+                body: {
+                  model: model,
+                  webSearch: webSearch,
+                },
+              }
+            );
+        });
+      } else
+        sendMessage(
+          { text: input },
+          {
+            body: {
+              model: model,
+              webSearch: webSearch,
+            },
+          }
+        );
       setInput("");
     }
   };
 
+  useEffect(() => {
+    isMounted.current = true;
+  }, []);
+
+  // Effect for saving chat sessions
+  useEffect(() => {
+    if (!isMounted.current) return;
+    if (status === "ready" && currentChatId && messages.length > 0) {
+      // Only save if messages have actually changed
+      if (messages.length !== lastSavedMessagesLength.current) {
+        saveChatSession(messages, currentChatId);
+        lastSavedMessagesLength.current = messages.length;
+      }
+    }
+  }, [status, messages, currentChatId, saveChatSession]);
+
+
   const handleNewChat = () => {
+    isNewChat.current = true;
+    lastSavedMessagesLength.current = 0;
+    resetSummaryStatus();
     startNewChat();
     setMessages([]);
     setInput("");
@@ -108,6 +153,10 @@ const ChatBotDemo = () => {
     try {
       const chatMessages = await loadChatSession(chatId);
       if (chatMessages) {
+        // Reset tracking refs for loaded chat
+        isNewChat.current = false;
+        lastSavedMessagesLength.current = chatMessages.length;
+        // Don't reset summary status for loaded chats (they likely already have titles)
         setMessages(chatMessages);
       }
     } catch (error) {
@@ -130,8 +179,8 @@ const ChatBotDemo = () => {
   return (
     <div className="flex h-screen">
       {/* Sidebar - Fixed on the left */}
-      <ChatSidebar 
-        isOpen={sidebarOpen} 
+      <ChatSidebar
+        isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         chatHistory={chatHistory}
         currentChatId={currentChatId}
@@ -140,12 +189,30 @@ const ChatBotDemo = () => {
         onLoadChat={handleLoadChat}
         onDeleteChat={handleDeleteChat}
       />
-      
+
       {/* Right side content area */}
       <div className="flex-1 flex flex-col transition-all duration-300">
         {/* Navbar */}
-        <Navbar onSidebarToggle={() => setSidebarOpen(!sidebarOpen)} />
-        
+        <Navbar 
+          onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
+          conversationTitle={getCurrentChat()?.title}
+          isStarred={getCurrentChat()?.isStarred}
+          onTitleUpdate={(newTitle) => {
+            if (currentChatId) {
+              updateTitleMutation.mutate({ id: currentChatId, title: newTitle });
+            }
+          }}
+          onStarToggle={() => {
+            const currentChat = getCurrentChat();
+            if (currentChatId && currentChat) {
+              toggleStar.mutate({ 
+                id: currentChatId, 
+                isStarred: !currentChat.isStarred 
+              });
+            }
+          }}
+        />
+
         {/* Main Content */}
         <div className="flex-1 overflow-hidden">
           <div className="max-w-4xl mx-auto h-full p-6">

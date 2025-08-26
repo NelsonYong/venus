@@ -149,6 +149,18 @@ class HTTPClient {
     });
   }
 
+  async patch<T>(
+    url: string,
+    data?: any,
+    options: Omit<RequestInit, 'method' | 'body'> = {}
+  ) {
+    return this.request<T>(url, {
+      ...options,
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   async delete<T>(url: string, options: Omit<RequestInit, 'method'> = {}) {
     return this.request<T>(url, { ...options, method: 'DELETE' });
   }

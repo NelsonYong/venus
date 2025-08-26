@@ -9,6 +9,7 @@ export interface Conversation {
   updatedAt: string
   userId: string
   isDeleted: boolean
+  isStarred?: boolean
   messages: ConversationMessage[]
 }
 
@@ -42,6 +43,7 @@ export interface UpdateConversationRequest {
     createdAt?: Date | string
   }[]
   model?: string
+  isStarred?: boolean
 }
 
 export const conversationsAPI = {
@@ -70,7 +72,7 @@ export const conversationsAPI = {
   },
 
   async update(id: string, data: UpdateConversationRequest): Promise<Conversation> {
-    const response = await httpClient.put<Conversation>(`/api/conversations/${id}`, data)
+    const response = await httpClient.patch<Conversation>(`/api/conversations/${id}/update`, data)
     if (response.status !== 200 || !response.data) {
       throw new Error(response.error || 'Failed to update conversation')
     }

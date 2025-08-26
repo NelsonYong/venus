@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PanelLeftIcon, EditIcon, StarIcon, CheckIcon, XIcon } from "lucide-react";
+import { PanelLeftIcon, EditIcon, StarIcon, CheckIcon, XIcon, ChevronDownIcon } from "lucide-react";
 import { UserMenu } from "./user-menu";
 import { ThemeToggle } from "../theme-toggle";
 import { useAuth } from "@/app/contexts/auth-context";
@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavbarProps {
   onSidebarToggle?: () => void;
@@ -111,40 +118,42 @@ export function Navbar({
                       </Button>
                     </div>
                   ) : (
-                    <>
-                      <h1 
-                        className="text-lg font-semibold text-foreground cursor-pointer hover:text-foreground/80 truncate flex-1 min-w-0"
-                        onClick={handleStartEdit}
-                        title={conversationTitle}
-                      >
-                        {conversationTitle}
-                      </h1>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 opacity-60 hover:opacity-100 flex-shrink-0"
-                        onClick={handleStartEdit}
-                      >
-                        <EditIcon className="h-3 w-3" />
-                      </Button>
-                      {onStarToggle && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 flex-shrink-0"
-                          onClick={onStarToggle}
-                        >
-                          <StarIcon 
-                            className={cn(
-                              "h-4 w-4",
-                              isStarred 
-                                ? "fill-yellow-400 text-yellow-400" 
-                                : "text-muted-foreground hover:text-foreground"
-                            )} 
-                          />
-                        </Button>
-                      )}
-                    </>
+                    <div className="flex items-center space-x-1 flex-1 min-w-0">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div className="flex items-center space-x-1 cursor-pointer hover:bg-muted/50 rounded-md px-2 py-1 flex-1 min-w-0">
+                            {isStarred && (
+                              <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                            )}
+                            <h1 
+                              className="text-lg font-semibold text-foreground truncate flex-1 min-w-0"
+                              title={conversationTitle}
+                            >
+                              {conversationTitle}
+                            </h1>
+                            <ChevronDownIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                          <DropdownMenuItem onClick={handleStartEdit}>
+                            <EditIcon className="mr-2 h-4 w-4" />
+                            重命名
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={onStarToggle}>
+                            <StarIcon 
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                isStarred 
+                                  ? "fill-yellow-400 text-yellow-400" 
+                                  : "text-muted-foreground"
+                              )} 
+                            />
+                            {isStarred ? "取消收藏" : "添加收藏"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
               ) : (

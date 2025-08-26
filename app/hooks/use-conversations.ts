@@ -10,6 +10,7 @@ export interface ChatSession {
   timestamp: Date
   preview: string
   messages: UIMessage[]
+  isStarred?: boolean
 }
 
 // Hook for fetching all conversations
@@ -24,6 +25,7 @@ export function useConversations() {
         timestamp: new Date(conv.updatedAt),
         preview: generatePreviewFromApiMessages(conv.messages),
         messages: conv.messages.map(transformApiMessageToUIMessage),
+        isStarred: conv.isStarred || false,
       }))
     },
   })
@@ -34,7 +36,7 @@ export function useConversation(id: string | null) {
   return useQuery({
     queryKey: queryKeys.conversations.detail(id || ''),
     queryFn: () => conversationsAPI.getById(id!),
-    enabled: !!id && id !== 'new',
+    enabled: !!id,
     select: (conversation: Conversation): UIMessage[] => {
       return conversation.messages.map(transformApiMessageToUIMessage)
     },
@@ -44,7 +46,7 @@ export function useConversation(id: string | null) {
 // Hook for creating a new conversation
 export function useCreateConversation() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: conversationsAPI.create,
     onSuccess: (data) => {
@@ -59,7 +61,7 @@ export function useCreateConversation() {
 // Hook for updating an existing conversation
 export function useUpdateConversation() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof conversationsAPI.update>[1] }) =>
       conversationsAPI.update(id, data),
@@ -75,7 +77,7 @@ export function useUpdateConversation() {
 // Hook for deleting a conversation
 export function useDeleteConversation() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: conversationsAPI.delete,
     onSuccess: (_, id) => {
@@ -90,12 +92,12 @@ export function useDeleteConversation() {
 // Main chat history hook that combines all the functionality
 export function useChatHistory() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
-  
+
   const conversationsQuery = useConversations()
   const createMutation = useCreateConversation()
   const updateMutation = useUpdateConversation()
   const deleteMutation = useDeleteConversation()
-  
+
   // Generate chat title from first message
   const generateChatTitle = useCallback((messages: UIMessage[]): string => {
     const firstUserMessage = messages.find(msg => msg.role === "user")
@@ -108,16 +110,25 @@ export function useChatHistory() {
     }
     return "新的对话"
   }, [])
-  
+
+
+  const updateChatTitle = useCallback(async (chatId: string, messages: UIMessage[], title: string) => {
+    const apiMessages = messages.map(transformUIMessageToApiFormat)
+    await updateMutation.mutateAsync({
+      id: chatId,
+      data: { title, messages: apiMessages }
+    })
+  }, [updateMutation])
+
   // Save chat session - creates new or updates existing
   const saveChatSession = useCallback(async (messages: UIMessage[], chatId?: string) => {
-    if (messages.length === 0) return null
-    
+    // if (!chatId) return null
+
     try {
       const title = generateChatTitle(messages)
       const apiMessages = messages.map(transformUIMessageToApiFormat)
-      
-      if (chatId && chatId !== "new") {
+
+      if (chatId) {
         // Update existing conversation
         const result = await updateMutation.mutateAsync({
           id: chatId,
@@ -144,7 +155,7 @@ export function useChatHistory() {
       throw error
     }
   }, [generateChatTitle, updateMutation, createMutation])
-  
+
   // Load chat session from cache
   const loadChatSession = useCallback(async (chatId: string): Promise<UIMessage[] | null> => {
     const conversations = conversationsQuery.data || []
@@ -155,7 +166,7 @@ export function useChatHistory() {
     }
     return null
   }, [conversationsQuery.data])
-  
+
   // Delete chat session
   const deleteChatSession = useCallback(async (chatId: string) => {
     try {
@@ -168,19 +179,19 @@ export function useChatHistory() {
       throw error
     }
   }, [deleteMutation, currentChatId])
-  
+
   // Start new chat
   const startNewChat = useCallback(() => {
     setCurrentChatId(null)
   }, [])
-  
+
   // Get current chat session
   const getCurrentChat = useCallback((): ChatSession | null => {
     if (!currentChatId) return null
     const conversations = conversationsQuery.data || []
     return conversations.find(chat => chat.id === currentChatId) || null
   }, [currentChatId, conversationsQuery.data])
-  
+
   // Fetch chat details (for URL-based loading)
   const fetchChatDetails = useCallback(async (chatId: string): Promise<UIMessage[] | null> => {
     try {
@@ -192,13 +203,14 @@ export function useChatHistory() {
       return null
     }
   }, [])
-  
+
   return {
     chatHistory: conversationsQuery.data || [],
     currentChatId,
     isLoading: conversationsQuery.isLoading,
     error: conversationsQuery.error,
     saveChatSession,
+    updateChatTitle,
     loadChatSession,
     deleteChatSession,
     startNewChat,
@@ -213,7 +225,7 @@ export function useChatHistory() {
 // Helper function to generate preview from API messages
 function generatePreviewFromApiMessages(apiMessages: ConversationMessage[]): string {
   if (apiMessages.length === 0) return "暂无消息"
-  
+
   const lastMessage = apiMessages[apiMessages.length - 1]
   if (lastMessage) {
     try {

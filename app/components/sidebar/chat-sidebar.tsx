@@ -10,8 +10,9 @@ import {
   StarIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ChatSession } from "@/app/hooks/use-chat-history";
 import { useEffect } from "react";
+import { ChatSession } from "@/app/hooks/use-conversations";
+import { useRouter } from "next/navigation";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -94,6 +95,7 @@ export function ChatSidebar({
   onDeleteChat,
   onOpen,
 }: ChatSidebarProps) {
+  const router = useRouter();
   // Load history when sidebar is first opened
   useEffect(() => {
     if (isOpen && onOpen) {
@@ -102,13 +104,15 @@ export function ChatSidebar({
   }, [isOpen, onOpen]);
 
   const handleNewChat = () => {
+    router.push(`/`, { scroll: false });
     onNewChat();
     onClose();
   };
 
   const handleChatSelect = (chatId: string) => {
+    // 设置路由参数 ?chatId=xxx
+    router.push(`/?chatId=${chatId}`, { scroll: false });
     onLoadChat(chatId);
-    // onClose();
   };
 
   const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {

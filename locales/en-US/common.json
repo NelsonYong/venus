@@ -64,6 +64,9 @@
     "security": {
       "title": "Security Protection",
       "description": "Your data is protected with end-to-end encryption. We never store or share your personal information."
+    },
+    "brand": {
+      "name": "Rela AI"
     }
   },
   "profile": {

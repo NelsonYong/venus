@@ -64,6 +64,9 @@
     "security": {
       "title": "安全保护",
       "description": "您的数据受到端到端加密保护，我们绝不会存储或分享您的个人信息。"
+    },
+    "brand": {
+      "name": "Rela AI"
     }
   },
   "profile": {

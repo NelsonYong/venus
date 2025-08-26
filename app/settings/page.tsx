@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/contexts/auth-context";
-import { useTranslation } from "@/app/contexts/i18n-context";
+import { useI18n, useTranslation } from "@/app/contexts/i18n-context";
 import { ProtectedRoute } from "@/app/components/auth/protected-route";
 import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
 
 function SettingsContent() {
   const { user, refreshAuth } = useAuth();
+  const { changeLanguage } = useI18n();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -75,6 +76,8 @@ function SettingsContent() {
         setMessage(response.data.message || "Settings saved successfully");
         // Refresh user data
         await refreshAuth();
+        // 确保语言设置同步到i18n和localStorage
+        await changeLanguage(settings.language);
       } else {
         setError(
           response.message || response.error || "Failed to save settings"
@@ -241,9 +244,11 @@ function SettingsContent() {
                 </label>
                 <Select
                   value={settings.language}
-                  onValueChange={(value) =>
-                    setSettings({ ...settings, language: value })
-                  }
+                  onValueChange={async (value) => {
+                    setSettings({ ...settings, language: value });
+                    // 立即切换语言并更新localStorage
+                    await changeLanguage(value);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />

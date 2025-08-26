@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/app/contexts/auth-context";
 import { PublicRoute } from "@/app/components/auth/protected-route";
+import { useTranslation } from "@/app/contexts/i18n-context";
 import {
   BotIcon,
   EyeIcon,
@@ -28,6 +29,7 @@ function LoginForm() {
   const [error, setError] = useState("");
 
   const { login, register } = useAuth();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +47,7 @@ function LoginForm() {
         }
       } else {
         if (password !== confirmPassword) {
-          setError("密码不匹配");
+          setError(t("auth.errors.passwordMismatch"));
           return;
         }
         const result = await register(name, email, password);
@@ -55,8 +57,8 @@ function LoginForm() {
           setError(result.message);
         }
       }
-    } catch (err) {
-      setError("操作失败，请重试");
+    } catch {
+      setError(t("auth.errors.operationFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -93,11 +95,11 @@ function LoginForm() {
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground">Rela AI</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("auth.brand.name")}
+            </h1>
             <p className="text-muted-foreground">
-              {isLogin
-                ? "登录您的账户，开始智能对话体验"
-                : "创建新账户，加入智能助手社区"}
+              {isLogin ? t("auth.login.title") : t("auth.register.title")}
             </p>
           </div>
         </div>
@@ -111,12 +113,12 @@ function LoginForm() {
                   htmlFor="name"
                   className="text-sm font-medium text-foreground"
                 >
-                  姓名
+                  {t("auth.register.name")}
                 </label>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="请输入您的姓名"
+                  placeholder={t("auth.register.namePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full"
@@ -130,12 +132,16 @@ function LoginForm() {
                 htmlFor="email"
                 className="text-sm font-medium text-foreground"
               >
-                邮箱地址
+                {isLogin ? t("auth.login.email") : t("auth.register.email")}
               </label>
               <Input
                 id="email"
                 type="email"
-                placeholder="请输入您的邮箱"
+                placeholder={
+                  isLogin
+                    ? t("auth.login.emailPlaceholder")
+                    : t("auth.register.emailPlaceholder")
+                }
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full"
@@ -148,14 +154,18 @@ function LoginForm() {
                 htmlFor="password"
                 className="text-sm font-medium text-foreground"
               >
-                密码
+                {isLogin
+                  ? t("auth.login.password")
+                  : t("auth.register.password")}
               </label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder={
-                    isLogin ? "请输入您的密码" : "设置密码（至少8位）"
+                    isLogin
+                      ? t("auth.login.passwordPlaceholder")
+                      : t("auth.register.passwordPlaceholder")
                   }
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -183,13 +193,13 @@ function LoginForm() {
                   htmlFor="confirmPassword"
                   className="text-sm font-medium text-foreground"
                 >
-                  确认密码
+                  {t("auth.register.confirmPassword")}
                 </label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="再次输入密码"
+                    placeholder={t("auth.register.confirmPasswordPlaceholder")}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full pr-10"
@@ -210,7 +220,9 @@ function LoginForm() {
                 {password &&
                   confirmPassword &&
                   password !== confirmPassword && (
-                    <p className="text-xs text-destructive">密码不匹配</p>
+                    <p className="text-xs text-destructive">
+                      {t("auth.register.passwordMismatch")}
+                    </p>
                   )}
               </div>
             )}
@@ -222,10 +234,12 @@ function LoginForm() {
                     type="checkbox"
                     className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20"
                   />
-                  <span className="text-muted-foreground">记住我</span>
+                  <span className="text-muted-foreground">
+                    {t("auth.login.rememberMe")}
+                  </span>
                 </label>
                 <a href="#" className="text-primary hover:underline">
-                  忘记密码？
+                  {t("auth.login.forgotPassword")}
                 </a>
               </div>
             ) : (
@@ -237,13 +251,13 @@ function LoginForm() {
                     required
                   />
                   <span className="text-muted-foreground leading-4">
-                    我已阅读并同意{" "}
+                    {t("auth.register.agreeTerms")}{" "}
                     <a href="#" className="text-primary hover:underline">
-                      用户协议
+                      {t("auth.register.userAgreement")}
                     </a>{" "}
-                    和{" "}
+                    {t("auth.register.and")}{" "}
                     <a href="#" className="text-primary hover:underline">
-                      隐私政策
+                      {t("auth.register.privacyPolicy")}
                     </a>
                   </span>
                 </label>
@@ -253,7 +267,7 @@ function LoginForm() {
                     className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20"
                   />
                   <span className="text-muted-foreground">
-                    订阅产品更新和优惠信息
+                    {t("auth.register.subscribeUpdates")}
                   </span>
                 </label>
               </div>
@@ -287,11 +301,19 @@ function LoginForm() {
               {isLoading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />
-                  <span>{isLogin ? "登录中..." : "注册中..."}</span>
+                  <span>
+                    {isLogin
+                      ? t("auth.login.loggingIn")
+                      : t("auth.register.creating")}
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <span>{isLogin ? "登录" : "创建账户"}</span>
+                  <span>
+                    {isLogin
+                      ? t("auth.login.loginButton")
+                      : t("auth.register.createButton")}
+                  </span>
                   <ArrowRightIcon className="w-4 h-4" />
                 </div>
               )}
@@ -299,12 +321,16 @@ function LoginForm() {
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            {isLogin ? "还没有账户？" : "已有账户？"}{" "}
+            {isLogin
+              ? t("auth.login.noAccount")
+              : t("auth.register.hasAccount")}{" "}
             <button
               onClick={toggleMode}
               className="text-primary hover:underline font-medium"
             >
-              {isLogin ? "立即注册" : "立即登录"}
+              {isLogin
+                ? t("auth.login.signUpNow")
+                : t("auth.register.loginNow")}
             </button>
           </div>
         </div>
@@ -316,10 +342,10 @@ function LoginForm() {
             <div className="space-y-1">
               <h3 className="text-sm font-medium text-foreground flex items-center">
                 <LockIcon className="w-4 h-4 mr-1" />
-                安全保护
+                {t("auth.security.title")}
               </h3>
               <p className="text-xs text-muted-foreground">
-                您的数据受到端到端加密保护，我们绝不会存储或分享您的个人信息。
+                {t("auth.security.description")}
               </p>
             </div>
           </div>

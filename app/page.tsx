@@ -138,6 +138,14 @@ const ChatBotDemo = () => {
     }
   }, [status, messages, currentChatId, saveChatSession]);
 
+  // 判读是刷新进入页面也是跳转路由进入
+  useEffect(() => {
+    const chatId = searchParams.get("chatId");
+    if (chatId && !isLoading) {
+      handleLoadChat(chatId);
+    }
+  }, [searchParams, isLoading]);
+
   const handleNewChat = () => {
     isNewChat.current = true;
     lastSavedMessagesLength.current = 0;

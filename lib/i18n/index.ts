@@ -24,10 +24,10 @@ if (!i18n.isInitialized) {
     .use(initReactI18next)
     .init({
       resources,
-      lng: 'zh-CN', // default language
-      fallbackLng: 'zh-CN',
+      lng: 'en-US', // default language
+      fallbackLng: 'en-US',
       defaultNS: 'common',
-      
+
       // SSR configuration
       react: {
         useSuspense: false, // Disable suspense for SSR

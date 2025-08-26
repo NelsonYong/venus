@@ -3,6 +3,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./auth-context";
 import { useTranslation as useI18nextTranslation } from "react-i18next";
+import {
+  getInitialLanguage,
+  setStoredLanguage,
+  type SupportedLanguage,
+} from "@/lib/language-utils";
 
 interface I18nContextType {
   locale: string;
@@ -14,20 +19,33 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [i18nReady, setI18nReady] = useState(false);
-  const [currentLocale, setCurrentLocale] = useState("zh-CN");
+  const [currentLocale, setCurrentLocale] =
+    useState<SupportedLanguage>("en-US");
 
   useEffect(() => {
     // Dynamic import to avoid SSR issues
-    import("@/lib/i18n").then((i18nModule) => {
+    import("@/lib/i18n").then(async (i18nModule) => {
       const i18n = i18nModule.default;
-      setCurrentLocale(i18n.language);
-      setI18nReady(true);
+
+      // 确定初始语言：localStorage > 用户设置 > 系统语言 > 默认英文
+      let initialLanguage: SupportedLanguage;
 
       if (user?.language) {
-        // Update i18n language when user language changes
-        i18n.changeLanguage(user.language).then(() => {
-          setCurrentLocale(user.language);
-        });
+        // 如果用户已登录且有语言设置，使用用户设置
+        initialLanguage = user.language as SupportedLanguage;
+      } else {
+        // 否则使用优先级逻辑：localStorage > 系统语言 > 默认英文
+        initialLanguage = getInitialLanguage();
+      }
+
+      // 设置i18n语言
+      await i18n.changeLanguage(initialLanguage);
+      setCurrentLocale(initialLanguage);
+      setI18nReady(true);
+
+      // 如果语言来源不是用户设置，保存到localStorage
+      if (!user?.language) {
+        setStoredLanguage(initialLanguage);
       }
     });
   }, [user?.language]);
@@ -36,7 +54,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     const i18nModule = await import("@/lib/i18n");
     const i18n = i18nModule.default;
     await i18n.changeLanguage(lng);
-    setCurrentLocale(lng);
+    setCurrentLocale(lng as SupportedLanguage);
+
+    // 更新localStorage
+    setStoredLanguage(lng as SupportedLanguage);
   };
 
   const value: I18nContextType = {

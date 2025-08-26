@@ -301,6 +301,7 @@ const ChatBotDemo = () => {
                 className="mt-4 flex-shrink-0 w-full"
               >
                 <PromptInputTextarea
+                  placeholder={t("chat.placeholder")}
                   onChange={(e) => setInput(e.target.value)}
                   value={input}
                 />

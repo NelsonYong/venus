@@ -179,6 +179,7 @@
   },
   "chat": {
     "loadingHistory": "Loading chat history...",
-    "search": "Search"
+    "search": "Search",
+    "placeholder": "What do you want to know?"
   }
 }

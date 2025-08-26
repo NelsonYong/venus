@@ -179,6 +179,7 @@
   },
   "chat": {
     "loadingHistory": "加载聊天记录中...",
-    "search": "搜索"
+    "search": "搜索",
+    "placeholder": "请输入问题"
   }
 }

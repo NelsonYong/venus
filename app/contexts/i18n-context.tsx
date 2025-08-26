@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './auth-context';
-import { useTranslation as useI18nextTranslation } from 'react-i18next';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./auth-context";
+import { useTranslation as useI18nextTranslation } from "react-i18next";
 
 interface I18nContextType {
   locale: string;
@@ -14,11 +14,11 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [i18nReady, setI18nReady] = useState(false);
-  const [currentLocale, setCurrentLocale] = useState('zh-CN');
+  const [currentLocale, setCurrentLocale] = useState("zh-CN");
 
   useEffect(() => {
     // Dynamic import to avoid SSR issues
-    import('@/lib/i18n').then((i18nModule) => {
+    import("@/lib/i18n").then((i18nModule) => {
       const i18n = i18nModule.default;
       setCurrentLocale(i18n.language);
       setI18nReady(true);
@@ -33,7 +33,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [user?.language]);
 
   const changeLanguage = async (lng: string) => {
-    const i18nModule = await import('@/lib/i18n');
+    const i18nModule = await import("@/lib/i18n");
     const i18n = i18nModule.default;
     await i18n.changeLanguage(lng);
     setCurrentLocale(lng);
@@ -46,20 +46,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   // Don't render children until i18n is ready
   if (!i18nReady) {
-    return <div>Loading...</div>;
+    return <div></div>;
   }
 
-  return (
-    <I18nContext.Provider value={value}>
-      {children}
-    </I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n(): I18nContextType {
   const context = useContext(I18nContext);
   if (context === undefined) {
-    throw new Error('useI18n must be used within an I18nProvider');
+    throw new Error("useI18n must be used within an I18nProvider");
   }
   return context;
 }

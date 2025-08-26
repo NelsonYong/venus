@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/contexts/auth-context";
+import { useTranslation } from "@/app/contexts/i18n-context";
 import { ProtectedRoute } from "@/app/components/auth/protected-route";
 import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 
 function ProfileContent() {
   const { user, refreshAuth } = useAuth();
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -35,9 +37,9 @@ function ProfileContent() {
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -46,23 +48,25 @@ function ProfileContent() {
     setIsLoading(true);
     setMessage("");
     setError("");
-    
+
     try {
       const response = await profileAPI.updateProfile({
         name: editData.name.trim(),
         avatar: editData.avatar.trim() || undefined,
       });
-      
+
       if (response.status === 200 && response.data?.success) {
         setMessage(response.data.message || "Profile updated successfully");
         setIsEditing(false);
         // Refresh user data
         await refreshAuth();
       } else {
-        setError(response.message || response.error || "Failed to update profile");
+        setError(
+          response.message || response.error || "Failed to update profile"
+        );
       }
     } catch (error) {
-      console.error('Update profile error:', error);
+      console.error("Update profile error:", error);
       setError("Failed to update profile. Please try again.");
     } finally {
       setIsLoading(false);
@@ -87,9 +91,11 @@ function ProfileContent() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">个人资料</h1>
+              <h1 className="text-3xl font-bold text-foreground">
+                {t("profile.title")}
+              </h1>
               <p className="text-muted-foreground mt-1">
-                管理您的个人信息和偏好设置
+                {t("profile.subtitle")}
               </p>
             </div>
             {!isEditing && (
@@ -98,7 +104,7 @@ function ProfileContent() {
                 className="flex items-center space-x-2"
               >
                 <EditIcon className="w-4 h-4" />
-                <span>编辑资料</span>
+                <span>{t("profile.editProfile")}</span>
               </Button>
             )}
           </div>
@@ -112,7 +118,9 @@ function ProfileContent() {
 
           {message && (
             <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-600 dark:text-green-400">{message}</p>
+              <p className="text-sm text-green-600 dark:text-green-400">
+                {message}
+              </p>
             </div>
           )}
 
@@ -137,11 +145,13 @@ function ProfileContent() {
                 {isEditing && (
                   <div className="space-y-2 w-full max-w-sm">
                     <label className="text-sm font-medium text-foreground">
-                      头像链接
+                      {t("profile.avatarUrl")}
                     </label>
                     <Input
                       value={editData.avatar}
-                      onChange={(e) => setEditData({ ...editData, avatar: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({ ...editData, avatar: e.target.value })
+                      }
                       placeholder="https://example.com/avatar.jpg"
                       className="text-center"
                     />
@@ -156,12 +166,14 @@ function ProfileContent() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
                       <UserIcon className="w-4 h-4 mr-2" />
-                      姓名
+                      {t("profile.name")}
                     </label>
                     {isEditing ? (
                       <Input
                         value={editData.name}
-                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                        onChange={(e) =>
+                          setEditData({ ...editData, name: e.target.value })
+                        }
                         className="w-full"
                       />
                     ) : (
@@ -175,7 +187,7 @@ function ProfileContent() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
                       <MailIcon className="w-4 h-4 mr-2" />
-                      邮箱地址
+                      {t("profile.email")}
                     </label>
                     <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
                       {user.email}
@@ -186,13 +198,13 @@ function ProfileContent() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
                       <CalendarIcon className="w-4 h-4 mr-2" />
-                      注册时间
+                      {t("profile.joinDate")}
                     </label>
                     <p className="text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-                      {new Date(user.createdAt).toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
+                      {new Date(user.createdAt).toLocaleDateString("zh-CN", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
                       })}
                     </p>
                   </div>
@@ -201,10 +213,12 @@ function ProfileContent() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
                       <LanguagesIcon className="w-4 h-4 mr-2" />
-                      语言偏好
+                      {t("profile.languagePreference")}
                     </label>
                     <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
-                      {user.language === 'zh-CN' ? '简体中文' : user.language}
+                      {user.language === "zh-CN"
+                        ? t("profile.languages.zh-CN")
+                        : user.language}
                     </p>
                   </div>
                 </div>
@@ -213,12 +227,16 @@ function ProfileContent() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground flex items-center">
                     <PaletteIcon className="w-4 h-4 mr-2" />
-                    主题偏好
+                    {t("profile.themePreference")}
                   </label>
                   <p className="text-foreground bg-muted/50 rounded-md px-3 py-2 inline-block">
-                    {user.theme === 'system' ? '跟随系统' : 
-                     user.theme === 'light' ? '浅色模式' : 
-                     user.theme === 'dark' ? '深色模式' : user.theme}
+                    {user.theme === "system"
+                      ? t("profile.themes.system")
+                      : user.theme === "light"
+                      ? t("profile.themes.light")
+                      : user.theme === "dark"
+                      ? t("profile.themes.dark")
+                      : user.theme}
                   </p>
                 </div>
 
@@ -233,12 +251,12 @@ function ProfileContent() {
                       {isLoading ? (
                         <>
                           <div className="w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />
-                          <span>保存中...</span>
+                          <span>{t("profile.saving")}</span>
                         </>
                       ) : (
                         <>
                           <SaveIcon className="w-4 h-4" />
-                          <span>保存更改</span>
+                          <span>{t("profile.save")}</span>
                         </>
                       )}
                     </Button>
@@ -249,7 +267,7 @@ function ProfileContent() {
                       className="flex items-center space-x-2"
                     >
                       <XIcon className="w-4 h-4" />
-                      <span>取消</span>
+                      <span>{t("profile.cancel")}</span>
                     </Button>
                   </div>
                 )}
@@ -259,21 +277,32 @@ function ProfileContent() {
 
           {/* Stats Card */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-foreground mb-4">使用统计</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              {t("profile.stats.title")}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">0</div>
-                <div className="text-sm text-muted-foreground">对话次数</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("profile.stats.conversations")}
+                </div>
               </div>
               <div className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">0</div>
-                <div className="text-sm text-muted-foreground">消息总数</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("profile.stats.messages")}
+                </div>
               </div>
               <div className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">
-                  {Math.ceil((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
+                  {Math.ceil(
+                    (Date.now() - new Date(user.createdAt).getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )}
                 </div>
-                <div className="text-sm text-muted-foreground">使用天数</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("profile.stats.daysUsed")}
+                </div>
               </div>
             </div>
           </div>

@@ -34,6 +34,8 @@ model Conversation {
   model      String    @default("openai/gpt-4o")
   isArchived Boolean   @default(false)
   isPinned   Boolean   @default(false)
+  isStarred  Boolean   @default(false)
+  isDeleted  Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   settings   Json?
@@ -42,6 +44,8 @@ model Conversation {
 
   @@index([userId, createdAt])
   @@index([userId, isPinned])
+  @@index([userId, isStarred])
+  @@index([userId, isDeleted])
   @@map("conversations")
 }
 

@@ -62,6 +62,7 @@ const ChatBotDemo = () => {
   const {
     chatHistory,
     currentChatId,
+    isLoading,
     saveChatSession,
     loadChatSession,
     deleteChatSession,
@@ -73,8 +74,11 @@ const ChatBotDemo = () => {
   // Save chat session when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      const chatId = saveChatSession(messages, currentChatId || undefined);
-      console.log("Saved chat session:", chatId);
+      saveChatSession(messages, currentChatId || undefined).then(chatId => {
+        console.log("Saved chat session:", chatId);
+      }).catch(error => {
+        console.error("Failed to save chat session:", error);
+      });
     }
   }, [messages, saveChatSession, currentChatId]);
 
@@ -100,18 +104,26 @@ const ChatBotDemo = () => {
     setInput("");
   };
 
-  const handleLoadChat = (chatId: string) => {
-    const chatMessages = loadChatSession(chatId);
-    if (chatMessages) {
-      setMessages(chatMessages);
+  const handleLoadChat = async (chatId: string) => {
+    try {
+      const chatMessages = await loadChatSession(chatId);
+      if (chatMessages) {
+        setMessages(chatMessages);
+      }
+    } catch (error) {
+      console.error("Failed to load chat:", error);
     }
   };
 
-  const handleDeleteChat = (chatId: string) => {
-    deleteChatSession(chatId);
-    // If we're deleting the current chat, start a new one
-    if (currentChatId === chatId) {
-      handleNewChat();
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      await deleteChatSession(chatId);
+      // If we're deleting the current chat, start a new one
+      if (currentChatId === chatId) {
+        handleNewChat();
+      }
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
     }
   };
 
@@ -123,6 +135,7 @@ const ChatBotDemo = () => {
         onClose={() => setSidebarOpen(false)}
         chatHistory={chatHistory}
         currentChatId={currentChatId}
+        isLoading={isLoading}
         onNewChat={handleNewChat}
         onLoadChat={handleLoadChat}
         onDeleteChat={handleDeleteChat}

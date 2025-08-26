@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -56,21 +55,27 @@ export async function createSession(userId: string, userAgent?: string, ipAddres
 }
 
 export async function validateSession(token: string) {
-  const session = await prisma.session.findUnique({
-    where: { token },
-    // @ts-ignore
-    include: { user: true },
-  });
+  try {
+    const session = await prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
 
-  if (!session || session.expiresAt < new Date()) {
-    if (session) {
-      // Clean up expired session
-      await prisma.session.delete({ where: { id: session.id } });
+    if (!session || session.expiresAt < new Date()) {
+      if (session) {
+        // Clean up expired session
+        await prisma.session.delete({ where: { id: session.id } }).catch(() => {
+          // Ignore delete errors (session might already be deleted)
+        });
+      }
+      return null;
     }
+
+    return session;
+  } catch (error) {
+    console.error('Session validation error:', error);
     return null;
   }
-
-  return session;
 }
 
 export async function revokeSession(token: string) {

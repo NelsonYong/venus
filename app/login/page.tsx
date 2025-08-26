@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/app/contexts/auth-context";
+import { PublicRoute } from "@/app/components/auth/protected-route";
 import {
   BotIcon,
   EyeIcon,
@@ -13,7 +15,7 @@ import {
   LockIcon,
 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -22,15 +24,42 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const { login, register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // 模拟登录/注册过程
-    setTimeout(() => {
+    setMessage("");
+    setError("");
+
+    try {
+      if (isLogin) {
+        const result = await login(email, password);
+        if (result.success) {
+          setMessage(result.message);
+        } else {
+          setError(result.message);
+        }
+      } else {
+        if (password !== confirmPassword) {
+          setError("密码不匹配");
+          return;
+        }
+        const result = await register(name, email, password);
+        if (result.success) {
+          setMessage(result.message);
+        } else {
+          setError(result.message);
+        }
+      }
+    } catch (err) {
+      setError("操作失败，请重试");
+    } finally {
       setIsLoading(false);
-      // 这里可以添加实际的登录/注册逻辑
-    }, 2000);
+    }
   };
 
   const resetForm = () => {
@@ -64,7 +93,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground">智能助手</h1>
+            <h1 className="text-3xl font-bold text-foreground">Rela AI</h1>
             <p className="text-muted-foreground">
               {isLogin
                 ? "登录您的账户，开始智能对话体验"
@@ -230,6 +259,20 @@ export default function LoginPage() {
               </div>
             )}
 
+            {error && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+
+            {message && (
+              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  {message}
+                </p>
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full"
@@ -283,5 +326,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <PublicRoute>
+      <LoginForm />
+    </PublicRoute>
   );
 }

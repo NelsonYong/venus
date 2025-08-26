@@ -22,6 +22,7 @@ model User {
   updatedAt       DateTime       @updatedAt
   conversations   Conversation[]
   messages        Message[]
+  sessions        Session[]
 
   @@map("users")
 }
@@ -102,6 +103,7 @@ model Session {
   userAgent String?
   ipAddress String?
   device    String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])

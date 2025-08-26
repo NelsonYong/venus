@@ -160,3 +160,45 @@ h6 {
 hr {
   @apply my-4;
 }
+
+/* 超精细滚动条样式 */
+::-webkit-scrollbar {
+  width: 1px;
+  height: 1px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.556 0 0 / 0.15);
+  border-radius: 1px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.556 0 0 / 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.708 0 0 / 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.708 0 0 / 0.3);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox 滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.556 0 0 / 0.15) transparent;
+}
+
+.dark * {
+  scrollbar-color: oklch(0.708 0 0 / 0.15) transparent;
+}

@@ -1,25 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession, createSession, revokeSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get("auth-token")?.value;
-    
+    console.log('Refresh token attempt, token exists:', !!token);
+
     if (!token) {
+      console.log('No token found in cookies');
       return NextResponse.json(
         { error: "No token found", message: "Authentication required" },
         { status: 401 }
       );
     }
 
+    console.log('Validating session...');
     const session = await validateSession(token);
-    
+    console.log('Session validation result:', !!session);
+
     if (!session) {
       const response = NextResponse.json(
         { error: "Invalid token", message: "Please login again" },
         { status: 401 }
       );
-      
+
       response.cookies.set("auth-token", "", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -27,7 +32,7 @@ export async function POST(request: NextRequest) {
         maxAge: 0,
         path: "/",
       });
-      
+
       return response;
     }
 
@@ -41,7 +46,7 @@ export async function POST(request: NextRequest) {
     const { token: newToken } = await createSession(session.userId, userAgent, ipAddress);
 
     const response = NextResponse.json(
-      { 
+      {
         success: true,
         message: "Token refreshed successfully",
         user: {
@@ -69,12 +74,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Token refresh error:", error);
-    
+
     const response = NextResponse.json(
       { error: "Token refresh failed", message: "Please login again" },
       { status: 500 }
     );
-    
+
     response.cookies.set("auth-token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
       maxAge: 0,
       path: "/",
     });
-    
+
     return response;
   }
 }

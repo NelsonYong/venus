@@ -1,0 +1,184 @@
+{
+  "navbar": {
+    "rename": "Rename",
+    "star": "Add to Favorites", 
+    "unstar": "Remove from Favorites",
+    "brand": "Rela AI",
+    "login": "Login",
+    "register": "Register"
+  },
+  "sidebar": {
+    "starred": "Starred",
+    "chats": "Chat History", 
+    "newChat": "New Chat",
+    "delete": "Delete",
+    "confirmDelete": "Confirm Delete",
+    "noMessages": "No messages"
+  },
+  "userMenu": {
+    "registeredSince": "Registered since",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "auth": {
+    "login": {
+      "title": "Login to your account and start intelligent conversations",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Login",
+      "loggingIn": "Logging in...",
+      "noAccount": "Don't have an account?",
+      "signUpNow": "Sign up now"
+    },
+    "register": {
+      "title": "Create new account and join our AI assistant community",
+      "name": "Name",
+      "namePlaceholder": "Enter your name",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Set password (at least 8 characters)",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter password",
+      "passwordMismatch": "Passwords do not match",
+      "agreeTerms": "I have read and agree to the",
+      "userAgreement": "User Agreement",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "subscribeUpdates": "Subscribe to product updates and promotions",
+      "createButton": "Create Account",
+      "creating": "Creating...",
+      "hasAccount": "Already have an account?",
+      "loginNow": "Login now"
+    },
+    "errors": {
+      "passwordMismatch": "Passwords do not match",
+      "operationFailed": "Operation failed, please try again"
+    },
+    "security": {
+      "title": "Security Protection",
+      "description": "Your data is protected with end-to-end encryption. We never store or share your personal information."
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your personal information and preferences",
+    "editProfile": "Edit Profile",
+    "avatarUrl": "Avatar URL",
+    "name": "Name",
+    "email": "Email",
+    "joinDate": "Join Date",
+    "languagePreference": "Language Preference",
+    "themePreference": "Theme Preference",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "stats": {
+      "title": "Usage Statistics",
+      "conversations": "Conversations",
+      "messages": "Total Messages",
+      "daysUsed": "Days Used"
+    },
+    "themes": {
+      "system": "Follow System",
+      "light": "Light Mode",
+      "dark": "Dark Mode"
+    },
+    "languages": {
+      "zh-CN": "Simplified Chinese"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Personalize your experience and security settings",
+    "appearance": {
+      "title": "Appearance Settings",
+      "theme": "Theme Mode",
+      "language": "Language",
+      "saveSettings": "Save Settings",
+      "saving": "Saving..."
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "email": "Email Notifications",
+      "emailDescription": "Receive important updates and security alerts",
+      "browser": "Browser Notifications",
+      "browserDescription": "Receive real-time message notifications",
+      "marketing": "Marketing Promotions",
+      "marketingDescription": "Receive product updates and promotional offers",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "privacy": {
+      "title": "Privacy Settings",
+      "profileVisibility": "Profile Visibility",
+      "profileVisibilityDescription": "Other users can view your basic information",
+      "activityStatus": "Activity Status",
+      "activityStatusDescription": "Show your online status and last active time",
+      "public": "Public",
+      "private": "Private",
+      "show": "Show",
+      "hide": "Hide"
+    },
+    "security": {
+      "title": "Security Settings",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmNewPassword": "Confirm New Password",
+      "updatePassword": "Update Password",
+      "passwordMismatch": "New password and confirmation do not match",
+      "passwordTooShort": "Password must be at least 8 characters long"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "deleteAccount": "Delete Account",
+      "deleteAccountDescription": "Permanently delete your account and all related data. This action cannot be undone.",
+      "deleteAccountButton": "Delete Account",
+      "confirmDelete": "Are you sure you want to delete your account? This action cannot be undone and will delete all your data.",
+      "doubleConfirm": "Please confirm again: After deleting your account, all your conversation history and personal data will be permanently lost.",
+      "enterPassword": "Please enter your password to confirm the deletion:"
+    },
+    "themes": {
+      "system": "Follow System",
+      "light": "Light Mode",
+      "dark": "Dark Mode"
+    },
+    "languages": {
+      "zh-CN": "简体中文",
+      "en-US": "English",
+      "ja-JP": "日本語"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel", 
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Error occurred",
+    "success": "Success",
+    "newConversation": "New conversation",
+    "noMessages": "No messages"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week", 
+    "lastWeek": "Last week",
+    "thisMonth": "This month",
+    "older": "Older",
+    "minutesAgo": "minutes ago",
+    "hoursAgo": "hours ago",
+    "daysAgo": "days ago"
+  },
+  "chat": {
+    "loadingHistory": "Loading chat history...",
+    "search": "Search"
+  }
+}

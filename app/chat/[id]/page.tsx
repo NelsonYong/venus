@@ -42,6 +42,7 @@ import { ProtectedRoute } from "../../components/auth/protected-route";
 import { Navbar } from "../../components/ui/navbar";
 import { ChatSidebar } from "../../components/sidebar/chat-sidebar";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslation } from "@/app/contexts/i18n-context";
 
 const models = [
   {
@@ -55,6 +56,7 @@ const models = [
 ];
 
 const ChatPage = () => {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [model, setModel] = useState<string>(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
@@ -281,7 +283,7 @@ const ChatPage = () => {
               {isLoadingChat ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Loader />
-                  <span className="ml-2">加载聊天记录中...</span>
+                  <span className="ml-2">{t("chat.loadingHistory")}</span>
                 </div>
               ) : (
                 <>
@@ -377,7 +379,7 @@ const ChatPage = () => {
                           onClick={() => setWebSearch(!webSearch)}
                         >
                           <GlobeIcon size={16} />
-                          <span>Search</span>
+                          <span>{t("chat.search")}</span>
                         </PromptInputButton>
                         <PromptInputModelSelect
                           onValueChange={(value) => {

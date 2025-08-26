@@ -44,6 +44,7 @@ import { useChatHistory } from "./hooks/use-conversations";
 import { useAutoSummary } from "./hooks/use-auto-summary";
 import { useConversationActions } from "./hooks/use-conversation-actions";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "@/app/contexts/i18n-context";
 
 const models = [
   {
@@ -57,6 +58,7 @@ const models = [
 ];
 
 const ChatBotDemo = () => {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [model, setModel] = useState<string>(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
@@ -74,7 +76,8 @@ const ChatBotDemo = () => {
     getCurrentChat,
   } = useChatHistory();
 
-  const { toggleStar, updateTitle: updateTitleMutation } = useConversationActions();
+  const { toggleStar, updateTitle: updateTitleMutation } =
+    useConversationActions();
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -88,7 +91,7 @@ const ChatBotDemo = () => {
     currentChatId,
     status,
     isNewChat: isNewChat.current,
-    updateChatTitle
+    updateChatTitle,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -138,7 +141,6 @@ const ChatBotDemo = () => {
       }
     }
   }, [status, messages, currentChatId, saveChatSession]);
-
 
   const handleNewChat = () => {
     isNewChat.current = true;
@@ -193,21 +195,24 @@ const ChatBotDemo = () => {
       {/* Right side content area */}
       <div className="flex-1 flex flex-col transition-all duration-300">
         {/* Navbar */}
-        <Navbar 
+        <Navbar
           onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
           conversationTitle={getCurrentChat()?.title}
           isStarred={getCurrentChat()?.isStarred}
           onTitleUpdate={(newTitle) => {
             if (currentChatId) {
-              updateTitleMutation.mutate({ id: currentChatId, title: newTitle });
+              updateTitleMutation.mutate({
+                id: currentChatId,
+                title: newTitle,
+              });
             }
           }}
           onStarToggle={() => {
             const currentChat = getCurrentChat();
             if (currentChatId && currentChat) {
-              toggleStar.mutate({ 
-                id: currentChatId, 
-                isStarred: !currentChat.isStarred 
+              toggleStar.mutate({
+                id: currentChatId,
+                isStarred: !currentChat.isStarred,
               });
             }
           }}
@@ -306,7 +311,7 @@ const ChatBotDemo = () => {
                       onClick={() => setWebSearch(!webSearch)}
                     >
                       <GlobeIcon size={16} />
-                      <span>Search</span>
+                      <span>{t("chat.search")}</span>
                     </PromptInputButton>
                     <PromptInputModelSelect
                       onValueChange={(value) => {

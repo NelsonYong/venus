@@ -5,6 +5,7 @@ import { PanelLeftIcon, EditIcon, StarIcon, CheckIcon, XIcon, ChevronDownIcon } 
 import { UserMenu } from "./user-menu";
 import { ThemeToggle } from "../theme-toggle";
 import { useAuth } from "@/app/contexts/auth-context";
+import { useTranslation } from "@/app/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,7 @@ export function Navbar({
   onStarToggle 
 }: NavbarProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigation = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(conversationTitle || "");
@@ -137,7 +139,7 @@ export function Navbar({
                         <DropdownMenuContent align="start" className="w-48">
                           <DropdownMenuItem onClick={handleStartEdit}>
                             <EditIcon className="mr-2 h-4 w-4" />
-                            重命名
+                            {t('navbar.rename')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={onStarToggle}>
@@ -149,7 +151,7 @@ export function Navbar({
                                   : "text-muted-foreground"
                               )} 
                             />
-                            {isStarred ? "取消收藏" : "添加收藏"}
+                            {isStarred ? t('navbar.unstar') : t('navbar.star')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -162,7 +164,7 @@ export function Navbar({
                   className="flex items-center cursor-pointer"
                   onClick={redirectChat}
                 >
-                  <h1 className="text-xl font-bold text-foreground">Rela AI</h1>
+                  <h1 className="text-xl font-bold text-foreground">{t('navbar.brand')}</h1>
                 </div>
               )}
             </div>
@@ -183,7 +185,7 @@ export function Navbar({
                     window.location.href = "/login";
                   }}
                 >
-                  登录
+                  {t('navbar.login')}
                 </Button>
                 <Button
                   size="sm"
@@ -191,7 +193,7 @@ export function Navbar({
                     window.location.href = "/login";
                   }}
                 >
-                  注册
+                  {t('navbar.register')}
                 </Button>
               </div>
             )}

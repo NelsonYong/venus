@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { ChatSession } from "@/app/hooks/use-conversations";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/app/contexts/i18n-context";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -96,6 +97,7 @@ export function ChatSidebar({
   onOpen,
 }: ChatSidebarProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   // Load history when sidebar is first opened
   useEffect(() => {
     if (isOpen && onOpen) {
@@ -117,7 +119,7 @@ export function ChatSidebar({
 
   const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
-    if (confirm("确定要删除这个聊天记录吗？")) {
+    if (confirm(t("sidebar.confirmDelete"))) {
       onDeleteChat(chatId);
     }
   };
@@ -127,11 +129,11 @@ export function ChatSidebar({
     const diff = now.getTime() - timestamp.getTime();
 
     if (diff < 1000 * 60 * 60) {
-      return `${Math.floor(diff / (1000 * 60))}分钟前`;
+      return `${Math.floor(diff / (1000 * 60))}${t("time.minutesAgo")}`;
     } else if (diff < 1000 * 60 * 60 * 24) {
-      return `${Math.floor(diff / (1000 * 60 * 60))}小时前`;
+      return `${Math.floor(diff / (1000 * 60 * 60))}${t("time.hoursAgo")}`;
     } else {
-      return `${Math.floor(diff / (1000 * 60 * 60 * 24))}天前`;
+      return `${Math.floor(diff / (1000 * 60 * 60 * 24))}${t("time.daysAgo")}`;
     }
   };
 
@@ -151,7 +153,7 @@ export function ChatSidebar({
             size="sm"
           >
             <PlusIcon className="w-4 h-4 mr-2" />
-            新建聊天
+            {t("sidebar.newChat")}
           </Button>
         </div>
 
@@ -161,11 +163,11 @@ export function ChatSidebar({
             <div className="p-4 w-full">
               {isLoading ? (
                 <div className="text-center text-sm text-muted-foreground py-8">
-                  加载中...
+                  {t("common.loading")}
                 </div>
               ) : chatHistory.length === 0 ? (
                 <div className="text-center text-sm text-muted-foreground py-8">
-                  还没有聊天记录
+                  {t("sidebar.noMessages")}
                 </div>
               ) : (
                 <>
@@ -174,7 +176,7 @@ export function ChatSidebar({
                     <div className="mb-6">
                       <div className="flex items-center gap-2 mb-3 text-sm font-medium text-muted-foreground">
                         <StarIcon className="w-4 h-4" />
-                        已收藏
+                        {t("sidebar.starred")}
                       </div>
                       <div className="space-y-2">
                         {chatHistory
@@ -198,7 +200,7 @@ export function ChatSidebar({
                   <div>
                     <div className="flex items-center gap-2 mb-3 text-sm font-medium text-muted-foreground">
                       <ClockIcon className="w-4 h-4" />
-                      聊天记录
+                      {t("sidebar.chats")}
                     </div>
                     <div className="space-y-2">
                       {chatHistory

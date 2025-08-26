@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/contexts/auth-context";
+import { useTranslation } from "@/app/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   HoverCard,
   HoverCardContent,
@@ -22,6 +19,7 @@ import {
 
 export function UserMenu() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   if (!user) {
@@ -39,9 +37,9 @@ export function UserMenu() {
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -75,42 +73,41 @@ export function UserMenu() {
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>
-                {getInitials(user.name)}
-              </AvatarFallback>
+              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="space-y-1">
               <p className="text-sm font-medium">{user.name}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
               <p className="text-xs text-muted-foreground">
-                注册于 {new Date(user.createdAt).toLocaleDateString('zh-CN')}
+                {t("userMenu.registeredSince")}{" "}
+                {new Date(user.createdAt).toLocaleDateString("zh-CN")}
               </p>
             </div>
           </div>
-          
+
           <div className="border-t pt-4 space-y-2">
             <Button
               variant="ghost"
               className="w-full justify-start h-auto p-2"
               onClick={() => {
-                window.location.href = '/profile';
+                window.location.href = "/profile";
               }}
             >
               <UserIcon className="h-4 w-4 mr-2" />
-              个人资料
+              {t("userMenu.profile")}
             </Button>
-            
+
             <Button
               variant="ghost"
               className="w-full justify-start h-auto p-2"
               onClick={() => {
-                window.location.href = '/settings';
+                window.location.href = "/settings";
               }}
             >
               <SettingsIcon className="h-4 w-4 mr-2" />
-              设置
+              {t("userMenu.settings")}
             </Button>
-            
+
             <div className="border-t pt-2">
               <Button
                 variant="ghost"
@@ -121,12 +118,12 @@ export function UserMenu() {
                 {isLoading ? (
                   <>
                     <div className="h-4 w-4 mr-2 border-2 border-destructive/20 border-t-destructive rounded-full animate-spin" />
-                    登出中...
+                    {t("userMenu.loggingOut")}
                   </>
                 ) : (
                   <>
                     <LogOutIcon className="h-4 w-4 mr-2" />
-                    登出
+                    {t("userMenu.logout")}
                   </>
                 )}
               </Button>

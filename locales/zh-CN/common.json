@@ -1,0 +1,184 @@
+{
+  "navbar": {
+    "rename": "重命名",
+    "star": "添加收藏", 
+    "unstar": "取消收藏",
+    "brand": "Rela AI",
+    "login": "登录",
+    "register": "注册"
+  },
+  "sidebar": {
+    "starred": "已收藏",
+    "chats": "聊天记录", 
+    "newChat": "新建对话",
+    "delete": "删除",
+    "confirmDelete": "确认删除",
+    "noMessages": "暂无消息"
+  },
+  "userMenu": {
+    "registeredSince": "注册于",
+    "profile": "个人资料",
+    "settings": "设置",
+    "logout": "登出",
+    "loggingOut": "登出中..."
+  },
+  "auth": {
+    "login": {
+      "title": "登录您的账户，开始智能对话体验",
+      "email": "邮箱地址",
+      "emailPlaceholder": "请输入您的邮箱",
+      "password": "密码",
+      "passwordPlaceholder": "请输入您的密码",
+      "rememberMe": "记住我",
+      "forgotPassword": "忘记密码？",
+      "loginButton": "登录",
+      "loggingIn": "登录中...",
+      "noAccount": "还没有账户？",
+      "signUpNow": "立即注册"
+    },
+    "register": {
+      "title": "创建新账户，加入智能助手社区",
+      "name": "姓名",
+      "namePlaceholder": "请输入您的姓名",
+      "email": "邮箱地址",
+      "emailPlaceholder": "请输入您的邮箱",
+      "password": "密码",
+      "passwordPlaceholder": "设置密码（至少8位）",
+      "confirmPassword": "确认密码",
+      "confirmPasswordPlaceholder": "再次输入密码",
+      "passwordMismatch": "密码不匹配",
+      "agreeTerms": "我已阅读并同意",
+      "userAgreement": "用户协议",
+      "and": "和",
+      "privacyPolicy": "隐私政策",
+      "subscribeUpdates": "订阅产品更新和优惠信息",
+      "createButton": "创建账户",
+      "creating": "注册中...",
+      "hasAccount": "已有账户？",
+      "loginNow": "立即登录"
+    },
+    "errors": {
+      "passwordMismatch": "密码不匹配",
+      "operationFailed": "操作失败，请重试"
+    },
+    "security": {
+      "title": "安全保护",
+      "description": "您的数据受到端到端加密保护，我们绝不会存储或分享您的个人信息。"
+    }
+  },
+  "profile": {
+    "title": "个人资料",
+    "subtitle": "管理您的个人信息和偏好设置",
+    "editProfile": "编辑资料",
+    "avatarUrl": "头像链接",
+    "name": "姓名",
+    "email": "邮箱地址",
+    "joinDate": "注册时间",
+    "languagePreference": "语言偏好",
+    "themePreference": "主题偏好",
+    "save": "保存更改",
+    "saving": "保存中...",
+    "cancel": "取消",
+    "stats": {
+      "title": "使用统计",
+      "conversations": "对话次数",
+      "messages": "消息总数",
+      "daysUsed": "使用天数"
+    },
+    "themes": {
+      "system": "跟随系统",
+      "light": "浅色模式",
+      "dark": "深色模式"
+    },
+    "languages": {
+      "zh-CN": "简体中文"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "个性化您的使用体验和安全设置",
+    "appearance": {
+      "title": "外观设置",
+      "theme": "主题模式",
+      "language": "语言",
+      "saveSettings": "保存设置",
+      "saving": "保存中..."
+    },
+    "notifications": {
+      "title": "通知设置",
+      "email": "邮件通知",
+      "emailDescription": "接收重要更新和安全提醒",
+      "browser": "浏览器通知",
+      "browserDescription": "接收实时消息推送",
+      "marketing": "营销推广",
+      "marketingDescription": "接收产品更新和优惠信息",
+      "enabled": "已开启",
+      "disabled": "已关闭"
+    },
+    "privacy": {
+      "title": "隐私设置",
+      "profileVisibility": "个人资料可见性",
+      "profileVisibilityDescription": "其他用户可以查看您的基本信息",
+      "activityStatus": "活动状态",
+      "activityStatusDescription": "显示您的在线状态和最后活跃时间",
+      "public": "公开",
+      "private": "私有",
+      "show": "显示",
+      "hide": "隐藏"
+    },
+    "security": {
+      "title": "安全设置",
+      "changePassword": "修改密码",
+      "currentPassword": "当前密码",
+      "newPassword": "新密码",
+      "confirmNewPassword": "确认新密码",
+      "updatePassword": "更新密码",
+      "passwordMismatch": "新密码和确认密码不匹配",
+      "passwordTooShort": "密码长度至少8位"
+    },
+    "dangerZone": {
+      "title": "危险操作",
+      "deleteAccount": "删除账户",
+      "deleteAccountDescription": "永久删除您的账户和所有相关数据。此操作无法撤销。",
+      "deleteAccountButton": "删除账户",
+      "confirmDelete": "确定要删除账户吗？此操作不可撤销，将删除您的所有数据。",
+      "doubleConfirm": "请再次确认：删除账户后，您的所有对话记录和个人数据将永久丢失。",
+      "enterPassword": "请输入您的密码以确认删除操作："
+    },
+    "themes": {
+      "system": "跟随系统",
+      "light": "浅色模式",
+      "dark": "深色模式"
+    },
+    "languages": {
+      "zh-CN": "简体中文",
+      "en-US": "English",
+      "ja-JP": "日本語"
+    }
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消", 
+    "confirm": "确认",
+    "loading": "加载中...",
+    "error": "出现错误",
+    "success": "操作成功",
+    "newConversation": "新的对话",
+    "noMessages": "暂无消息"
+  },
+  "time": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "thisWeek": "本周", 
+    "lastWeek": "上周",
+    "thisMonth": "本月",
+    "older": "更早",
+    "minutesAgo": "分钟前",
+    "hoursAgo": "小时前",
+    "daysAgo": "天前"
+  },
+  "chat": {
+    "loadingHistory": "加载聊天记录中...",
+    "search": "搜索"
+  }
+}

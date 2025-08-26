@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/theme-context";
 import { AuthProvider } from "./contexts/auth-context";
+import { I18nProvider } from "./contexts/i18n-context";
 import { AuthGuard } from "./components/auth/auth-guard";
 import { QueryProvider } from "./providers/query-provider";
 
@@ -59,7 +60,9 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <AuthProvider>
-              <AuthGuard>{children}</AuthGuard>
+              <I18nProvider>
+                <AuthGuard>{children}</AuthGuard>
+              </I18nProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryProvider>

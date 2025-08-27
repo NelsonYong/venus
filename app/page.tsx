@@ -132,6 +132,8 @@ const ChatBotDemo = () => {
     if (status === "ready" && currentChatId && messages.length > 0) {
       // Only save if messages have actually changed
       if (messages.length !== lastSavedMessagesLength.current) {
+        console.log("保存 messages", messages);
+
         saveChatSession(messages, currentChatId);
         lastSavedMessagesLength.current = messages.length;
       }
@@ -213,6 +215,8 @@ const ChatBotDemo = () => {
           }}
           onStarToggle={() => {
             const currentChat = getCurrentChat();
+            console.log("currentChat", currentChat, currentChatId);
+
             if (currentChatId && currentChat) {
               toggleStar.mutate({
                 id: currentChatId,
@@ -223,11 +227,11 @@ const ChatBotDemo = () => {
         />
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="max-w-4xl mx-auto h-full p-6">
+        <div className="flex-1 w-full overflow-hidden">
+          <div className="w-full h-full">
             <div className="flex flex-col h-full">
               <Conversation className="flex-1">
-                <ConversationContent>
+                <ConversationContent className="max-w-4xl mx-auto prose">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.role === "assistant" && (
@@ -263,7 +267,11 @@ const ChatBotDemo = () => {
                             switch (part.type) {
                               case "text":
                                 return (
-                                  <Response key={`${message.id}-${i}`}>
+                                  <Response
+                                    key={`${message.id}-${i}`}
+                                    shikiTheme="github-dark"
+                                    className="markdown"
+                                  >
                                     {part.text}
                                   </Response>
                                 );
@@ -302,7 +310,7 @@ const ChatBotDemo = () => {
 
               <PromptInput
                 onSubmit={handleSubmit}
-                className="mt-4 flex-shrink-0 w-full"
+                className="mt-4 flex-shrink-0 w-full max-w-4xl mx-auto"
               >
                 <PromptInputTextarea
                   placeholder={t("chat.placeholder")}

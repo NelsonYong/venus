@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 const DropdownMenu = React.forwardRef<
@@ -105,29 +106,58 @@ const DropdownMenuContent = React.forwardRef<
   }
 >(({ className, children, align = "start", sideOffset = 4, ...props }, ref) => {
   const { open } = React.useContext(DropdownMenuContext);
+  const [triggerRect, setTriggerRect] = React.useState<DOMRect | null>(null);
+  const triggerRef = React.useRef<HTMLElement | null>(null);
 
-  if (!open) return null;
+  React.useEffect(() => {
+    if (open && triggerRef.current) {
+      setTriggerRect(triggerRef.current.getBoundingClientRect());
+    }
+  }, [open]);
 
-  const alignmentClasses = {
-    start: "left-0",
-    center: "left-1/2 -translate-x-1/2",
-    end: "right-0",
+  React.useEffect(() => {
+    const trigger = document.querySelector('[aria-expanded="true"]') as HTMLElement;
+    if (trigger) {
+      triggerRef.current = trigger;
+    }
+  }, [open]);
+
+  if (!open || !triggerRect) return null;
+
+  const getPosition = () => {
+    let left = triggerRect.left;
+    let top = triggerRect.bottom + sideOffset;
+
+    if (align === 'center') {
+      left = triggerRect.left + triggerRect.width / 2;
+    } else if (align === 'end') {
+      left = triggerRect.right;
+    }
+
+    return { left, top };
   };
 
-  return (
+  const { left, top } = getPosition();
+
+  const dropdownContent = (
     <div
       ref={ref}
       className={cn(
-        "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
-        alignmentClasses[align],
+        "fixed z-[9999] min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
         className
       )}
-      style={{ top: `calc(100% + ${sideOffset}px)` }}
+      style={{ 
+        left: align === 'center' ? left : align === 'end' ? left - 192 : left,
+        top,
+        transform: align === 'center' ? 'translateX(-50%)' : 'none'
+      }}
       {...props}
     >
       {children}
     </div>
   );
+
+  return typeof window !== 'undefined' ? createPortal(dropdownContent, document.body) : null;
 });
 DropdownMenuContent.displayName = "DropdownMenuContent";
 

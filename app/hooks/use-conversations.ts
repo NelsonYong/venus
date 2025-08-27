@@ -74,6 +74,22 @@ export function useUpdateConversation() {
   })
 }
 
+// Hook for saving conversation (complete chat records)
+export function useSaveConversation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof conversationsAPI.save>[1] }) =>
+      conversationsAPI.save(id, data),
+    onSuccess: (data, variables) => {
+      // Update the conversation in cache
+      queryClient.setQueryData(queryKeys.conversations.detail(variables.id), data)
+      // Invalidate conversations list to refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversations.list() })
+    },
+  })
+}
+
 // Hook for deleting a conversation
 export function useDeleteConversation() {
   const queryClient = useQueryClient()
@@ -97,6 +113,7 @@ export function useChatHistory() {
   const createMutation = useCreateConversation()
   const updateMutation = useUpdateConversation()
   const deleteMutation = useDeleteConversation()
+  const saveMutation = useSaveConversation()
 
   // Generate chat title from first message
   const generateChatTitle = useCallback((messages: UIMessage[]): string => {
@@ -130,7 +147,7 @@ export function useChatHistory() {
 
       if (chatId) {
         // Update existing conversation
-        const result = await updateMutation.mutateAsync({
+        const result = await saveMutation.mutateAsync({
           id: chatId,
           data: {
             title,
@@ -154,7 +171,7 @@ export function useChatHistory() {
       console.error("Failed to save chat session:", error)
       throw error
     }
-  }, [generateChatTitle, updateMutation, createMutation])
+  }, [generateChatTitle, saveMutation, createMutation])
 
   // Load chat session from cache
   const loadChatSession = useCallback(async (chatId: string): Promise<UIMessage[] | null> => {

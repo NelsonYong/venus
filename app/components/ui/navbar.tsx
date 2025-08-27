@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   PanelLeftIcon,
   EditIcon,
@@ -15,7 +15,7 @@ import { useAuth } from "@/app/contexts/auth-context";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -45,6 +45,13 @@ export function Navbar({
   const navigation = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(conversationTitle || "");
+
+  // get pathname
+  const pathname = usePathname();
+
+  const isShowSidebar = useMemo(() => {
+    return user && pathname === "/";
+  }, [pathname, user]);
 
   const redirectChat = () => {
     // 获取当前的路径
@@ -84,7 +91,7 @@ export function Navbar({
           {/* Left Side */}
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             {/* Sidebar Toggle Button */}
-            {user && (
+            {isShowSidebar && (
               <Button
                 variant="ghost"
                 size="icon"

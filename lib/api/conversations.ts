@@ -86,6 +86,14 @@ export const conversationsAPI = {
     }
     return response.data
   },
+
+  async save(id: string, data: { title?: string; messages: any[]; model?: string }): Promise<Conversation> {
+    const response = await httpClient.put<Conversation>(`/api/conversations/${id}`, data)
+    if (response.status !== 200 || !response.data) {
+      throw new Error(response.error || 'Failed to save conversation')
+    }
+    return response.data
+  },
 }
 
 // Transform API message to UI message format

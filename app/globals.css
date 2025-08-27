@@ -117,8 +117,17 @@
     @apply border-border outline-ring/50;
   }
 
+  html,
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+
+  html {
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 
@@ -201,4 +210,16 @@ hr {
 
 .dark * {
   scrollbar-color: oklch(0.708 0 0 / 0.15) transparent;
+}
+
+.markdown .group div {
+  @apply p-0 m-1.5;
+}
+
+.markdown .group div pre {
+  @apply p-4
+}
+
+.markdown .group button {
+  color: #fff;
 }

@@ -20,9 +20,12 @@ import {
   LanguagesIcon,
   PaletteIcon,
 } from "lucide-react";
+import { useConversations } from "../hooks/use-conversations";
 
 function ProfileContent() {
   const { user, refreshAuth } = useAuth();
+  const { data: conversations } = useConversations();
+
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +35,10 @@ function ProfileContent() {
     name: user?.name || "",
     avatar: user?.avatar || "",
   });
+
+  const totalConversations = conversations?.length || 0;
+  const totalMessages =
+    conversations?.reduce((acc, curr) => acc + curr.messages.length, 0) || 0;
 
   if (!user) return null;
 
@@ -282,13 +289,17 @@ function ProfileContent() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-primary">0</div>
+                <div className="text-3xl font-bold text-primary">
+                  {totalConversations}
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {t("profile.stats.conversations")}
                 </div>
               </div>
               <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-primary">0</div>
+                <div className="text-3xl font-bold text-primary">
+                  {totalMessages}
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {t("profile.stats.messages")}
                 </div>

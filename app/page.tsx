@@ -310,7 +310,7 @@ const ChatBotDemo = () => {
 
               <PromptInput
                 onSubmit={handleSubmit}
-                className="mt-4 flex-shrink-0 w-full max-w-4xl mx-auto"
+                className="flex-shrink-0 w-full max-w-4xl mx-auto mb-2"
               >
                 <PromptInputTextarea
                   placeholder={t("chat.placeholder")}

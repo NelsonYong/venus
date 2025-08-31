@@ -173,7 +173,7 @@ export function Navbar({
                   )}
                 </div>
               ) : (
-                // Show default Rela AI logo/brand
+                // Show default Venus logo/brand
                 <div
                   className="flex items-center cursor-pointer"
                   onClick={redirectChat}

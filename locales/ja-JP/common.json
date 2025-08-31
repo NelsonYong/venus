@@ -3,7 +3,7 @@
     "rename": "名前を変更",
     "star": "お気に入りに追加", 
     "unstar": "お気に入りから削除",
-    "brand": "Rela AI",
+    "brand": "Venus",
     "login": "ログイン",
     "register": "登録"
   },
@@ -66,7 +66,7 @@
       "description": "あなたのデータはエンドツーエンド暗号化で保護されています。個人情報を保存・共有することはありません。"
     },
     "brand": {
-      "name": "Rela AI"
+      "name": "Venus"
     }
   },
   "profile": {

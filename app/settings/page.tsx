@@ -27,9 +27,11 @@ import {
   EyeIcon,
   EyeOffIcon,
 } from "lucide-react";
+import { useTheme } from "../contexts/theme-context";
 
 function SettingsContent() {
   const { user, refreshAuth } = useAuth();
+  const { theme, setTheme } = useTheme();
   const { changeLanguage } = useI18n();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +42,7 @@ function SettingsContent() {
   const [error, setError] = useState("");
 
   const [settings, setSettings] = useState({
-    theme: user?.theme || "system",
+    theme: user?.theme || theme,
     language: user?.language || "zh-CN",
     notifications: {
       email: true,
@@ -78,6 +80,7 @@ function SettingsContent() {
         await refreshAuth();
         // 确保语言设置同步到i18n和localStorage
         await changeLanguage(settings.language);
+        setTheme(settings.theme as "system" | "light" | "dark");
       } else {
         setError(
           response.message || response.error || "Failed to save settings"
@@ -246,8 +249,6 @@ function SettingsContent() {
                   value={settings.language}
                   onValueChange={async (value) => {
                     setSettings({ ...settings, language: value });
-                    // 立即切换语言并更新localStorage
-                    await changeLanguage(value);
                   }}
                 >
                   <SelectTrigger>

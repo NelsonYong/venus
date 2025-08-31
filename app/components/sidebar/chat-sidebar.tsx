@@ -140,8 +140,9 @@ export function ChatSidebar({
   return (
     <div
       className={cn(
-        "h-full bg-background border-r border-border transition-all duration-300 ease-in-out overflow-hidden",
-        isOpen ? "w-80" : "w-0"
+        "h-full bg-background transition-all duration-300 ease-in-out overflow-hidden",
+        isOpen ? "w-80" : "w-0",
+        isOpen ? "border-r border-border" : ""
       )}
     >
       <div className="flex flex-col h-full w-80">

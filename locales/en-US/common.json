@@ -184,7 +184,35 @@
   "chat": {
     "loadingHistory": "Loading chat history...",
     "search": "Search",
-    "placeholder": "What do you want to know?"
+    "placeholder": "What do you want to know?",
+    "welcome": {
+      "title": "Welcome to Venus",
+      "subtitle": "Your intelligent AI assistant, ready to help anytime"
+    },
+    "capabilities": {
+      "intelligent": {
+        "title": "🧠 Intelligent Conversation",
+        "description": "Powered by advanced language models for natural, flowing conversations"
+      },
+      "multimodal": {
+        "title": "🎨 Multimodal Understanding",
+        "description": "Supports text, images, and more input types for richer content understanding"
+      },
+      "realtime": {
+        "title": "🌐 Real-time Search",
+        "description": "Connects to the internet for the latest information and timely answers"
+      },
+      "context": {
+        "title": "💭 Context Memory",
+        "description": "Remembers conversation history for coherent and consistent interactions"
+      }
+    },
+    "examples": {
+      "coding": "Code Programming",
+      "writing": "Creative Writing",
+      "analysis": "Data Analysis",
+      "creative": "Creative Design"
+    }
   },
   "billing": {
     "title": "Billing Management",

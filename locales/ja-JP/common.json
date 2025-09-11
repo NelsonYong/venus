@@ -183,6 +183,34 @@
   "chat": {
     "loadingHistory": "チャット履歴を読み込み中...",
     "search": "検索",
-    "placeholder": "質問を入力してください"
+    "placeholder": "質問を入力してください",
+    "welcome": {
+      "title": "Venus へようこそ",
+      "subtitle": "いつでもお手伝いする、あなたの知的AIアシスタント"
+    },
+    "capabilities": {
+      "intelligent": {
+        "title": "🧠 知的な会話",
+        "description": "高度な言語モデルによる自然で流暢な会話体験"
+      },
+      "multimodal": {
+        "title": "🎨 マルチモーダル理解",
+        "description": "テキスト、画像など多様な入力形式でより豊かなコンテンツ理解"
+      },
+      "realtime": {
+        "title": "🌐 リアルタイム検索",
+        "description": "インターネットに接続して最新情報を取得し、適時な回答を提供"
+      },
+      "context": {
+        "title": "💭 コンテキスト記憶",
+        "description": "会話履歴を記憶し、一貫性のある相互作用を提供"
+      }
+    },
+    "examples": {
+      "coding": "コードプログラミング",
+      "writing": "創作文章",
+      "analysis": "データ分析",
+      "creative": "クリエイティブデザイン"
+    }
   }
 }

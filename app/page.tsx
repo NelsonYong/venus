@@ -45,6 +45,7 @@ import { useAutoSummary } from "./hooks/use-auto-summary";
 import { useConversationActions } from "./hooks/use-conversation-actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "@/app/contexts/i18n-context";
+import { useAuth } from "@/app/contexts/auth-context";
 
 const models = [
   {
@@ -55,6 +56,7 @@ const models = [
 
 const ChatBotDemo = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [input, setInput] = useState("");
   const [model, setModel] = useState<string>(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
@@ -104,6 +106,8 @@ const ChatBotDemo = () => {
                 body: {
                   model: model,
                   webSearch: webSearch,
+                  userId: user?.id,
+                  conversationId: chatId,
                 },
               }
             );
@@ -115,6 +119,8 @@ const ChatBotDemo = () => {
             body: {
               model: model,
               webSearch: webSearch,
+              userId: user?.id,
+              conversationId: currentChatId,
             },
           }
         );

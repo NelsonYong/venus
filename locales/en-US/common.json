@@ -18,6 +18,7 @@
   "userMenu": {
     "registeredSince": "Registered since",
     "profile": "Profile",
+    "billing": "Billing Management",
     "settings": "Settings",
     "logout": "Logout",
     "loggingOut": "Logging out..."
@@ -184,5 +185,30 @@
     "loadingHistory": "Loading chat history...",
     "search": "Search",
     "placeholder": "What do you want to know?"
+  },
+  "billing": {
+    "title": "Billing Management",
+    "subtitle": "View your usage, balance, and transaction history",
+    "backButton": "Back",
+    "creditsBalance": "Credits Balance",
+    "availableCredits": "Available credits",
+    "plan": "Plan",
+    "currentPlan": "Current billing plan",
+    "totalSpent": "Total Spent",
+    "allTimeUsage": "All-time usage cost",
+    "thisMonth": "This Month",
+    "currentMonthSpending": "Current month spending",
+    "recentUsage": "Recent Usage",
+    "lastApiCalls": "Last 20 API calls",
+    "addCredits": "Add $",
+    "limit": "Limit:",
+    "tokens": "tokens",
+    "overLimit": "Over Limit",
+    "noUsageRecords": "No usage records found",
+    "loading": "Loading billing information...",
+    "failed": "Failed to load billing information",
+    "addCreditsSuccess": "Credits added successfully",
+    "addCreditsFailed": "Failed to add credits",
+    "emptyStateDescription": "Your usage records will appear here after you start chatting"
   }
 }

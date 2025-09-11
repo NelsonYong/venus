@@ -23,6 +23,9 @@ model User {
   conversations   Conversation[]
   messages        Message[]
   sessions        Session[]
+  userBilling     UserBilling?
+  billingRecords  BillingRecord[]
+  usageRecords    UsageRecord[]
 
   @@map("users")
 }
@@ -123,4 +126,166 @@ model SystemSetting {
   isPublic    Boolean  @default(false)
 
   @@map("system_settings")
+}
+
+model AiModel {
+  id              String   @id @default(cuid())
+  name            String
+  displayName     String
+  provider        String
+  modelType       ModelType @default(TEXT)
+  category        String?
+  apiEndpoint     String
+  apiKey          String
+  apiKeyName      String   @default("Authorization")
+  headers         Json?
+  requestFormat   Json?
+  responseFormat  Json?
+  isActive        Boolean  @default(true)
+  isDefault       Boolean  @default(false)
+  maxTokens       Int?
+  supportedFeatures Json?
+  rateLimit       Json?
+  cost            Json?
+  description     String?
+  version         String?
+  tags            String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  lastUsedAt      DateTime?
+  usageCount      Int      @default(0)
+  priority        Int      @default(0)
+
+  @@unique([provider, name])
+  @@index([modelType, isActive])
+  @@index([provider, isActive])
+  @@index([isDefault, isActive])
+  @@index([priority])
+  @@map("ai_models")
+}
+
+enum ModelType {
+  TEXT
+  IMAGE_GENERATION
+  IMAGE_ANALYSIS
+  VIDEO_GENERATION
+  VIDEO_ANALYSIS
+  AUDIO_GENERATION
+  AUDIO_TRANSCRIPTION
+  EMBEDDING
+  CODE_GENERATION
+  MULTIMODAL
+}
+
+model UserBilling {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  plan                  BillingPlan @default(FREE)
+  credits               Decimal  @default(0)
+  totalSpent            Decimal  @default(0)
+  monthlyLimit          Decimal?
+  dailyLimit            Decimal?
+  currentMonthSpent     Decimal  @default(0)
+  currentDaySpent       Decimal  @default(0)
+  billingCycle          DateTime?
+  lastResetDate         DateTime @default(now())
+  isOverLimit           Boolean  @default(false)
+  autoRecharge          Boolean  @default(false)
+  autoRechargeAmount    Decimal?
+  autoRechargeThreshold Decimal?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_billing")
+}
+
+model BillingRecord {
+  id            String      @id @default(cuid())
+  userId        String
+  type          BillingType
+  amount        Decimal
+  description   String
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  paymentMethod String?
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+  processedAt   DateTime?
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("billing_records")
+}
+
+model UsageRecord {
+  id               String   @id @default(cuid())
+  userId           String
+  conversationId   String?
+  messageId        String?
+  modelId          String?
+  modelName        String
+  provider         String
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  totalTokens      Int      @default(0)
+  inputCost        Decimal  @default(0)
+  outputCost       Decimal  @default(0)
+  totalCost        Decimal  @default(0)
+  requestDuration  Int?
+  endpoint         String
+  requestMetadata  Json?
+  responseMetadata Json?
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([modelName, createdAt])
+  @@index([provider, createdAt])
+  @@index([conversationId])
+  @@map("usage_records")
+}
+
+model PricingRule {
+  id               String     @id @default(cuid())
+  modelId          String?
+  modelName        String?
+  provider         String
+  inputTokenPrice  Decimal    @default(0)
+  outputTokenPrice Decimal    @default(0)
+  basePrice        Decimal?
+  tierRules        Json?
+  effectiveFrom    DateTime   @default(now())
+  effectiveTo      DateTime?
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([provider, modelName, isActive])
+  @@index([effectiveFrom, effectiveTo])
+  @@map("pricing_rules")
+}
+
+enum BillingPlan {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum BillingType {
+  CHARGE
+  REFUND
+  CREDIT
+  BONUS
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
 }

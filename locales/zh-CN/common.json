@@ -18,6 +18,7 @@
   "userMenu": {
     "registeredSince": "注册于",
     "profile": "个人资料",
+    "billing": "计费管理",
     "settings": "设置",
     "logout": "登出",
     "loggingOut": "登出中..."
@@ -184,5 +185,30 @@
     "loadingHistory": "加载聊天记录中...",
     "search": "搜索",
     "placeholder": "请输入问题"
+  },
+  "billing": {
+    "title": "计费管理",
+    "subtitle": "查看您的使用情况、余额和交易记录",
+    "backButton": "返回",
+    "creditsBalance": "账户余额",
+    "availableCredits": "可用积分",
+    "plan": "当前套餐",
+    "currentPlan": "当前计费套餐",
+    "totalSpent": "总消费",
+    "allTimeUsage": "历史累计消费",
+    "thisMonth": "本月消费",
+    "currentMonthSpending": "当月消费情况",
+    "recentUsage": "最近使用",
+    "lastApiCalls": "最近 20 次 API 调用",
+    "addCredits": "充值 $",
+    "limit": "限额:",
+    "tokens": "tokens",
+    "overLimit": "超出限额",
+    "noUsageRecords": "暂无使用记录",
+    "loading": "加载计费信息中...",
+    "failed": "加载计费信息失败",
+    "addCreditsSuccess": "积分充值成功",
+    "addCreditsFailed": "积分充值失败",
+    "emptyStateDescription": "开始对话后，您的使用记录将在这里显示"
   }
 }

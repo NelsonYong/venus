@@ -3,6 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   PlusIcon,
   MessageSquareIcon,
   ClockIcon,
@@ -10,7 +21,7 @@ import {
   StarIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChatSession } from "@/app/hooks/use-conversations";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/contexts/i18n-context";
@@ -31,7 +42,7 @@ interface ChatItemProps {
   chat: ChatSession;
   currentChatId: string | null;
   onSelect: (chatId: string) => void;
-  onDelete: (e: React.MouseEvent, chatId: string) => void;
+  onDelete: (chatId: string) => void;
   formatTimestamp: (timestamp: Date) => string;
   showStar: boolean;
 }
@@ -44,6 +55,8 @@ function ChatItem({
   formatTimestamp,
   showStar,
 }: ChatItemProps) {
+  const { t } = useTranslation();
+  
   return (
     <div
       onClick={() => onSelect(chat.id)}
@@ -72,14 +85,35 @@ function ChatItem({
             {formatTimestamp(chat.timestamp)}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
-          onClick={(e) => onDelete(e, chat.id)}
-        >
-          <TrashIcon className="h-3 w-3" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TrashIcon className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("sidebar.confirmDeleteTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("sidebar.confirmDeleteDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDelete(chat.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t("sidebar.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -117,11 +151,8 @@ export function ChatSidebar({
     onLoadChat(chatId);
   };
 
-  const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
-    e.stopPropagation();
-    if (confirm(t("sidebar.confirmDelete"))) {
-      onDeleteChat(chatId);
-    }
+  const handleDeleteChat = (chatId: string) => {
+    onDeleteChat(chatId);
   };
 
   const formatTimestamp = (timestamp: Date) => {

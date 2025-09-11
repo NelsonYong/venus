@@ -13,6 +13,8 @@
     "newChat": "新しいチャット",
     "delete": "削除",
     "confirmDelete": "削除確認",
+    "confirmDeleteTitle": "会話を削除",
+    "confirmDeleteDescription": "この会話を削除してもよろしいですか？この操作は取り消すことができません。",
     "noMessages": "メッセージがありません"
   },
   "userMenu": {

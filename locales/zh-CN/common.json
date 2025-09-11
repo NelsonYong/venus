@@ -13,6 +13,8 @@
     "newChat": "新建对话",
     "delete": "删除",
     "confirmDelete": "确认删除",
+    "confirmDeleteTitle": "删除对话",
+    "confirmDeleteDescription": "确定要删除这个对话吗？此操作无法撤销。",
     "noMessages": "暂无消息"
   },
   "userMenu": {

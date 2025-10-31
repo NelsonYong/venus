@@ -191,6 +191,8 @@
     "placeholder": "请输入问题",
     "loadingModels": "加载模型中...",
     "selectModel": "选择模型",
+    "presetModelNotice": "当前使用预设模型，使用时需要收费",
+    "customModelNotice": "当前使用自定义模型，不会产生费用",
     "welcome": {
       "title": "欢迎使用 Venus",
       "subtitle": "您的智能 AI 助手，随时为您提供帮助"

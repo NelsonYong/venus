@@ -191,6 +191,8 @@
     "placeholder": "What do you want to know?",
     "loadingModels": "Loading models...",
     "selectModel": "Select model",
+    "presetModelNotice": "Using preset model - charges may apply",
+    "customModelNotice": "Using custom model - no additional charges",
     "welcome": {
       "title": "Welcome to Venus",
       "subtitle": "Your intelligent AI assistant, ready to help anytime"

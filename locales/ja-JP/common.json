@@ -191,6 +191,8 @@
     "placeholder": "質問を入力してください",
     "loadingModels": "モデルを読み込み中...",
     "selectModel": "モデルを選択",
+    "presetModelNotice": "プリセットモデルを使用中 - 料金が発生する場合があります",
+    "customModelNotice": "カスタムモデルを使用中 - 追加料金は発生しません",
     "welcome": {
       "title": "Venus へようこそ",
       "subtitle": "いつでもお手伝いする、あなたの知的AIアシスタント"

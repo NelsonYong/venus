@@ -46,9 +46,15 @@ export async function GET(request: NextRequest) {
       ],
     });
 
+    // Mask API keys for preset models
+    const maskedModels = models.map(model => ({
+      ...model,
+      apiKey: model.isPreset ? "····" : model.apiKey,
+    }));
+
     return NextResponse.json({
       success: true,
-      models,
+      models: maskedModels,
     });
   } catch (error) {
     console.error("Get available models error:", error);

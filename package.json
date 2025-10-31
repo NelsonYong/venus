@@ -3,15 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3343",
+    "dev": "next dev --turbopack --port 3353",
     "build": "next build --turbopack",
     "db:up": "docker-compose up -d postgres",
     "db:down": "docker-compose down",
     "db:logs": "docker-compose logs postgres",
     "db:reset": "docker-compose down -v && docker-compose up -d postgres",
+    "db:seed": "npx tsx prisma/seed.ts",
     "prisma-studio": "npx prisma studio",
     "start": "next start",
     "lint": "eslint"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^1.0.11",
@@ -46,6 +50,7 @@
     "react-dom": "19.1.0",
     "react-i18next": "^15.7.2",
     "react-syntax-highlighter": "^15.6.3",
+    "serpapi": "^2.2.1",
     "streamdown": "^1.0.12",
     "tailwind-merge": "^3.3.1",
     "use-stick-to-bottom": "^1.1.1",

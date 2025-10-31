@@ -20,6 +20,8 @@
   "userMenu": {
     "registeredSince": "登録日",
     "profile": "プロフィール",
+    "billing": "請求管理",
+    "models": "モデル設定",
     "settings": "設定",
     "logout": "ログアウト",
     "loggingOut": "ログアウト中..."
@@ -163,8 +165,9 @@
   },
   "common": {
     "save": "保存",
-    "cancel": "キャンセル", 
+    "cancel": "キャンセル",
     "confirm": "確認",
+    "delete": "削除",
     "loading": "読み込み中...",
     "error": "エラーが発生しました",
     "success": "成功しました",
@@ -186,6 +189,8 @@
     "loadingHistory": "チャット履歴を読み込み中...",
     "search": "検索",
     "placeholder": "質問を入力してください",
+    "loadingModels": "モデルを読み込み中...",
+    "selectModel": "モデルを選択",
     "welcome": {
       "title": "Venus へようこそ",
       "subtitle": "いつでもお手伝いする、あなたの知的AIアシスタント"
@@ -213,6 +218,64 @@
       "writing": "創作文章",
       "analysis": "データ分析",
       "creative": "クリエイティブデザイン"
+    }
+  },
+  "billing": {
+    "title": "請求管理",
+    "subtitle": "使用状況、残高、取引履歴を確認",
+    "backButton": "戻る",
+    "creditsBalance": "アカウント残高",
+    "availableCredits": "利用可能なクレジット",
+    "plan": "現在のプラン",
+    "currentPlan": "現在の請求プラン",
+    "totalSpent": "総支出",
+    "allTimeUsage": "全期間の使用コスト",
+    "thisMonth": "今月",
+    "currentMonthSpending": "今月の支出",
+    "recentUsage": "最近の使用状況",
+    "lastApiCalls": "最近20件のAPIコール",
+    "addCredits": "追加 $",
+    "limit": "制限:",
+    "tokens": "トークン",
+    "overLimit": "制限超過",
+    "noUsageRecords": "使用記録が見つかりません",
+    "loading": "請求情報を読み込み中...",
+    "failed": "請求情報の読み込みに失敗しました",
+    "addCreditsSuccess": "クレジットが正常に追加されました",
+    "addCreditsFailed": "クレジットの追加に失敗しました",
+    "emptyStateDescription": "チャットを開始すると、使用記録がここに表示されます"
+  },
+  "models": {
+    "title": "モデル設定",
+    "subtitle": "独自のAIモデルを設定します。複数のモデルプロバイダーをサポートしています",
+    "configured": "設定済み",
+    "modelConfig": "モデル設定",
+    "preset": "プリセット",
+    "presetInfo": "これはシステムプリセットモデルです。APIキーの設定は不要で、無料で利用できます。",
+    "selectPreset": "プリセットモデルを選択",
+    "modelName": "モデル名",
+    "displayName": "表示名",
+    "apiEndpoint": "APIエンドポイント",
+    "apiKey": "APIキー",
+    "active": "有効",
+    "inactive": "無効",
+    "addModel": "モデルを追加",
+    "delete": "削除",
+    "save": "設定を保存",
+    "saving": "保存中...",
+    "saveSuccess": "モデル設定が正常に保存されました",
+    "saveFailed": "保存に失敗しました。再試行してください",
+    "deleteConfirm": {
+      "title": "削除の確認",
+      "message": "モデル \"{{name}}\" を削除してもよろしいですか？この操作は元に戻せません。"
+    },
+    "validation": {
+      "required": "モデル名、表示名、APIキーは必須項目です"
+    },
+    "providers": {
+      "deepseek": {
+        "info": "ℹ️ DeepSeekシリーズモデルを使用するために、独自のDeepSeek APIキーを設定してください。APIキーはDeepSeek公式サイトで申請できます。"
+      }
     }
   }
 }

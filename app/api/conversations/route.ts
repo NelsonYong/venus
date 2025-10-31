@@ -52,13 +52,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, messages, model } = await request.json();
+    const { title, messages, model, modelId } = await request.json();
+
+    // If modelId is provided, fetch the model name from database
+    let modelName = model || "openai/gpt-4o";
+    if (modelId) {
+      const dbModel = await prisma.aiModel.findFirst({
+        where: {
+          id: modelId,
+          OR: [
+            { isPreset: true },
+            { createdBy: session.userId },
+          ],
+          isActive: true,
+        },
+        select: {
+          provider: true,
+          name: true,
+        }
+      });
+      if (dbModel) {
+        modelName = `${dbModel.provider}/${dbModel.name}`;
+      }
+    }
 
     const conversation = await prisma.conversation.create({
       data: {
         title: title || "新对话",
         userId: session.userId,
-        model: model || "openai/gpt-4o",
+        model: modelName,
         messages: {
           create: messages.map((msg: any, index: number) => ({
             userId: session.userId,

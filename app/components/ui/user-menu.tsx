@@ -16,6 +16,7 @@ import {
   SettingsIcon,
   ChevronDownIcon,
   CreditCardIcon,
+  CpuIcon,
 } from "lucide-react";
 
 export function UserMenu() {
@@ -107,6 +108,17 @@ export function UserMenu() {
             >
               <CreditCardIcon className="h-4 w-4 mr-2" />
               {t("userMenu.billing")}
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start h-auto p-2"
+              onClick={() => {
+                window.location.href = "/models";
+              }}
+            >
+              <CpuIcon className="h-4 w-4 mr-2" />
+              {t("userMenu.models")}
             </Button>
 
             <Button

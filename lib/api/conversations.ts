@@ -31,7 +31,8 @@ export interface CreateConversationRequest {
     content?: unknown
     createdAt?: Date | string
   }[]
-  model: string
+  model?: string
+  modelId?: string
 }
 
 export interface UpdateConversationRequest {
@@ -87,7 +88,7 @@ export const conversationsAPI = {
     return response.data
   },
 
-  async save(id: string, data: { title?: string; messages: any[]; model?: string }): Promise<Conversation> {
+  async save(id: string, data: { title?: string; messages: any[]; model?: string; modelId?: string }): Promise<Conversation> {
     const response = await httpClient.put<Conversation>(`/api/conversations/${id}`, data)
     if (response.status !== 200 || !response.data) {
       throw new Error(response.error || 'Failed to save conversation')

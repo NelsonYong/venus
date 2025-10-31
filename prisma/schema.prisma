@@ -143,6 +143,7 @@ model AiModel {
   responseFormat  Json?
   isActive        Boolean  @default(true)
   isDefault       Boolean  @default(false)
+  isPreset        Boolean  @default(false)
   maxTokens       Int?
   supportedFeatures Json?
   rateLimit       Json?
@@ -161,6 +162,7 @@ model AiModel {
   @@index([modelType, isActive])
   @@index([provider, isActive])
   @@index([isDefault, isActive])
+  @@index([isPreset, isActive])
   @@index([priority])
   @@map("ai_models")
 }

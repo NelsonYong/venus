@@ -78,7 +78,7 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
     }
 
-    const { title, messages, model } = requestData;
+    const { title, messages, model, modelId } = requestData;
     const { id } = await params;
 
     // First, verify the conversation belongs to the user
@@ -96,6 +96,28 @@ export async function PUT(
       );
     }
 
+    // If modelId is provided, fetch the model name from database
+    let modelName = model || existingConversation.model;
+    if (modelId) {
+      const dbModel = await prisma.aiModel.findFirst({
+        where: {
+          id: modelId,
+          OR: [
+            { isPreset: true },
+            { createdBy: session.userId },
+          ],
+          isActive: true,
+        },
+        select: {
+          provider: true,
+          name: true,
+        }
+      });
+      if (dbModel) {
+        modelName = `${dbModel.provider}/${dbModel.name}`;
+      }
+    }
+
     // Update the conversation and replace all messages
     const updatedConversation = await prisma.$transaction(async (tx) => {
       // Delete existing messages
@@ -108,7 +130,7 @@ export async function PUT(
         where: { id },
         data: {
           title: title || existingConversation.title,
-          model: model || existingConversation.model,
+          model: modelName,
           updatedAt: new Date(),
           messages: {
             create: messages.map((msg: { role: string; parts?: unknown; content?: unknown; createdAt?: string }, index: number) => ({

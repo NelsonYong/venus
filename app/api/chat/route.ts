@@ -1,26 +1,24 @@
-import { createDeepSeek } from '@ai-sdk/deepseek';
 import { z } from 'zod';
 import { convertToModelMessages, stepCountIs, streamText, tool, UIMessage } from 'ai';
 import { billingService } from '@/lib/billing';
 import { NextResponse } from 'next/server';
+import { performWebSearch, formatSearchResults } from '@/lib/search-tool';
+import { prisma } from '@/lib/prisma';
+import { createModelAdapter, getDefaultModelConfig } from '@/lib/model-adapter';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-const deepSeek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-  baseURL: process.env.DEEPSEEK_BASE_URL,
-});
-const languageModel = process.env.DEEPSEEK_MODEL || 'deepseek-chat'
-
 export async function POST(req: Request) {
   const startTime = Date.now();
-  
+
   try {
-    const { messages, userId, conversationId }: { 
-      messages: UIMessage[]; 
+    const { messages, userId, conversationId, webSearch, modelId }: {
+      messages: UIMessage[];
       userId?: string;
       conversationId?: string;
+      webSearch?: boolean;
+      modelId?: string;
     } = await req.json();
 
     if (!userId) {
@@ -30,62 +28,139 @@ export async function POST(req: Request) {
       );
     }
 
-    const provider = 'deepseek';
-    const modelName = languageModel;
-
-    const estimatedInputTokens = messages.reduce((acc, msg) => {
-      const content = JSON.stringify(msg);
-      return acc + (content.length / 4);
-    }, 0);
-    const estimatedOutputTokens = 1000;
-
-    const estimatedCost = await billingService.calculateCost(
-      provider,
-      modelName,
-      {
-        inputTokens: estimatedInputTokens,
-        outputTokens: estimatedOutputTokens,
-        totalTokens: estimatedInputTokens + estimatedOutputTokens
-      }
-    );
-
-    const usageCheck = await billingService.checkUsageLimit(userId, estimatedCost.totalCost);
-    if (!usageCheck.canProceed) {
-      return NextResponse.json(
-        { 
-          error: 'Usage limit exceeded',
-          reason: usageCheck.reason,
-          billing: usageCheck.userBilling
+    // Get model configuration
+    let modelConfig;
+    if (modelId) {
+      // User selected a specific model
+      const dbModel = await prisma.aiModel.findFirst({
+        where: {
+          id: modelId,
+          OR: [
+            { isPreset: true },
+            { createdBy: userId },
+          ],
+          isActive: true,
         },
-        { status: 429 }
+        select: {
+          id: true,
+          name: true,
+          provider: true,
+          apiKey: true,
+          apiEndpoint: true,
+          isPreset: true,
+        }
+      });
+
+      if (!dbModel) {
+        return NextResponse.json(
+          { error: 'Model not found or not accessible' },
+          { status: 404 }
+        );
+      }
+
+      modelConfig = {
+        provider: dbModel.provider,
+        name: dbModel.name,
+        apiKey: dbModel.apiKey,
+        apiEndpoint: dbModel.apiEndpoint,
+        isPreset: dbModel.isPreset,
+      };
+    } else {
+      // Use default model
+      modelConfig = getDefaultModelConfig();
+    }
+
+    const provider = modelConfig.provider;
+    const modelName = modelConfig.name;
+    const isPresetModel = modelConfig.isPreset;
+
+    // Only check billing for non-preset models
+    if (!isPresetModel) {
+      const estimatedInputTokens = messages.reduce((acc, msg) => {
+        const content = JSON.stringify(msg);
+        return acc + (content.length / 4);
+      }, 0);
+      const estimatedOutputTokens = 1000;
+
+      const estimatedCost = await billingService.calculateCost(
+        provider,
+        modelName,
+        {
+          inputTokens: estimatedInputTokens,
+          outputTokens: estimatedOutputTokens,
+          totalTokens: estimatedInputTokens + estimatedOutputTokens
+        }
       );
+
+      const usageCheck = await billingService.checkUsageLimit(userId, estimatedCost.totalCost);
+      if (!usageCheck.canProceed) {
+        return NextResponse.json(
+          {
+            error: 'Usage limit exceeded',
+            reason: usageCheck.reason,
+            billing: usageCheck.userBilling
+          },
+          { status: 429 }
+        );
+      }
     }
 
     let actualInputTokens = 0;
     let actualOutputTokens = 0;
 
+    // 构建工具集合
+    const tools: any = {
+      weather: tool({
+        description: 'Get the weather in a location',
+        inputSchema: z.object({
+          location: z.string().describe('The location to get the weather for'),
+        }),
+        execute: async ({ location }) => ({
+          location,
+          temperature: 72 + Math.floor(Math.random() * 21) - 10,
+        }),
+      }),
+    };
+
+    // 如果启用了联网搜索，添加搜索工具
+    if (webSearch) {
+      tools.webSearch = tool({
+        description: 'Search the web for current information, news, facts, or any information that requires up-to-date knowledge. Use this when you need to find recent information or verify facts.',
+        inputSchema: z.object({
+          query: z.string().describe('The search query to look up on the web'),
+        }),
+        execute: async ({ query }) => {
+          try {
+            const searchResults = await performWebSearch(query, 5);
+            return formatSearchResults(searchResults);
+          } catch (error) {
+            return `搜索失败: ${error instanceof Error ? error.message : '未知错误'}`;
+          }
+        },
+      });
+    }
+
+    // Create model adapter based on configuration
+    const model = createModelAdapter(modelConfig);
+
     const result = streamText({
-      model: deepSeek(languageModel),
-      system: 'You are a helpful assistant. output in markdown format.',
+      model,
+      system: webSearch
+        ? 'You are a helpful assistant with web search capabilities. When users ask questions that require current information, use the webSearch tool to find up-to-date information. Always cite your sources when using web search results. Output in markdown format.'
+        : 'You are a helpful assistant. output in markdown format.',
       messages: convertToModelMessages(messages),
       abortSignal: AbortSignal.timeout(30000),
-      tools: {
-        weather: tool({
-          description: 'Get the weather in a location',
-          inputSchema: z.object({
-            location: z.string().describe('The location to get the weather for'),
-          }),
-          execute: async ({ location }) => ({
-            location,
-            temperature: 72 + Math.floor(Math.random() * 21) - 10,
-          }),
-        }),
-      },
+      tools,
       stopWhen: stepCountIs(5),
       onFinish: async (result) => {
+        // Skip billing for preset models
+        if (isPresetModel) {
+          return;
+        }
+
         try {
-          actualInputTokens = (result.usage as any)?.promptTokens || estimatedInputTokens;
-          actualOutputTokens = (result.usage as any)?.completionTokens || estimatedOutputTokens;
+          actualInputTokens = (result.usage as any)?.promptTokens || 0;
+          actualOutputTokens = (result.usage as any)?.completionTokens || 0;
 
           const actualUsage = {
             inputTokens: actualInputTokens,

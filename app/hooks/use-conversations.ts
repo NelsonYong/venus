@@ -138,7 +138,7 @@ export function useChatHistory() {
   }, [updateMutation])
 
   // Save chat session - creates new or updates existing
-  const saveChatSession = useCallback(async (messages: UIMessage[], chatId?: string) => {
+  const saveChatSession = useCallback(async (messages: UIMessage[], chatId?: string, modelId?: string) => {
     // if (!chatId) return null
 
     try {
@@ -152,7 +152,7 @@ export function useChatHistory() {
           data: {
             title,
             messages: apiMessages,
-            model: 'openai/gpt-4o'
+            modelId
           }
         })
         setCurrentChatId(result.id)
@@ -162,7 +162,7 @@ export function useChatHistory() {
         const result = await createMutation.mutateAsync({
           title,
           messages: apiMessages,
-          model: 'openai/gpt-4o'
+          modelId
         })
         setCurrentChatId(result.id)
         return result.id

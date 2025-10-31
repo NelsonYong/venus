@@ -52,14 +52,14 @@ export function useChatBot() {
     if (input.trim()) {
       // 如果没有 chatId，则生成一个
       if (!searchParams.get("chatId")) {
-        saveChatSession([]).then((chatId) => {
+        saveChatSession([], undefined, model).then((chatId) => {
           router.push(`/?chatId=${chatId}`, { scroll: false });
           if (chatId)
             sendMessage(
               { text: input },
               {
                 body: {
-                  model: model,
+                  modelId: model,
                   webSearch: webSearch,
                   userId: user?.id,
                   conversationId: chatId,
@@ -72,7 +72,7 @@ export function useChatBot() {
           { text: input },
           {
             body: {
-              model: model,
+              modelId: model,
               webSearch: webSearch,
               userId: user?.id,
               conversationId: currentChatId,
@@ -152,11 +152,11 @@ export function useChatBot() {
       if (messages.length !== lastSavedMessagesLength.current) {
         console.log("保存 messages", messages);
 
-        saveChatSession(messages, currentChatId);
+        saveChatSession(messages, currentChatId, model);
         lastSavedMessagesLength.current = messages.length;
       }
     }
-  }, [status, messages, currentChatId, saveChatSession]);
+  }, [status, messages, currentChatId, model, saveChatSession]);
 
   // 判读是刷新进入页面也是跳转路由进入
   useEffect(() => {

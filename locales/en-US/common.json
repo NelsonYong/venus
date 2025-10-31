@@ -21,6 +21,7 @@
     "registeredSince": "Registered since",
     "profile": "Profile",
     "billing": "Billing Management",
+    "models": "Model Configuration",
     "settings": "Settings",
     "logout": "Logout",
     "loggingOut": "Logging out..."
@@ -164,8 +165,9 @@
   },
   "common": {
     "save": "Save",
-    "cancel": "Cancel", 
+    "cancel": "Cancel",
     "confirm": "Confirm",
+    "delete": "Delete",
     "loading": "Loading...",
     "error": "Error occurred",
     "success": "Success",
@@ -187,6 +189,8 @@
     "loadingHistory": "Loading chat history...",
     "search": "Search",
     "placeholder": "What do you want to know?",
+    "loadingModels": "Loading models...",
+    "selectModel": "Select model",
     "welcome": {
       "title": "Welcome to Venus",
       "subtitle": "Your intelligent AI assistant, ready to help anytime"
@@ -240,5 +244,38 @@
     "addCreditsSuccess": "Credits added successfully",
     "addCreditsFailed": "Failed to add credits",
     "emptyStateDescription": "Your usage records will appear here after you start chatting"
+  },
+  "models": {
+    "title": "Model Configuration",
+    "subtitle": "Configure your own AI models, supporting multiple model providers",
+    "configured": "Configured",
+    "modelConfig": "Model Configuration",
+    "preset": "Preset",
+    "presetInfo": "This is a system preset model. No API Key configuration required. Free to use with no charges.",
+    "selectPreset": "Select Preset Model",
+    "modelName": "Model Name",
+    "displayName": "Display Name",
+    "apiEndpoint": "API Endpoint",
+    "apiKey": "API Key",
+    "active": "Active",
+    "inactive": "Inactive",
+    "addModel": "Add Model",
+    "delete": "Delete",
+    "save": "Save Configuration",
+    "saving": "Saving...",
+    "saveSuccess": "Model configuration saved successfully",
+    "saveFailed": "Failed to save, please try again",
+    "deleteConfirm": {
+      "title": "Confirm Delete",
+      "message": "Are you sure you want to delete model \"{{name}}\"? This action cannot be undone."
+    },
+    "validation": {
+      "required": "Model name, display name and API Key are required"
+    },
+    "providers": {
+      "deepseek": {
+        "info": "ℹ️ Configure your own DeepSeek API Key to use DeepSeek series models. You can apply for an API Key on the DeepSeek official website."
+      }
+    }
   }
 }

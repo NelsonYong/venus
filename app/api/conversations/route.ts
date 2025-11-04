@@ -82,12 +82,25 @@ export async function POST(request: NextRequest) {
         userId: session.userId,
         model: modelName,
         messages: {
-          create: messages.map((msg: any, index: number) => ({
-            userId: session.userId,
-            role: msg.role,
-            content: JSON.stringify(msg.parts || msg.content),
-            createdAt: msg.createdAt || new Date(Date.now() + index * 1000), // Ensure proper ordering
-          })),
+          create: messages.map((msg: any, index: number) => {
+            // Preserve original createdAt timestamps to maintain message order
+            let messageTimestamp: Date;
+            
+            if (msg.createdAt) {
+              // Use the provided timestamp
+              messageTimestamp = new Date(msg.createdAt);
+            } else {
+              // Generate timestamp with small increments (100ms) to maintain order
+              messageTimestamp = new Date(Date.now() + index * 100);
+            }
+
+            return {
+              userId: session.userId,
+              role: msg.role,
+              content: JSON.stringify(msg.parts || msg.content),
+              createdAt: messageTimestamp,
+            };
+          }),
         },
       },
       include: {

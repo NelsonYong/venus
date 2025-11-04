@@ -6,8 +6,8 @@ import { performWebSearch, formatSearchResults } from '@/lib/search-tool';
 import { prisma } from '@/lib/prisma';
 import { createModelAdapter, getDefaultModelConfig } from '@/lib/model-adapter';
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+// Allow streaming responses up to 60 seconds
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -149,52 +149,128 @@ export async function POST(req: Request) {
         ? 'You are a helpful assistant with web search capabilities. When users ask questions that require current information, use the webSearch tool to find up-to-date information. Always cite your sources when using web search results. Output in markdown format.'
         : 'You are a helpful assistant. output in markdown format.',
       messages: convertToModelMessages(messages),
-      abortSignal: AbortSignal.timeout(30000),
+      abortSignal: AbortSignal.timeout(60000),
       tools,
       stopWhen: stepCountIs(5),
       onFinish: async (result) => {
-        // Skip billing for preset models
-        if (isPresetModel) {
-          return;
+        // Record billing usage (skip for preset models)
+        if (!isPresetModel) {
+          try {
+            actualInputTokens = (result.usage as any)?.promptTokens || 0;
+            actualOutputTokens = (result.usage as any)?.completionTokens || 0;
+
+            const actualUsage = {
+              inputTokens: actualInputTokens,
+              outputTokens: actualOutputTokens,
+              totalTokens: actualInputTokens + actualOutputTokens
+            };
+
+            const actualCost = await billingService.calculateCost(
+              provider,
+              modelName,
+              actualUsage
+            );
+
+            await billingService.recordUsage({
+              userId,
+              conversationId,
+              modelName,
+              provider,
+              usage: actualUsage,
+              cost: actualCost,
+              endpoint: '/api/chat',
+              requestDuration: Date.now() - startTime,
+              requestMetadata: {
+                messageCount: messages.length,
+                hasTools: true,
+                system: 'You are a helpful assistant. output in markdown format.'
+              },
+              responseMetadata: {
+                finishReason: result.finishReason,
+                usage: result.usage
+              }
+            });
+          } catch (error) {
+            console.error('Error recording usage:', error);
+          }
         }
 
-        try {
-          actualInputTokens = (result.usage as any)?.promptTokens || 0;
-          actualOutputTokens = (result.usage as any)?.completionTokens || 0;
+        // Save messages to database (real-time save)
+        if (conversationId && userId) {
+          try {
+            // The last message in the array is the user's question
+            const lastUserMessage = messages[messages.length - 1];
+            const assistantResponse = result.text;
 
-          const actualUsage = {
-            inputTokens: actualInputTokens,
-            outputTokens: actualOutputTokens,
-            totalTokens: actualInputTokens + actualOutputTokens
-          };
+            // Get existing messages to check for duplicates
+            const existingMessages = await prisma.message.findMany({
+              where: {
+                conversationId,
+                isDeleted: false
+              },
+              select: { id: true, role: true, createdAt: true, content: true },
+              orderBy: { createdAt: 'desc' },
+              take: 5, // Check last 5 messages to be safe
+            });
 
-          const actualCost = await billingService.calculateCost(
-            provider,
-            modelName,
-            actualUsage
-          );
+            // Prepare messages to save
+            const now = Date.now();
+            const messagesToCreate = [];
 
-          await billingService.recordUsage({
-            userId,
-            conversationId,
-            modelName,
-            provider,
-            usage: actualUsage,
-            cost: actualCost,
-            endpoint: '/api/chat',
-            requestDuration: Date.now() - startTime,
-            requestMetadata: {
-              messageCount: messages.length,
-              hasTools: true,
-              system: 'You are a helpful assistant. output in markdown format.'
-            },
-            responseMetadata: {
-              finishReason: result.finishReason,
-              usage: result.usage
+            // Check if user message already exists
+            // Compare the content to avoid duplicates
+            const userMessageContent = JSON.stringify(lastUserMessage.parts);
+            const userMessageExists = existingMessages.some(msg =>
+              msg.role === lastUserMessage.role &&
+              msg.content === userMessageContent
+            );
+
+            // Only save user message if it doesn't exist
+            if (lastUserMessage && !userMessageExists) {
+              messagesToCreate.push({
+                conversationId,
+                userId,
+                role: lastUserMessage.role,
+                content: userMessageContent,
+                createdAt: new Date(now),
+              });
             }
-          });
-        } catch (error) {
-          console.error('Error recording usage:', error);
+
+            // Check if assistant response already exists
+            const assistantMessageContent = JSON.stringify([{ type: 'text', text: assistantResponse }]);
+            const assistantMessageExists = existingMessages.some(msg =>
+              msg.role === 'assistant' &&
+              msg.content === assistantMessageContent
+            );
+
+            // Only save assistant response if it doesn't exist
+            if (assistantResponse && !assistantMessageExists) {
+              messagesToCreate.push({
+                conversationId,
+                userId,
+                role: 'assistant',
+                content: assistantMessageContent,
+                createdAt: new Date(now + 100), // Ensure assistant message comes after user message
+              });
+            }
+
+            // Save to database incrementally using transaction
+            if (messagesToCreate.length > 0) {
+              await prisma.$transaction([
+                ...messagesToCreate.map(msg => prisma.message.create({ data: msg })),
+                prisma.conversation.update({
+                  where: { id: conversationId },
+                  data: { updatedAt: new Date() },
+                }),
+              ]);
+
+              console.log(`✅ Saved ${messagesToCreate.length} new message(s) to conversation ${conversationId}`);
+            } else {
+              console.log(`ℹ️  No new messages to save (already exists in conversation ${conversationId})`);
+            }
+          } catch (error) {
+            console.error('❌ Error saving conversation messages:', error);
+          }
         }
       }
     });

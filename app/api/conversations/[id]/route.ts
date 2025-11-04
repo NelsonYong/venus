@@ -126,6 +126,7 @@ export async function PUT(
       });
 
       // Update conversation and create new messages
+      // IMPORTANT: Preserve original createdAt timestamps to maintain message order
       return await tx.conversation.update({
         where: { id },
         data: {
@@ -133,12 +134,26 @@ export async function PUT(
           model: modelName,
           updatedAt: new Date(),
           messages: {
-            create: messages.map((msg: { role: string; parts?: unknown; content?: unknown; createdAt?: string }, index: number) => ({
-              userId: session.userId,
-              role: msg.role,
-              content: JSON.stringify(msg.parts || msg.content),
-              createdAt: msg.createdAt || new Date(Date.now() + index * 1000),
-            })),
+            create: messages.map((msg: { role: string; parts?: unknown; content?: unknown; createdAt?: string | Date }, index: number) => {
+              // If createdAt is provided, use it; otherwise generate a proper sequence
+              let messageTimestamp: Date;
+              
+              if (msg.createdAt) {
+                // Preserve the original timestamp
+                messageTimestamp = new Date(msg.createdAt);
+              } else {
+                // Generate timestamp with small increments (100ms) to maintain order
+                // Use index to ensure proper sequencing
+                messageTimestamp = new Date(Date.now() + index * 100);
+              }
+
+              return {
+                userId: session.userId,
+                role: msg.role,
+                content: JSON.stringify(msg.parts || msg.content),
+                createdAt: messageTimestamp,
+              };
+            }),
           },
         },
         include: {

@@ -174,6 +174,7 @@ export function useChatHistory() {
   }, [generateChatTitle, saveMutation, createMutation])
 
   // Load chat session from cache
+  // React Query automatically refetches when cache is invalidated via invalidateQueries
   const loadChatSession = useCallback(async (chatId: string): Promise<UIMessage[] | null> => {
     const conversations = conversationsQuery.data || []
     const session = conversations.find(chat => chat.id === chatId)

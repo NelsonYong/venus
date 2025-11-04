@@ -10,6 +10,7 @@
     "db:logs": "docker-compose logs postgres",
     "db:reset": "docker-compose down -v && docker-compose up -d postgres",
     "db:seed": "npx tsx prisma/seed.ts",
+    "db:verify-messages": "npx tsx scripts/verify-message-order.ts",
     "prisma-studio": "npx prisma studio",
     "start": "next start",
     "lint": "eslint"

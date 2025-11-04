@@ -123,8 +123,16 @@ function ModelCard({
   provider: ProviderConfig;
   providerIndex: number;
   onRemoveModel: (index: number) => void;
-  onModelChange: (index: number, field: keyof ModelConfig, value: string | boolean) => void;
-  onSelectPreset: (index: number, preset: ModelPreset, provider: string) => void;
+  onModelChange: (
+    index: number,
+    field: keyof ModelConfig,
+    value: string | boolean
+  ) => void;
+  onSelectPreset: (
+    index: number,
+    preset: ModelPreset,
+    provider: string
+  ) => void;
   showApiKey: boolean;
   onToggleApiKey: (index: number) => void;
   onSaveModel: (index: number) => Promise<void>;
@@ -158,7 +166,8 @@ function ModelCard({
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <h3 className="text-base font-semibold text-foreground">
-                      {model.displayName || t("models.modelConfig") + " #" + (providerIndex + 1)}
+                      {model.displayName ||
+                        t("models.modelConfig") + " #" + (providerIndex + 1)}
                     </h3>
                     {model.isPreset && (
                       <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
@@ -172,17 +181,23 @@ function ModelCard({
                           : "bg-gray-50 dark:bg-gray-900/20 text-gray-500 dark:text-gray-400"
                       }`}
                     >
-                      {model.isActive ? t("models.active") : t("models.inactive")}
+                      {model.isActive
+                        ? t("models.active")
+                        : t("models.inactive")}
                     </span>
                   </div>
                   {!isExpanded && (
                     <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                       <span>
-                        {t("models.modelName")}: <span className="font-mono">{model.name}</span>
+                        {t("models.modelName")}:{" "}
+                        <span className="font-mono">{model.name}</span>
                       </span>
                       <span>•</span>
                       <span>
-                        {t("models.apiKey")}: <span className="font-mono">{maskApiKey(model.apiKey)}</span>
+                        {t("models.apiKey")}:{" "}
+                        <span className="font-mono">
+                          {maskApiKey(model.apiKey)}
+                        </span>
                       </span>
                     </div>
                   )}
@@ -199,196 +214,221 @@ function ModelCard({
               </div>
             </div>
 
-          {/* Expanded Content */}
-          {isExpanded && (
-            <div className="space-y-4 pt-2 border-t">
-              {/* Preset badge for preset models */}
-              {model.isPreset && (
+            {/* Expanded Content */}
+            {isExpanded && (
+              <div className="space-y-4 pt-2 border-t">
+                {/* Preset badge for preset models */}
+                {/* {model.isPreset && (
                 <div className="p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
                   <p className="text-sm text-blue-600 dark:text-blue-400">
                     ℹ️ {t("models.presetInfo")}
                   </p>
                 </div>
-              )}
+              )} */}
 
-              {/* Preset Selection - Only for user-configured models */}
-              {!model.isPreset && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t("models.selectPreset")}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {provider.presets.map((preset) => (
-                      <Button
-                        key={preset.name}
-                        variant={model.name === preset.name ? "default" : "outline"}
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectPreset(index, preset, provider.id);
-                        }}
-                      >
-                        {preset.displayName}
-                      </Button>
-                    ))}
+                {/* Preset Selection - Only for user-configured models */}
+                {!model.isPreset && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      {t("models.selectPreset")}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {provider.presets.map((preset) => (
+                        <Button
+                          key={preset.name}
+                          variant={
+                            model.name === preset.name ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectPreset(index, preset, provider.id);
+                          }}
+                        >
+                          {preset.displayName}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t("models.modelName")}
-                  </label>
-                  <Input
-                    value={model.name}
-                    onChange={(e) => onModelChange(index, "name", e.target.value)}
-                    placeholder={provider.presets[0]?.name || "model-name"}
-                    disabled={model.isPreset}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t("models.displayName")}
-                  </label>
-                  <Input
-                    value={model.displayName}
-                    onChange={(e) => onModelChange(index, "displayName", e.target.value)}
-                    placeholder={provider.presets[0]?.displayName || "Display Name"}
-                    disabled={model.isPreset}
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t("models.apiEndpoint")}
-                  </label>
-                  <Input
-                    value={model.apiEndpoint}
-                    onChange={(e) => onModelChange(index, "apiEndpoint", e.target.value)}
-                    placeholder={provider.defaultEndpoint}
-                    disabled={model.isPreset}
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t("models.apiKey")}
-                  </label>
-                  <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      {t("models.modelName")}
+                    </label>
                     <Input
-                      type={showApiKey ? "text" : "password"}
-                      value={model.apiKey}
-                      onChange={(e) => onModelChange(index, "apiKey", e.target.value)}
-                      placeholder="sk-xxxxxxxxxxxxx"
-                      className="pr-10"
+                      value={model.name}
+                      onChange={(e) =>
+                        onModelChange(index, "name", e.target.value)
+                      }
+                      placeholder={provider.presets[0]?.name || "model-name"}
                       disabled={model.isPreset}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      {t("models.displayName")}
+                    </label>
+                    <Input
+                      value={model.displayName}
+                      onChange={(e) =>
+                        onModelChange(index, "displayName", e.target.value)
+                      }
+                      placeholder={
+                        provider.presets[0]?.displayName || "Display Name"
+                      }
+                      disabled={model.isPreset}
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-foreground">
+                      {t("models.apiEndpoint")}
+                    </label>
+                    <Input
+                      value={model.apiEndpoint}
+                      onChange={(e) =>
+                        onModelChange(index, "apiEndpoint", e.target.value)
+                      }
+                      placeholder={provider.defaultEndpoint}
+                      disabled={model.isPreset}
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-foreground">
+                      {t("models.apiKey")}
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showApiKey ? "text" : "password"}
+                        value={model.apiKey}
+                        onChange={(e) =>
+                          onModelChange(index, "apiKey", e.target.value)
+                        }
+                        placeholder="sk-xxxxxxxxxxxxx"
+                        className="pr-10"
+                        disabled={model.isPreset}
+                      />
+                      {!model.isPreset && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleApiKey(index);
+                          }}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                        >
+                          {showApiKey ? (
+                            <EyeOffIcon className="w-4 h-4" />
+                          ) : (
+                            <EyeIcon className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between md:col-span-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!model.isPreset) {
+                          onModelChange(index, "isActive", !model.isActive);
+                        }
+                      }}
+                      disabled={model.isPreset}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors ${
+                        model.isActive
+                          ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
+                          : "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400"
+                      } ${
+                        model.isPreset ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      {model.isActive ? (
+                        <>
+                          <CheckIcon className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            {t("models.active")}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <XIcon className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            {t("models.inactive")}
+                          </span>
+                        </>
+                      )}
+                    </button>
                     {!model.isPreset && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleApiKey(index);
-                        }}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                      >
-                        {showApiKey ? (
-                          <EyeOffIcon className="w-4 h-4" />
-                        ) : (
-                          <EyeIcon className="w-4 h-4" />
-                        )}
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setIsSaving(true);
+                            try {
+                              await onSaveModel(index);
+                            } finally {
+                              setIsSaving(false);
+                            }
+                          }}
+                          disabled={isSaving}
+                          size="sm"
+                        >
+                          <SaveIcon className="w-4 h-4 mr-2" />
+                          {isSaving ? t("models.saving") : t("models.save")}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <TrashIcon className="w-4 h-4 mr-2" />
+                          {t("models.delete")}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between md:col-span-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!model.isPreset) {
-                        onModelChange(index, "isActive", !model.isActive);
-                      }
-                    }}
-                    disabled={model.isPreset}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors ${
-                      model.isActive
-                        ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
-                        : "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400"
-                    } ${model.isPreset ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    {model.isActive ? (
-                      <>
-                        <CheckIcon className="w-4 h-4" />
-                        <span className="text-sm font-medium">{t("models.active")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <XIcon className="w-4 h-4" />
-                        <span className="text-sm font-medium">{t("models.inactive")}</span>
-                      </>
-                    )}
-                  </button>
-                  {!model.isPreset && (
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setIsSaving(true);
-                          try {
-                            await onSaveModel(index);
-                          } finally {
-                            setIsSaving(false);
-                          }
-                        }}
-                        disabled={isSaving}
-                        size="sm"
-                      >
-                        <SaveIcon className="w-4 h-4 mr-2" />
-                        {isSaving ? t("models.saving") : t("models.save")}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowDeleteDialog(true);
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4 mr-2" />
-                        {t("models.delete")}
-                      </Button>
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-    {/* Delete Confirmation Dialog */}
-    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("models.deleteConfirm.title")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("models.deleteConfirm.message", { name: model.displayName || model.name })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            {t("common.delete")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  </>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("models.deleteConfirm.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("models.deleteConfirm.message", {
+                name: model.displayName || model.name,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -407,8 +447,16 @@ function ProviderSection({
   models: ModelConfig[];
   onAddModel: (provider: string) => void;
   onRemoveModel: (index: number) => void;
-  onModelChange: (index: number, field: keyof ModelConfig, value: string | boolean) => void;
-  onSelectPreset: (index: number, preset: ModelPreset, provider: string) => void;
+  onModelChange: (
+    index: number,
+    field: keyof ModelConfig,
+    value: string | boolean
+  ) => void;
+  onSelectPreset: (
+    index: number,
+    preset: ModelPreset,
+    provider: string
+  ) => void;
   showApiKeys: { [key: string]: boolean };
   onToggleApiKey: (index: number) => void;
   onSaveModel: (index: number) => Promise<void>;
@@ -421,7 +469,9 @@ function ProviderSection({
     .filter(({ model }) => model.provider === provider.id);
 
   // Check if there are any user-configured models (non-preset models)
-  const hasUserConfiguredModels = providerModels.some(({ model }) => !model.isPreset);
+  const hasUserConfiguredModels = providerModels.some(
+    ({ model }) => !model.isPreset
+  );
 
   return (
     <Card className="border-border w-full">
@@ -441,7 +491,9 @@ function ProviderSection({
                     {providerModels.length} {t("models.configured")}
                   </span>
                 </h2>
-                <p className="text-sm text-muted-foreground">{provider.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {provider.description}
+                </p>
               </div>
             </div>
             <Button variant="ghost" size="sm" className="flex-shrink-0">
@@ -511,7 +563,9 @@ function ModelsContent() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [models, setModels] = useState<ModelConfig[]>([]);
-  const [showApiKeys, setShowApiKeys] = useState<{ [key: string]: boolean }>({});
+  const [showApiKeys, setShowApiKeys] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   useEffect(() => {
     loadModels();
@@ -519,7 +573,10 @@ function ModelsContent() {
 
   const loadModels = async () => {
     try {
-      const response = await httpClient.get<{ success: boolean; models: ModelConfig[] }>("/api/models/user");
+      const response = await httpClient.get<{
+        success: boolean;
+        models: ModelConfig[];
+      }>("/api/models/user");
       if (response.status === 200 && response.data?.models) {
         setModels(response.data.models);
       }
@@ -558,7 +615,11 @@ function ModelsContent() {
     setModels(newModels);
   };
 
-  const handleSelectPreset = (index: number, preset: ModelPreset, provider: string) => {
+  const handleSelectPreset = (
+    index: number,
+    preset: ModelPreset,
+    provider: string
+  ) => {
     handleModelChange(index, "name", preset.name);
     handleModelChange(index, "displayName", preset.displayName);
     handleModelChange(index, "apiEndpoint", preset.defaultEndpoint);
@@ -585,7 +646,10 @@ function ModelsContent() {
     }
 
     try {
-      const response = await httpClient.post<{ success: boolean; message: string }>("/api/models/user", {
+      const response = await httpClient.post<{
+        success: boolean;
+        message: string;
+      }>("/api/models/user", {
         models: [model],
       });
 
@@ -593,7 +657,11 @@ function ModelsContent() {
         setMessage(response.data.message || t("models.saveSuccess"));
         await loadModels();
       } else {
-        setError((response as any).message || (response as any).error || t("models.saveFailed"));
+        setError(
+          (response as any).message ||
+            (response as any).error ||
+            t("models.saveFailed")
+        );
       }
     } catch (error) {
       console.error("Save model error:", error);
@@ -628,7 +696,9 @@ function ModelsContent() {
 
           {message && (
             <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-600 dark:text-green-400">{message}</p>
+              <p className="text-sm text-green-600 dark:text-green-400">
+                {message}
+              </p>
             </div>
           )}
 

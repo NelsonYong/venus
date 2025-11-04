@@ -17,6 +17,7 @@ export function ChatBot() {
     chatHistory,
     currentChatId,
     isLoading,
+    error,
     
     // Actions
     setInput,
@@ -72,6 +73,7 @@ export function ChatBot() {
               onModelChange={setModel}
               webSearch={webSearch}
               onWebSearchToggle={() => setWebSearch(!webSearch)}
+              error={error}
             />
           </div>
         </div>

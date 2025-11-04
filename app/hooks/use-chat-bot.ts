@@ -8,15 +8,28 @@ import { useChatHistory } from "./use-conversations";
 import { useAutoSummary } from "./use-auto-summary";
 import { useConversationActions } from "./use-conversation-actions";
 import { defaultModel } from "@/app/constants/models";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-client";
 
 export function useChatBot() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [model, setModel] = useState<string>(defaultModel);
   const [webSearch, setWebSearch] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  const { messages, sendMessage, status, setMessages } = useChat();
+  const { messages, sendMessage, status, setMessages, error } = useChat({
+    api: "/api/chat",
+    onError: (error) => {
+      console.error("Chat stream error:", error);
+      // You can add a toast notification here if needed
+    },
+    onFinish: (message) => {
+      console.log("Chat stream finished:", message);
+    },
+    maxSteps: 5,
+  });
   const {
     chatHistory,
     currentChatId,
@@ -144,19 +157,35 @@ export function useChatBot() {
     isMounted.current = true;
   }, []);
 
-  // Effect for saving chat sessions
+  // Effect for refreshing cache after backend saves messages
+  // NOTE: Backend handles real-time saving in /api/chat onFinish callback
+  // This effect refreshes the React Query cache so switching conversations works correctly
   useEffect(() => {
     if (!isMounted.current) return;
+    
+    // When stream completes and we have new messages, invalidate cache
     if (status === "ready" && currentChatId && messages.length > 0) {
-      // Only save if messages have actually changed
       if (messages.length !== lastSavedMessagesLength.current) {
-        console.log("保存 messages", messages);
-
-        saveChatSession(messages, currentChatId, model);
+        console.log("🔄 Stream completed, refreshing conversation cache");
+        
+        // Update our tracking
         lastSavedMessagesLength.current = messages.length;
+        
+        // Invalidate the conversations cache to force refetch on next load
+        // This ensures when switching back to this conversation, we see all messages
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.conversations.list() 
+        });
+        
+        // Also invalidate the specific conversation detail cache
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.conversations.detail(currentChatId) 
+        });
+        
+        console.log("✅ Cache invalidated for conversation:", currentChatId);
       }
     }
-  }, [status, messages, currentChatId, model, saveChatSession]);
+  }, [status, messages, currentChatId, queryClient]);
 
   // 判读是刷新进入页面也是跳转路由进入
   useEffect(() => {
@@ -177,6 +206,7 @@ export function useChatBot() {
     chatHistory,
     currentChatId,
     isLoading,
+    error,
     
     // Actions
     setInput,

@@ -19,6 +19,7 @@ interface ChatLayoutProps {
   onModelChange: (value: string) => void;
   webSearch: boolean;
   onWebSearchToggle: () => void;
+  error?: Error | undefined;
 }
 
 export function ChatLayout({
@@ -31,6 +32,7 @@ export function ChatLayout({
   onModelChange,
   webSearch,
   onWebSearchToggle,
+  error,
 }: ChatLayoutProps) {
   const hasMessages = messages.length > 0;
 
@@ -38,6 +40,12 @@ export function ChatLayout({
     // Empty state with centered layout
     return (
       <div className="flex flex-col h-full">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg mx-auto max-w-3xl mb-4 mt-4">
+            <p className="font-semibold">流式输出错误</p>
+            <p className="text-sm mt-1">{error.message || "发生未知错误，请重试"}</p>
+          </div>
+        )}
         <EmptyChatState />
         <ChatInput
           input={input}
@@ -57,6 +65,13 @@ export function ChatLayout({
   // Normal chat layout with messages
   return (
     <div className="flex flex-col h-full">
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg mx-auto max-w-4xl mb-4 mt-4">
+          <p className="font-semibold">流式输出错误</p>
+          <p className="text-sm mt-1">{error.message || "发生未知错误，请重试"}</p>
+          <p className="text-xs mt-2 opacity-75">提示: 检查网络连接或尝试禁用浏览器扩展</p>
+        </div>
+      )}
       <Conversation className="flex-1">
         <ConversationContent className="max-w-4xl mx-auto prose">
           <MessageRenderer messages={messages} status={status} />

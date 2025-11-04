@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Create new models for this provider
-      const createPromises = providerModels.map((model) =>
+      const createPromises = providerModels?.map((model) =>
         prisma.aiModel.create({
           data: {
             name: model.name,

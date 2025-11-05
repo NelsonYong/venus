@@ -14,8 +14,14 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
+import {
+  Tool,
+  ToolHeader,
+  ToolContent,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
 import { Actions, Action } from "@/components/ai-elements/actions";
-import { Weather, WeatherProps } from "../../tools/Weather";
 import { Loader } from "@/components/ai-elements/loader";
 import { CopyIcon, CheckIcon, RefreshCwIcon } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
@@ -88,6 +94,27 @@ export function MessageRenderer({
           <Message from={message.role} key={message.id} className="pb-0">
             <MessageContent>
               {message.parts.map((part: any, i: number) => {
+                // 忽略 step-start 类型（步骤标记，不需要显示）
+                if (part.type === "step-start") {
+                  return null;
+                }
+
+                // 调试：记录未识别的消息部分类型
+                if (
+                  part.type &&
+                  ![
+                    "text",
+                    "tool-weather",
+                    "tool-webSearch",
+                    "reasoning",
+                    "tool-call",
+                    "tool-result",
+                    "source-url",
+                  ].includes(part.type)
+                ) {
+                  console.log("🔍 Unknown message part type:", part.type, part);
+                }
+
                 switch (part.type) {
                   case "text":
                     return (
@@ -100,11 +127,80 @@ export function MessageRenderer({
                       </Response>
                     );
                   case "tool-weather":
+                    // ReAct 模式：显示工具调用的详细信息
+                    const weatherToolPart = part as any;
                     return (
-                      <Weather
+                      <Tool
                         key={`${message.id}-${i}`}
-                        {...(part.output as WeatherProps)}
-                      />
+                        defaultOpen={status === "streaming"}
+                      >
+                        <ToolHeader
+                          type="tool-weather"
+                          state={
+                            weatherToolPart.state ||
+                            (status === "streaming"
+                              ? "input-streaming"
+                              : "output-available")
+                          }
+                        />
+                        <ToolContent>
+                          {weatherToolPart.input && (
+                            <ToolInput input={weatherToolPart.input} />
+                          )}
+                          {weatherToolPart.output && (
+                            <ToolOutput
+                              output={
+                                typeof weatherToolPart.output === "string"
+                                  ? weatherToolPart.output
+                                  : JSON.stringify(
+                                      weatherToolPart.output,
+                                      null,
+                                      2
+                                    )
+                              }
+                              errorText={weatherToolPart.error}
+                            />
+                          )}
+                        </ToolContent>
+                      </Tool>
+                    );
+                  case "tool-webSearch":
+                    // webSearch 工具调用
+                    const webSearchToolPart = part as any;
+                    return (
+                      <Tool
+                        key={`${message.id}-${i}`}
+                        defaultOpen={status === "streaming"}
+                      >
+                        <ToolHeader
+                          type="tool-webSearch"
+                          state={
+                            webSearchToolPart.state ||
+                            (status === "streaming"
+                              ? "input-streaming"
+                              : "output-available")
+                          }
+                        />
+                        <ToolContent>
+                          {webSearchToolPart.input && (
+                            <ToolInput input={webSearchToolPart.input} />
+                          )}
+                          {webSearchToolPart.output && (
+                            <ToolOutput
+                              output={
+                                typeof webSearchToolPart.output === "string"
+                                  ? webSearchToolPart.output
+                                  : JSON.stringify(
+                                      webSearchToolPart.output,
+                                      null,
+                                      2
+                                    )
+                              }
+                              errorText={webSearchToolPart.error}
+                            />
+                          )}
+                        </ToolContent>
+                      </Tool>
                     );
                   case "reasoning":
                     return (
@@ -117,7 +213,94 @@ export function MessageRenderer({
                         <ReasoningContent>{part.text}</ReasoningContent>
                       </Reasoning>
                     );
+                  // 兼容其他工具调用格式
+                  case "tool-call":
+                  case "tool-result":
+                    const toolPart = part as any;
+                    return (
+                      <Tool
+                        key={`${message.id}-${i}`}
+                        defaultOpen={status === "streaming"}
+                      >
+                        <ToolHeader
+                          type={
+                            toolPart.toolName || toolPart.toolCallId || "tool"
+                          }
+                          state={
+                            toolPart.state ||
+                            (status === "streaming"
+                              ? "input-streaming"
+                              : "output-available")
+                          }
+                        />
+                        <ToolContent>
+                          {(toolPart.input || toolPart.args) && (
+                            <ToolInput
+                              input={toolPart.input || toolPart.args}
+                            />
+                          )}
+                          {(toolPart.output || toolPart.result) && (
+                            <ToolOutput
+                              output={
+                                typeof (toolPart.output || toolPart.result) ===
+                                "string"
+                                  ? toolPart.output || toolPart.result
+                                  : JSON.stringify(
+                                      toolPart.output || toolPart.result,
+                                      null,
+                                      2
+                                    )
+                              }
+                              errorText={toolPart.error}
+                            />
+                          )}
+                        </ToolContent>
+                      </Tool>
+                    );
                   default:
+                    // 处理其他可能的工具调用格式（通过 toolCallId 识别）
+                    if (part.toolCallId || part.type?.startsWith("tool-")) {
+                      const toolName =
+                        part.type?.replace("tool-", "") ||
+                        part.toolName ||
+                        "tool";
+                      return (
+                        <Tool
+                          key={`${message.id}-${i}`}
+                          defaultOpen={status === "streaming"}
+                        >
+                          <ToolHeader
+                            type={toolName}
+                            state={
+                              part.state ||
+                              (status === "streaming"
+                                ? "input-streaming"
+                                : "output-available")
+                            }
+                          />
+                          <ToolContent>
+                            {(part.input || part.args) && (
+                              <ToolInput input={part.input || part.args} />
+                            )}
+                            {(part.output || part.result) && (
+                              <ToolOutput
+                                output={
+                                  typeof (part.output || part.result) ===
+                                  "string"
+                                    ? part.output || part.result
+                                    : JSON.stringify(
+                                        part.output || part.result,
+                                        null,
+                                        2
+                                      )
+                                }
+                                errorText={part.error}
+                              />
+                            )}
+                          </ToolContent>
+                        </Tool>
+                      );
+                    }
                     return null;
                 }
               })}

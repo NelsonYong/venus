@@ -30,7 +30,8 @@ export function useChatBot() {
     onFinish: (message) => {
       console.log("Chat stream finished:", message);
     },
-    maxSteps: 5,
+    // ReAct 模式需要更多步骤来完成思考 -> 行动 -> 观察 -> 回答的循环
+    maxSteps: 10,
   });
   const {
     chatHistory,
@@ -236,6 +237,7 @@ export function useChatBot() {
     if (chatId && !isLoading) {
       handleLoadChat(chatId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isLoading]);
 
   // Check if we have a chatId in URL but messages haven't loaded yet

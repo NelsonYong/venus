@@ -150,7 +150,11 @@
       "deleteAccountButton": "アカウント削除",
       "confirmDelete": "アカウントを削除してもよろしいですか？この操作は元に戻せず、すべてのデータが削除されます。",
       "doubleConfirm": "再度確認してください：アカウントを削除すると、すべての会話履歴と個人データが永久に失われます。",
-      "enterPassword": "削除操作を確認するためにパスワードを入力してください："
+      "enterPassword": "削除操作を確認するためにパスワードを入力してください：",
+      "clearHistory": "履歴をクリア",
+      "clearHistoryDescription": "すべての会話記録とメッセージを削除します。この操作は元に戻せませんが、アカウントには影響しません。",
+      "clearHistoryButton": "すべての履歴をクリア",
+      "confirmClearHistory": "すべての履歴をクリアしてもよろしいですか？この操作は元に戻せず、すべての会話記録が削除されます。"
     },
     "themes": {
       "system": "システムに従う",
@@ -195,6 +199,7 @@
     "customModelNotice": "カスタムモデルを使用中 - 追加料金は発生しません",
     "welcome": {
       "title": "Venus へようこそ",
+      "titleWithName": "{{name}}さん、ようこそ",
       "subtitle": "いつでもお手伝いする、あなたの知的AIアシスタント"
     },
     "capabilities": {
@@ -220,6 +225,17 @@
       "writing": "創作文章",
       "analysis": "データ分析",
       "creative": "クリエイティブデザイン"
+    },
+    "streamingWarning": {
+      "title": "返信を生成中",
+      "description": "AIが返信を生成中です。ページを離れると生成プロセスが中断されます。本当に離れますか？",
+      "cancel": "待機を続ける",
+      "confirm": "ページを離れる"
+    },
+    "actions": {
+      "copy": "コピー",
+      "copied": "コピーしました",
+      "regenerate": "再生成"
     }
   },
   "billing": {

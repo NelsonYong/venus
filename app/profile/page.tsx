@@ -93,8 +93,8 @@ function ProfileContent() {
   return (
     <div className="flex flex-col h-screen">
       <Navbar />
-      <div className="flex-1 max-w-4xl mx-auto p-6 overflow-auto">
-        <div className="space-y-8">
+      <div className="flex-1 max-w-6xl mx-auto p-6 overflow-auto w-full">
+        <div className="space-y-6 w-full">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>

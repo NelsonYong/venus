@@ -18,8 +18,10 @@ export function useChatBot() {
   const [model, setModel] = useState<string>(defaultModel);
   const [webSearch, setWebSearch] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  const { messages, sendMessage, status, setMessages, error } = useChat({
+
+  const { messages, sendMessage, status, setMessages, error, stop } = useChat({
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     api: "/api/chat",
     onError: (error) => {
       console.error("Chat stream error:", error);
@@ -153,6 +155,47 @@ export function useChatBot() {
     }
   };
 
+  const handleRegenerate = () => {
+    if (messages.length === 0) return;
+
+    // Find the last user message
+    let lastUserMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
+
+    if (lastUserMessageIndex === -1) return;
+
+    const lastUserMessage = messages[lastUserMessageIndex];
+
+    // Remove all messages after and including the last user message
+    // sendMessage will automatically add the user message back
+    setMessages(messages.slice(0, lastUserMessageIndex));
+
+    // Re-send the last user message
+    const messageText = lastUserMessage.parts
+      .filter((part: any) => part.type === "text")
+      .map((part: any) => part.text)
+      .join("\n");
+
+    if (messageText) {
+      sendMessage(
+        { text: messageText },
+        {
+          body: {
+            modelId: model,
+            webSearch: webSearch,
+            userId: user?.id,
+            conversationId: currentChatId,
+          },
+        }
+      );
+    }
+  };
+
   useEffect(() => {
     isMounted.current = true;
   }, []);
@@ -162,26 +205,26 @@ export function useChatBot() {
   // This effect refreshes the React Query cache so switching conversations works correctly
   useEffect(() => {
     if (!isMounted.current) return;
-    
+
     // When stream completes and we have new messages, invalidate cache
     if (status === "ready" && currentChatId && messages.length > 0) {
       if (messages.length !== lastSavedMessagesLength.current) {
         console.log("🔄 Stream completed, refreshing conversation cache");
-        
+
         // Update our tracking
         lastSavedMessagesLength.current = messages.length;
-        
+
         // Invalidate the conversations cache to force refetch on next load
         // This ensures when switching back to this conversation, we see all messages
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.conversations.list() 
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.conversations.list()
         });
-        
+
         // Also invalidate the specific conversation detail cache
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.conversations.detail(currentChatId) 
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.conversations.detail(currentChatId)
         });
-        
+
         console.log("✅ Cache invalidated for conversation:", currentChatId);
       }
     }
@@ -195,6 +238,10 @@ export function useChatBot() {
     }
   }, [searchParams, isLoading]);
 
+  // Check if we have a chatId in URL but messages haven't loaded yet
+  const chatId = searchParams.get("chatId");
+  const isLoadingChat = Boolean(chatId && messages.length === 0 && isLoading);
+
   return {
     // State
     input,
@@ -206,8 +253,9 @@ export function useChatBot() {
     chatHistory,
     currentChatId,
     isLoading,
+    isLoadingChat,
     error,
-    
+
     // Actions
     setInput,
     setModel,
@@ -219,7 +267,9 @@ export function useChatBot() {
     handleDeleteChat,
     handleTitleUpdate,
     handleStarToggle,
-    
+    handleRegenerate,
+    stop,
+
     // Computed
     getCurrentChat,
   };

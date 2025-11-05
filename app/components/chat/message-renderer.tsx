@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import {
@@ -13,20 +14,50 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
+import { Actions, Action } from "@/components/ai-elements/actions";
 import { Weather, WeatherProps } from "../../tools/Weather";
 import { Loader } from "@/components/ai-elements/loader";
-import type { ChatRequestOptions } from "@ai-sdk/react";
+import { CopyIcon, CheckIcon, RefreshCwIcon } from "lucide-react";
+import { useTranslation } from "@/app/contexts/i18n-context";
 
 interface MessageRendererProps {
   messages: any[];
   status: string;
+  onRegenerate?: () => void;
 }
 
-export function MessageRenderer({ messages, status }: MessageRendererProps) {
+export function MessageRenderer({
+  messages,
+  status,
+  onRegenerate,
+}: MessageRendererProps) {
+  const { t } = useTranslation();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = async (message: any) => {
+    const textParts = message.parts
+      .filter((part: any) => part.type === "text")
+      .map((part: any) => part.text)
+      .join("\n");
+
+    await navigator.clipboard.writeText(textParts);
+    setCopiedId(message.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const isLastAssistantMessage = (index: number) => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") {
+        return i === index;
+      }
+    }
+    return false;
+  };
+
   return (
     <>
-      {messages.map((message) => (
-        <div key={message.id}>
+      {messages.map((message, index) => (
+        <div key={message.id} className="group flex flex-col">
           {message.role === "assistant" && (
             <Sources>
               {message.parts.map((part: any, i: number) => {
@@ -54,7 +85,7 @@ export function MessageRenderer({ messages, status }: MessageRendererProps) {
               })}
             </Sources>
           )}
-          <Message from={message.role} key={message.id}>
+          <Message from={message.role} key={message.id} className="pb-0">
             <MessageContent>
               {message.parts.map((part: any, i: number) => {
                 switch (part.type) {
@@ -83,9 +114,7 @@ export function MessageRenderer({ messages, status }: MessageRendererProps) {
                         isStreaming={status === "streaming"}
                       >
                         <ReasoningTrigger />
-                        <ReasoningContent>
-                          {part.text}
-                        </ReasoningContent>
+                        <ReasoningContent>{part.text}</ReasoningContent>
                       </Reasoning>
                     );
                   default:
@@ -94,6 +123,58 @@ export function MessageRenderer({ messages, status }: MessageRendererProps) {
               })}
             </MessageContent>
           </Message>
+
+          {/* Actions for assistant messages - copy button always visible */}
+          {message.role === "assistant" && (
+            <div className="flex justify-start mt-2 px-2">
+              <Actions>
+                <Action
+                  tooltip={
+                    copiedId === message.id
+                      ? t("chat.actions.copied")
+                      : t("chat.actions.copy")
+                  }
+                  onClick={() => handleCopy(message)}
+                >
+                  {copiedId === message.id ? (
+                    <CheckIcon className="w-4 h-4" />
+                  ) : (
+                    <CopyIcon className="w-4 h-4" />
+                  )}
+                </Action>
+                {isLastAssistantMessage(index) && onRegenerate && (
+                  <Action
+                    tooltip={t("chat.actions.regenerate")}
+                    onClick={onRegenerate}
+                  >
+                    <RefreshCwIcon className="w-4 h-4" />
+                  </Action>
+                )}
+              </Actions>
+            </div>
+          )}
+
+          {/* Actions for user messages - copy button visible on hover */}
+          {message.role === "user" && (
+            <div className="flex justify-end mt-2 px-2">
+              <Actions className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <Action
+                  tooltip={
+                    copiedId === message.id
+                      ? t("chat.actions.copied")
+                      : t("chat.actions.copy")
+                  }
+                  onClick={() => handleCopy(message)}
+                >
+                  {copiedId === message.id ? (
+                    <CheckIcon className="w-4 h-4" />
+                  ) : (
+                    <CopyIcon className="w-4 h-4" />
+                  )}
+                </Action>
+              </Actions>
+            </div>
+          )}
         </div>
       ))}
       {status === "submitted" && <Loader />}

@@ -95,6 +95,14 @@ export const conversationsAPI = {
     }
     return response.data
   },
+
+  async deleteAll(): Promise<{ success: boolean; message?: string }> {
+    const response = await httpClient.delete<{ success: boolean; message?: string }>('/api/conversations')
+    if (response.status !== 200 || !response.data) {
+      throw new Error(response.error || 'Failed to delete all conversations')
+    }
+    return response.data
+  },
 }
 
 // Transform API message to UI message format

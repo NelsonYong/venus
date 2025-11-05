@@ -150,7 +150,11 @@
       "deleteAccountButton": "删除账户",
       "confirmDelete": "确定要删除账户吗？此操作不可撤销，将删除您的所有数据。",
       "doubleConfirm": "请再次确认：删除账户后，您的所有对话记录和个人数据将永久丢失。",
-      "enterPassword": "请输入您的密码以确认删除操作："
+      "enterPassword": "请输入您的密码以确认删除操作：",
+      "clearHistory": "清空历史记录",
+      "clearHistoryDescription": "删除所有对话记录和消息。此操作无法撤销，但不会影响您的账户。",
+      "clearHistoryButton": "清空所有历史记录",
+      "confirmClearHistory": "确定要清空所有历史记录吗？此操作不可撤销，将删除您的所有对话记录。"
     },
     "themes": {
       "system": "跟随系统",
@@ -195,6 +199,7 @@
     "customModelNotice": "当前使用自定义模型，不会产生费用",
     "welcome": {
       "title": "欢迎使用 Venus",
+      "titleWithName": "欢迎 {{name}}",
       "subtitle": "您的智能 AI 助手，随时为您提供帮助"
     },
     "capabilities": {
@@ -220,6 +225,17 @@
       "writing": "创意写作",
       "analysis": "数据分析",
       "creative": "创意设计"
+    },
+    "streamingWarning": {
+      "title": "正在生成回复",
+      "description": "AI 正在生成回复中，离开页面将中断生成过程。确定要离开吗？",
+      "cancel": "继续等待",
+      "confirm": "离开页面"
+    },
+    "actions": {
+      "copy": "复制",
+      "copied": "已复制",
+      "regenerate": "重新生成"
     }
   },
   "billing": {

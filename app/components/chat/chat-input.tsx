@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import {
   PromptInput,
   PromptInputButton,
@@ -17,15 +16,7 @@ import {
 import { GlobeIcon } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { ChatStatus } from "ai";
-import { httpClient } from "@/lib/http-client";
-
-interface AvailableModel {
-  id: string;
-  name: string;
-  displayName: string;
-  provider: string;
-  isPreset: boolean;
-}
+import { useAvailableModels } from "@/app/hooks/use-available-models";
 
 interface ChatInputProps {
   input: string;
@@ -51,57 +42,8 @@ export function ChatInput({
   className,
 }: ChatInputProps) {
   const { t } = useTranslation();
-  const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
-  const [isLoadingModels, setIsLoadingModels] = useState(true);
-  const isMounted = useRef(false);
-
-  useEffect(() => {
-    loadAvailableModels();
-  }, []);
-
-  const loadAvailableModels = async () => {
-    try {
-      const response = await httpClient.get<{
-        success: boolean;
-        models: AvailableModel[];
-      }>("/api/models/available");
-      if (response.status === 200 && response.data?.models) {
-        setAvailableModels(response.data.models);
-
-        if (response.data.models.length > 0) {
-          // Get saved model from localStorage
-          const savedModelId = localStorage.getItem("selectedModelId");
-
-          // Check if saved model exists in available models
-          const savedModel = savedModelId
-            ? response.data.models.find((m) => m.id === savedModelId)
-            : null;
-
-          let modelToSelect: string;
-
-          if (savedModel) {
-            // Use saved model if it exists in available models
-            modelToSelect = savedModel.id;
-          } else {
-            // No saved model or it doesn't exist, find first preset model or fallback to first model
-            const firstPresetModel = response.data.models.find(
-              (m) => m.isPreset
-            );
-            const defaultModel = firstPresetModel || response.data.models[0];
-            modelToSelect = defaultModel.id;
-            // Only save to localStorage when there's no saved model or it's invalid
-            localStorage.setItem("selectedModelId", modelToSelect);
-          }
-
-          onModelChange(modelToSelect);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load models:", error);
-    } finally {
-      setIsLoadingModels(false);
-    }
-  };
+  const { models: availableModels, isLoading: isLoadingModels } =
+    useAvailableModels(onModelChange);
 
   const handleModelChange = (value: string) => {
     onModelChange(value);

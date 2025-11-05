@@ -150,7 +150,11 @@
       "deleteAccountButton": "Delete Account",
       "confirmDelete": "Are you sure you want to delete your account? This action cannot be undone and will delete all your data.",
       "doubleConfirm": "Please confirm again: After deleting your account, all your conversation history and personal data will be permanently lost.",
-      "enterPassword": "Please enter your password to confirm the deletion:"
+      "enterPassword": "Please enter your password to confirm the deletion:",
+      "clearHistory": "Clear History",
+      "clearHistoryDescription": "Delete all conversation records and messages. This action cannot be undone, but will not affect your account.",
+      "clearHistoryButton": "Clear All History",
+      "confirmClearHistory": "Are you sure you want to clear all history? This action cannot be undone and will delete all your conversation records."
     },
     "themes": {
       "system": "Follow System",
@@ -195,6 +199,7 @@
     "customModelNotice": "Using custom model - no additional charges",
     "welcome": {
       "title": "Welcome to Venus",
+      "titleWithName": "Welcome {{name}}",
       "subtitle": "Your intelligent AI assistant, ready to help anytime"
     },
     "capabilities": {
@@ -220,6 +225,17 @@
       "writing": "Creative Writing",
       "analysis": "Data Analysis",
       "creative": "Creative Design"
+    },
+    "streamingWarning": {
+      "title": "Generating Response",
+      "description": "AI is generating a response. Leaving this page will interrupt the process. Are you sure you want to leave?",
+      "cancel": "Keep Waiting",
+      "confirm": "Leave Page"
+    },
+    "actions": {
+      "copy": "Copy",
+      "copied": "Copied",
+      "regenerate": "Regenerate"
     }
   },
   "billing": {

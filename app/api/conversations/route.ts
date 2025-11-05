@@ -119,3 +119,52 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get("auth-token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const session = await validateSession(token);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Soft delete all conversations for the user
+    // updatedAt will be automatically updated by Prisma's @updatedAt decorator
+    await prisma.conversation.updateMany({
+      where: {
+        userId: session.userId,
+        isDeleted: false,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    // Also soft delete all messages for the user
+    // Message model doesn't have updatedAt field, so we don't set it
+    await prisma.message.updateMany({
+      where: {
+        userId: session.userId,
+        isDeleted: false,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      message: "All conversations deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting all conversations:", error);
+    return NextResponse.json(
+      { error: "Failed to delete all conversations" },
+      { status: 500 }
+    );
+  }
+}

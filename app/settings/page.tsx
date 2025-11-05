@@ -8,6 +8,9 @@ import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authAPI, settingsAPI } from "@/lib/http-client";
+import { conversationsAPI } from "@/lib/api/conversations";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-client";
 import {
   Select,
   SelectContent,
@@ -28,18 +31,30 @@ import {
   EyeOffIcon,
 } from "lucide-react";
 import { useTheme } from "../contexts/theme-context";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function SettingsContent() {
   const { user, refreshAuth } = useAuth();
   const { theme, setTheme } = useTheme();
   const { changeLanguage } = useI18n();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
 
   const [settings, setSettings] = useState({
     theme: user?.theme || theme,
@@ -134,6 +149,34 @@ function SettingsContent() {
     }
   };
 
+  const handleClearHistory = async () => {
+    setIsLoading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await conversationsAPI.deleteAll();
+
+      if (response.success) {
+        setMessage(response.message || t("settings.dangerZone.clearHistory") + " 成功");
+        setShowClearHistoryDialog(false);
+        // Invalidate conversations cache to refresh the list
+        queryClient.invalidateQueries({ queryKey: queryKeys.conversations.list() });
+        // Redirect to home page to clear current chat
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        setError("Failed to clear history. Please try again.");
+      }
+    } catch (error) {
+      console.error("Clear history error:", error);
+      setError("Failed to clear history. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAccountDelete = async () => {
     const confirmed = window.confirm(t("settings.dangerZone.confirmDelete"));
     if (!confirmed) return;
@@ -173,10 +216,36 @@ function SettingsContent() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Navbar />
-      <div className="flex-1 max-w-4xl mx-auto p-6 overflow-auto">
-        <div className="space-y-8">
+    <>
+      <AlertDialog open={showClearHistoryDialog} onOpenChange={setShowClearHistoryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("settings.dangerZone.clearHistory")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("settings.dangerZone.confirmClearHistory")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearHistory}
+              disabled={isLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLoading ? t("common.loading") : t("common.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex flex-col h-screen">
+        <Navbar />
+        <div className="flex-1 max-w-6xl mx-auto p-6 overflow-auto w-full">
+          <div className="space-y-6 w-full">
           {/* Header */}
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
@@ -591,6 +660,24 @@ function SettingsContent() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium text-foreground mb-2">
+                  {t("settings.dangerZone.clearHistory")}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t("settings.dangerZone.clearHistoryDescription")}
+                </p>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowClearHistoryDialog(true)}
+                  disabled={isLoading}
+                  className="flex items-center space-x-2"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  <span>{t("settings.dangerZone.clearHistoryButton")}</span>
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t border-destructive/20">
+                <h3 className="font-medium text-foreground mb-2">
                   {t("settings.dangerZone.deleteAccount")}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -611,6 +698,7 @@ function SettingsContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

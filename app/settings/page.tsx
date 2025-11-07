@@ -26,6 +26,7 @@ import {
   TrashIcon,
   EyeIcon,
   EyeOffIcon,
+  CodeIcon,
 } from "lucide-react";
 import { useTheme } from "../contexts/theme-context";
 import {
@@ -44,12 +45,14 @@ import {
   SettingsContent,
   SettingsSection,
 } from "./layout-components";
+import { McpConfig } from "./components/mcp-config";
 
 type SettingTab =
   | "appearance"
   | "notifications"
   | "privacy"
   | "security"
+  | "developer"
   | "dangerZone";
 
 function SettingsContentPage() {
@@ -109,6 +112,11 @@ function SettingsContentPage() {
       id: "security",
       label: t("settings.security.title"),
       icon: <KeyIcon className="w-4 h-4" />,
+    },
+    {
+      id: "developer",
+      label: t("settings.developer.title"),
+      icon: <CodeIcon className="w-4 h-4" />,
     },
     {
       id: "dangerZone",
@@ -666,6 +674,18 @@ function SettingsContentPage() {
                   {t("settings.security.updatePassword")}
                 </Button>
               </div>
+            </SettingsSection>
+          </SettingsContent>
+        );
+
+      case "developer":
+        return (
+          <SettingsContent
+            title={t("settings.developer.title")}
+            description={t("settings.developer.description")}
+          >
+            <SettingsSection>
+              <McpConfig />
             </SettingsSection>
           </SettingsContent>
         );

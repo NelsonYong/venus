@@ -104,6 +104,43 @@
   "settings": {
     "title": "设置",
     "subtitle": "个性化您的使用体验和安全设置",
+    "developer": {
+      "title": "开发者选项",
+      "description": "面向开发者的高级设置",
+      "mcpConfig": {
+        "title": "MCP 配置",
+        "description": "配置模型上下文协议 (MCP) 服务器以增强 AI 能力",
+        "addServer": "添加 MCP 服务器",
+        "noServers": "暂无配置的 MCP 服务器",
+        "serverName": "服务器名称",
+        "serverNamePlaceholder": "例如：filesystem、database",
+        "command": "命令",
+        "commandPlaceholder": "例如：node、python",
+        "args": "参数",
+        "argsPlaceholder": "例如：server.js、--port 3000",
+        "env": "环境变量",
+        "envKey": "键",
+        "envValue": "值",
+        "addEnvVar": "添加变量",
+        "enabled": "已启用",
+        "disabled": "已禁用",
+        "save": "保存配置",
+        "cancel": "取消",
+        "delete": "删除服务器",
+        "edit": "编辑",
+        "untitled": "未命名服务器",
+        "saveSuccess": "MCP 配置保存成功",
+        "saveFailed": "保存 MCP 配置失败",
+        "deleteSuccess": "MCP 服务器删除成功",
+        "deleteFailed": "删除 MCP 服务器失败",
+        "deleteConfirmTitle": "确认删除 MCP 服务器",
+        "deleteConfirmDescription": "确定要删除这个 MCP 服务器吗？此操作无法撤销。",
+        "validation": {
+          "nameRequired": "服务器名称不能为空",
+          "commandRequired": "命令不能为空"
+        }
+      }
+    },
     "appearance": {
       "title": "外观设置",
       "theme": "主题模式",

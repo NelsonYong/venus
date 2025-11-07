@@ -19,14 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  SettingsIcon,
   ShieldIcon,
   BellIcon,
   PaletteIcon,
-  LanguagesIcon,
   KeyIcon,
   TrashIcon,
-  SaveIcon,
   EyeIcon,
   EyeOffIcon,
 } from "lucide-react";
@@ -41,8 +38,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  SettingsLayout,
+  SettingsSidebar,
+  SettingsContent,
+  SettingsSection,
+} from "./layout-components";
 
-function SettingsContent() {
+type SettingTab =
+  | "appearance"
+  | "notifications"
+  | "privacy"
+  | "security"
+  | "dangerZone";
+
+function SettingsContentPage() {
   const { user, refreshAuth } = useAuth();
   const { theme, setTheme } = useTheme();
   const { changeLanguage } = useI18n();
@@ -55,6 +65,7 @@ function SettingsContent() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState<SettingTab>("appearance");
 
   const [settings, setSettings] = useState({
     theme: user?.theme || theme,
@@ -78,34 +89,87 @@ function SettingsContent() {
 
   if (!user) return null;
 
-  const handleSettingsSave = async () => {
-    setIsLoading(true);
+  const sidebarItems = [
+    {
+      id: "appearance",
+      label: t("settings.appearance.title"),
+      icon: <PaletteIcon className="w-4 h-4" />,
+    },
+    {
+      id: "notifications",
+      label: t("settings.notifications.title"),
+      icon: <BellIcon className="w-4 h-4" />,
+    },
+    {
+      id: "privacy",
+      label: t("settings.privacy.title"),
+      icon: <ShieldIcon className="w-4 h-4" />,
+    },
+    {
+      id: "security",
+      label: t("settings.security.title"),
+      icon: <KeyIcon className="w-4 h-4" />,
+    },
+    {
+      id: "dangerZone",
+      label: t("settings.dangerZone.title"),
+      icon: <TrashIcon className="w-4 h-4" />,
+    },
+  ];
+
+  const handleThemeChange = async (newTheme: string) => {
+    setSettings({ ...settings, theme: newTheme });
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await settingsAPI.updateSettings({
+        theme: newTheme as "system" | "light" | "dark",
+        language: settings.language,
+      });
+
+      if (response.status === 200 && response.data?.success) {
+        setMessage(response.data.message || t("settings.themes.updateSuccess"));
+        await refreshAuth();
+        setTheme(newTheme as "system" | "light" | "dark");
+        // Auto-hide message after 2 seconds
+        setTimeout(() => setMessage(""), 2000);
+      } else {
+        setError(
+          response.message || response.error || t("settings.themes.updateFailed")
+        );
+      }
+    } catch (error) {
+      console.error("Update theme error:", error);
+      setError(t("settings.themes.updateFailedRetry"));
+    }
+  };
+
+  const handleLanguageChange = async (newLanguage: string) => {
+    setSettings({ ...settings, language: newLanguage });
     setMessage("");
     setError("");
 
     try {
       const response = await settingsAPI.updateSettings({
         theme: settings.theme as "system" | "light" | "dark",
-        language: settings.language,
+        language: newLanguage,
       });
 
       if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || "Settings saved successfully");
-        // Refresh user data
+        setMessage(response.data.message || t("settings.languages.updateSuccess"));
         await refreshAuth();
-        // 确保语言设置同步到i18n和localStorage
-        await changeLanguage(settings.language);
-        setTheme(settings.theme as "system" | "light" | "dark");
+        await changeLanguage(newLanguage);
+        // Auto-hide message after 2 seconds
+        setTimeout(() => setMessage(""), 2000);
       } else {
         setError(
-          response.message || response.error || "Failed to save settings"
+          response.message || response.error || t("settings.languages.updateFailed")
         );
       }
     } catch (error) {
-      console.error("Save settings error:", error);
-      setError("Failed to save settings. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error("Update language error:", error);
+      setError(t("settings.languages.updateFailedRetry"));
     }
   };
 
@@ -130,7 +194,7 @@ function SettingsContent() {
       );
 
       if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || "Password changed successfully");
+        setMessage(response.data.message || t("settings.security.updateSuccess"));
         setPasswordData({
           currentPassword: "",
           newPassword: "",
@@ -138,12 +202,12 @@ function SettingsContent() {
         });
       } else {
         setError(
-          response.message || response.error || "Failed to change password"
+          response.message || response.error || t("settings.security.updateFailed")
         );
       }
     } catch (error) {
       console.error("Change password error:", error);
-      setError("Failed to change password. Please try again.");
+      setError(t("settings.security.updateFailedRetry"));
     } finally {
       setIsLoading(false);
     }
@@ -158,20 +222,22 @@ function SettingsContent() {
       const response = await conversationsAPI.deleteAll();
 
       if (response.success) {
-        setMessage(response.message || t("settings.dangerZone.clearHistory") + " 成功");
+        setMessage(
+          response.message || t("settings.dangerZone.clearHistorySuccess")
+        );
         setShowClearHistoryDialog(false);
-        // Invalidate conversations cache to refresh the list
-        queryClient.invalidateQueries({ queryKey: queryKeys.conversations.list() });
-        // Redirect to home page to clear current chat
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.conversations.list(),
+        });
         setTimeout(() => {
           window.location.href = "/";
         }, 1500);
       } else {
-        setError("Failed to clear history. Please try again.");
+        setError(t("settings.dangerZone.clearHistoryFailed"));
       }
     } catch (error) {
       console.error("Clear history error:", error);
-      setError("Failed to clear history. Please try again.");
+      setError(t("settings.dangerZone.clearHistoryFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -197,344 +263,301 @@ function SettingsContent() {
       const response = await authAPI.deleteAccount(password);
 
       if (response.status === 200 && response.data?.success) {
-        alert(response.data.message || "Account deleted successfully");
-        // User will be redirected to login page automatically
+        alert(response.data.message || t("settings.dangerZone.deleteAccountSuccess"));
         window.location.href = "/login";
       } else {
         setError(
-          response.message || response.error || "Failed to delete account"
+          response.message || response.error || t("settings.dangerZone.deleteAccountFailed")
         );
       }
     } catch (error) {
       console.error("Delete account error:", error);
-      setError(
-        "Failed to delete account. Please check your password and try again."
-      );
+      setError(t("settings.dangerZone.deleteAccountFailedRetry"));
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <>
-      <AlertDialog open={showClearHistoryDialog} onOpenChange={setShowClearHistoryDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("settings.dangerZone.clearHistory")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("settings.dangerZone.confirmClearHistory")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>
-              {t("common.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleClearHistory}
-              disabled={isLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isLoading ? t("common.loading") : t("common.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <div className="flex flex-col h-screen">
-        <Navbar />
-        <div className="flex-1 max-w-6xl mx-auto p-6 overflow-auto w-full">
-          <div className="space-y-6 w-full">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center">
-              <SettingsIcon className="w-8 h-8 mr-3" />
-              {t("settings.title")}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {t("settings.subtitle")}
-            </p>
-          </div>
-
-          {/* Messages */}
-          {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-
-          {message && (
-            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-600 dark:text-green-400">
-                {message}
-              </p>
-            </div>
-          )}
-
-          {/* Appearance Settings */}
-          <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center mb-6">
-              <PaletteIcon className="w-5 h-5 mr-2 text-primary" />
-              <h2 className="text-xl font-semibold text-foreground">
-                {t("settings.appearance.title")}
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  {t("settings.appearance.theme")}
-                </label>
-                <Select
-                  value={settings.theme}
-                  onValueChange={(value) =>
-                    setSettings({ ...settings, theme: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">
-                      {t("settings.themes.system")}
-                    </SelectItem>
-                    <SelectItem value="light">
-                      {t("settings.themes.light")}
-                    </SelectItem>
-                    <SelectItem value="dark">
-                      {t("settings.themes.dark")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center">
-                  <LanguagesIcon className="w-4 h-4 mr-1" />
-                  {t("settings.appearance.language")}
-                </label>
-                <Select
-                  value={settings.language}
-                  onValueChange={async (value) => {
-                    setSettings({ ...settings, language: value });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="zh-CN">
-                      {t("settings.languages.zh-CN")}
-                    </SelectItem>
-                    <SelectItem value="en-US">
-                      {t("settings.languages.en-US")}
-                    </SelectItem>
-                    <SelectItem value="ja-JP">
-                      {t("settings.languages.ja-JP")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t">
-              <Button onClick={handleSettingsSave} disabled={isLoading}>
-                {isLoading
-                  ? t("settings.appearance.saving")
-                  : t("settings.appearance.saveSettings")}
-              </Button>
-            </div>
-          </div>
-
-          {/* Notification Settings */}
-          <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center mb-6">
-              <BellIcon className="w-5 h-5 mr-2 text-primary" />
-              <h2 className="text-xl font-semibold text-foreground">
-                {t("settings.notifications.title")}
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">
-                    {t("settings.notifications.email")}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t("settings.notifications.emailDescription")}
-                  </div>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "appearance":
+        return (
+          <SettingsContent
+            title={t("settings.appearance.title")}
+            description={t("settings.subtitle")}
+          >
+            <SettingsSection>
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <p className="text-sm text-destructive">{error}</p>
                 </div>
-                <Button
-                  variant={settings.notifications.email ? "default" : "outline"}
-                  size="sm"
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        email: !settings.notifications.email,
-                      },
-                    })
-                  }
-                >
-                  {settings.notifications.email
-                    ? t("settings.notifications.enabled")
-                    : t("settings.notifications.disabled")}
-                </Button>
-              </div>
+              )}
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">
-                    {t("settings.notifications.browser")}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t("settings.notifications.browserDescription")}
-                  </div>
+              {message && (
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {message}
+                  </p>
                 </div>
-                <Button
-                  variant={
-                    settings.notifications.browser ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        browser: !settings.notifications.browser,
-                      },
-                    })
-                  }
-                >
-                  {settings.notifications.browser
-                    ? t("settings.notifications.enabled")
-                    : t("settings.notifications.disabled")}
-                </Button>
-              </div>
+              )}
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">
-                    {t("settings.notifications.marketing")}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t("settings.notifications.marketingDescription")}
-                  </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">
+                    {t("settings.appearance.theme")}
+                  </label>
+                  <Select
+                    value={settings.theme}
+                    onValueChange={handleThemeChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="system">
+                        {t("settings.themes.system")}
+                      </SelectItem>
+                      <SelectItem value="light">
+                        {t("settings.themes.light")}
+                      </SelectItem>
+                      <SelectItem value="dark">
+                        {t("settings.themes.dark")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button
-                  variant={
-                    settings.notifications.marketing ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        marketing: !settings.notifications.marketing,
-                      },
-                    })
-                  }
-                >
-                  {settings.notifications.marketing
-                    ? t("settings.notifications.enabled")
-                    : t("settings.notifications.disabled")}
-                </Button>
-              </div>
-            </div>
-          </div>
 
-          {/* Privacy Settings */}
-          <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center mb-6">
-              <ShieldIcon className="w-5 h-5 mr-2 text-primary" />
-              <h2 className="text-xl font-semibold text-foreground">
-                {t("settings.privacy.title")}
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">
-                    {t("settings.privacy.profileVisibility")}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t("settings.privacy.profileVisibilityDescription")}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">
+                    {t("settings.appearance.language")}
+                  </label>
+                  <Select
+                    value={settings.language}
+                    onValueChange={handleLanguageChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zh-CN">
+                        {t("settings.languages.zh-CN")}
+                      </SelectItem>
+                      <SelectItem value="en-US">
+                        {t("settings.languages.en-US")}
+                      </SelectItem>
+                      <SelectItem value="ja-JP">
+                        {t("settings.languages.ja-JP")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button
-                  variant={
-                    settings.privacy.profileVisible ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      privacy: {
-                        ...settings.privacy,
-                        profileVisible: !settings.privacy.profileVisible,
-                      },
-                    })
-                  }
-                >
-                  {settings.privacy.profileVisible
-                    ? t("settings.privacy.public")
-                    : t("settings.privacy.private")}
-                </Button>
               </div>
+            </SettingsSection>
+          </SettingsContent>
+        );
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">
-                    {t("settings.privacy.activityStatus")}
+      case "notifications":
+        return (
+          <SettingsContent
+            title={t("settings.notifications.title")}
+            description={t("settings.notifications.description")}
+          >
+            <SettingsSection>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">
+                      {t("settings.notifications.email")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("settings.notifications.emailDescription")}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t("settings.privacy.activityStatusDescription")}
-                  </div>
+                  <Button
+                    variant={
+                      settings.notifications.email ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        notifications: {
+                          ...settings.notifications,
+                          email: !settings.notifications.email,
+                        },
+                      })
+                    }
+                  >
+                    {settings.notifications.email
+                      ? t("settings.notifications.enabled")
+                      : t("settings.notifications.disabled")}
+                  </Button>
                 </div>
-                <Button
-                  variant={
-                    settings.privacy.activityVisible ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      privacy: {
-                        ...settings.privacy,
-                        activityVisible: !settings.privacy.activityVisible,
-                      },
-                    })
-                  }
-                >
-                  {settings.privacy.activityVisible
-                    ? t("settings.privacy.show")
-                    : t("settings.privacy.hide")}
-                </Button>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">
+                      {t("settings.notifications.browser")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("settings.notifications.browserDescription")}
+                    </div>
+                  </div>
+                  <Button
+                    variant={
+                      settings.notifications.browser ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        notifications: {
+                          ...settings.notifications,
+                          browser: !settings.notifications.browser,
+                        },
+                      })
+                    }
+                  >
+                    {settings.notifications.browser
+                      ? t("settings.notifications.enabled")
+                      : t("settings.notifications.disabled")}
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">
+                      {t("settings.notifications.marketing")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("settings.notifications.marketingDescription")}
+                    </div>
+                  </div>
+                  <Button
+                    variant={
+                      settings.notifications.marketing ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        notifications: {
+                          ...settings.notifications,
+                          marketing: !settings.notifications.marketing,
+                        },
+                      })
+                    }
+                  >
+                    {settings.notifications.marketing
+                      ? t("settings.notifications.enabled")
+                      : t("settings.notifications.disabled")}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
+            </SettingsSection>
+          </SettingsContent>
+        );
 
-          {/* Security Settings */}
-          <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center mb-6">
-              <KeyIcon className="w-5 h-5 mr-2 text-primary" />
-              <h2 className="text-xl font-semibold text-foreground">
-                {t("settings.security.title")}
-              </h2>
-            </div>
+      case "privacy":
+        return (
+          <SettingsContent
+            title={t("settings.privacy.title")}
+            description={t("settings.privacy.description")}
+          >
+            <SettingsSection>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">
+                      {t("settings.privacy.profileVisibility")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("settings.privacy.profileVisibilityDescription")}
+                    </div>
+                  </div>
+                  <Button
+                    variant={
+                      settings.privacy.profileVisible ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        privacy: {
+                          ...settings.privacy,
+                          profileVisible: !settings.privacy.profileVisible,
+                        },
+                      })
+                    }
+                  >
+                    {settings.privacy.profileVisible
+                      ? t("settings.privacy.public")
+                      : t("settings.privacy.private")}
+                  </Button>
+                </div>
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-medium text-foreground mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">
+                      {t("settings.privacy.activityStatus")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("settings.privacy.activityStatusDescription")}
+                    </div>
+                  </div>
+                  <Button
+                    variant={
+                      settings.privacy.activityVisible ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        privacy: {
+                          ...settings.privacy,
+                          activityVisible: !settings.privacy.activityVisible,
+                        },
+                      })
+                    }
+                  >
+                    {settings.privacy.activityVisible
+                      ? t("settings.privacy.show")
+                      : t("settings.privacy.hide")}
+                  </Button>
+                </div>
+              </div>
+            </SettingsSection>
+          </SettingsContent>
+        );
+
+      case "security":
+        return (
+          <SettingsContent
+            title={t("settings.security.title")}
+            description={t("settings.security.description")}
+          >
+            <SettingsSection>
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+
+              {message && (
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {message}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">
                   {t("settings.security.changePassword")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
+
+                <div className="space-y-4">
+                  <div>
                     <label className="text-sm font-medium text-foreground">
                       {t("settings.security.currentPassword")}
                     </label>
@@ -639,65 +662,127 @@ function SettingsContent() {
                     !passwordData.newPassword ||
                     !passwordData.confirmPassword
                   }
-                  className="mt-4 flex items-center space-x-2"
                 >
-                  <SaveIcon className="w-4 h-4" />
-                  <span>{t("settings.security.updatePassword")}</span>
+                  {t("settings.security.updatePassword")}
                 </Button>
               </div>
-            </div>
-          </div>
+            </SettingsSection>
+          </SettingsContent>
+        );
 
-          {/* Danger Zone */}
-          <div className="bg-card border border-destructive/20 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center mb-6">
-              <TrashIcon className="w-5 h-5 mr-2 text-destructive" />
-              <h2 className="text-xl font-semibold text-destructive">
-                {t("settings.dangerZone.title")}
-              </h2>
-            </div>
+      case "dangerZone":
+        return (
+          <SettingsContent
+            title={t("settings.dangerZone.title")}
+            description={t("settings.dangerZone.description")}
+          >
+            <SettingsSection>
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-foreground mb-2">
-                  {t("settings.dangerZone.clearHistory")}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t("settings.dangerZone.clearHistoryDescription")}
-                </p>
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowClearHistoryDialog(true)}
-                  disabled={isLoading}
-                  className="flex items-center space-x-2"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                  <span>{t("settings.dangerZone.clearHistoryButton")}</span>
-                </Button>
+              {message && (
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {message}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div className="border border-destructive/20 rounded-lg p-4">
+                  <h3 className="font-medium text-foreground mb-2">
+                    {t("settings.dangerZone.clearHistory")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t("settings.dangerZone.clearHistoryDescription")}
+                  </p>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowClearHistoryDialog(true)}
+                    disabled={isLoading}
+                  >
+                    <TrashIcon className="w-4 h-4 mr-2" />
+                    {t("settings.dangerZone.clearHistoryButton")}
+                  </Button>
+                </div>
+
+                <div className="border border-destructive/20 rounded-lg p-4">
+                  <h3 className="font-medium text-foreground mb-2">
+                    {t("settings.dangerZone.deleteAccount")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t("settings.dangerZone.deleteAccountDescription")}
+                  </p>
+                  <Button
+                    variant="destructive"
+                    onClick={handleAccountDelete}
+                    disabled={isLoading}
+                  >
+                    <TrashIcon className="w-4 h-4 mr-2" />
+                    {t("settings.dangerZone.deleteAccountButton")}
+                  </Button>
+                </div>
               </div>
+            </SettingsSection>
+          </SettingsContent>
+        );
 
-              <div className="pt-4 border-t border-destructive/20">
-                <h3 className="font-medium text-foreground mb-2">
-                  {t("settings.dangerZone.deleteAccount")}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t("settings.dangerZone.deleteAccountDescription")}
-                </p>
-                <Button
-                  variant="destructive"
-                  onClick={handleAccountDelete}
-                  disabled={isLoading}
-                  className="flex items-center space-x-2"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                  <span>{t("settings.dangerZone.deleteAccountButton")}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <AlertDialog
+        open={showClearHistoryDialog}
+        onOpenChange={setShowClearHistoryDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("settings.dangerZone.clearHistory")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("settings.dangerZone.confirmClearHistory")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearHistory}
+              disabled={isLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLoading ? t("common.loading") : t("common.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex flex-col h-screen">
+        <Navbar />
+        <SettingsLayout
+          sidebar={
+            <SettingsSidebar
+              items={sidebarItems}
+              activeItem={activeTab}
+              onItemClick={(id) => {
+                setActiveTab(id as SettingTab);
+                setMessage("");
+                setError("");
+              }}
+            />
+          }
+        >
+          {renderContent()}
+        </SettingsLayout>
       </div>
-    </div>
     </>
   );
 }
@@ -705,7 +790,7 @@ function SettingsContent() {
 export default function SettingsPage() {
   return (
     <ProtectedRoute>
-      <SettingsContent />
+      <SettingsContentPage />
     </ProtectedRoute>
   );
 }

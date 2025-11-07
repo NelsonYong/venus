@@ -113,6 +113,7 @@
     },
     "notifications": {
       "title": "通知設定",
+      "description": "通知設定を管理",
       "email": "メール通知",
       "emailDescription": "重要な更新とセキュリティアラートを受信",
       "browser": "ブラウザ通知",
@@ -124,6 +125,7 @@
     },
     "privacy": {
       "title": "プライバシー設定",
+      "description": "プライバシー設定を制御",
       "profileVisibility": "プロフィールの表示",
       "profileVisibilityDescription": "他のユーザーが基本情報を見ることができます",
       "activityStatus": "アクティビティ状態",
@@ -135,36 +137,52 @@
     },
     "security": {
       "title": "セキュリティ設定",
+      "description": "セキュリティ設定を管理",
       "changePassword": "パスワード変更",
       "currentPassword": "現在のパスワード",
       "newPassword": "新しいパスワード",
       "confirmNewPassword": "新しいパスワード確認",
       "updatePassword": "パスワード更新",
       "passwordMismatch": "新しいパスワードと確認パスワードが一致しません",
-      "passwordTooShort": "パスワードは8文字以上である必要があります"
+      "passwordTooShort": "パスワードは8文字以上である必要があります",
+      "updateSuccess": "パスワードが正常に変更されました",
+      "updateFailed": "パスワードの変更に失敗しました",
+      "updateFailedRetry": "パスワードの変更に失敗しました。再試行してください。"
     },
     "dangerZone": {
       "title": "危険な操作",
+      "description": "取り消せない操作",
       "deleteAccount": "アカウント削除",
       "deleteAccountDescription": "アカウントとすべての関連データを永久に削除します。この操作は元に戻せません。",
       "deleteAccountButton": "アカウント削除",
+      "deleteAccountSuccess": "アカウントが正常に削除されました",
+      "deleteAccountFailed": "アカウントの削除に失敗しました",
+      "deleteAccountFailedRetry": "アカウントの削除に失敗しました。パスワードを確認して再試行してください。",
       "confirmDelete": "アカウントを削除してもよろしいですか？この操作は元に戻せず、すべてのデータが削除されます。",
       "doubleConfirm": "再度確認してください：アカウントを削除すると、すべての会話履歴と個人データが永久に失われます。",
       "enterPassword": "削除操作を確認するためにパスワードを入力してください：",
       "clearHistory": "履歴をクリア",
       "clearHistoryDescription": "すべての会話記録とメッセージを削除します。この操作は元に戻せませんが、アカウントには影響しません。",
       "clearHistoryButton": "すべての履歴をクリア",
+      "clearHistorySuccess": "履歴が正常にクリアされました",
+      "clearHistoryFailed": "履歴のクリアに失敗しました。再試行してください。",
       "confirmClearHistory": "すべての履歴をクリアしてもよろしいですか？この操作は元に戻せず、すべての会話記録が削除されます。"
     },
     "themes": {
       "system": "システムに従う",
       "light": "ライトモード",
-      "dark": "ダークモード"
+      "dark": "ダークモード",
+      "updateSuccess": "テーマが正常に更新されました",
+      "updateFailed": "テーマの更新に失敗しました",
+      "updateFailedRetry": "テーマの更新に失敗しました。再試行してください。"
     },
     "languages": {
       "zh-CN": "简体中文",
       "en-US": "English",
-      "ja-JP": "日本語"
+      "ja-JP": "日本語",
+      "updateSuccess": "言語が正常に更新されました",
+      "updateFailed": "言語の更新に失敗しました",
+      "updateFailedRetry": "言語の更新に失敗しました。再試行してください。"
     }
   },
   "common": {

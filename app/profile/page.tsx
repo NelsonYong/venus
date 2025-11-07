@@ -172,7 +172,7 @@ function ProfileContent() {
                   {/* Name */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
-                      <UserIcon className="w-4 h-4 mr-2" />
+                      <UserIcon className="w-4 h-4 " />
                       {t("profile.name")}
                     </label>
                     {isEditing ? (
@@ -193,7 +193,7 @@ function ProfileContent() {
                   {/* Email */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
-                      <MailIcon className="w-4 h-4 mr-2" />
+                      <MailIcon className="w-4 h-4 " />
                       {t("profile.email")}
                     </label>
                     <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
@@ -204,7 +204,7 @@ function ProfileContent() {
                   {/* Join Date */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
-                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      <CalendarIcon className="w-4 h-4 " />
                       {t("profile.joinDate")}
                     </label>
                     <p className="text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
@@ -219,7 +219,7 @@ function ProfileContent() {
                   {/* Language */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
-                      <LanguagesIcon className="w-4 h-4 mr-2" />
+                      <LanguagesIcon className="w-4 h-4 " />
                       {t("profile.languagePreference")}
                     </label>
                     <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
@@ -233,7 +233,7 @@ function ProfileContent() {
                 {/* Theme */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground flex items-center">
-                    <PaletteIcon className="w-4 h-4 mr-2" />
+                    <PaletteIcon className="w-4 h-4 " />
                     {t("profile.themePreference")}
                   </label>
                   <p className="text-foreground bg-muted/50 rounded-md px-3 py-2 inline-block">

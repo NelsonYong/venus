@@ -275,7 +275,7 @@ function SettingsContent() {
           {/* Appearance Settings */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
             <div className="flex items-center mb-6">
-              <PaletteIcon className="w-5 h-5 mr-2 text-primary" />
+              <PaletteIcon className="w-5 h-5  text-primary" />
               <h2 className="text-xl font-semibold text-foreground">
                 {t("settings.appearance.title")}
               </h2>
@@ -350,7 +350,7 @@ function SettingsContent() {
           {/* Notification Settings */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
             <div className="flex items-center mb-6">
-              <BellIcon className="w-5 h-5 mr-2 text-primary" />
+              <BellIcon className="w-5 h-5  text-primary" />
               <h2 className="text-xl font-semibold text-foreground">
                 {t("settings.notifications.title")}
               </h2>
@@ -450,7 +450,7 @@ function SettingsContent() {
           {/* Privacy Settings */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
             <div className="flex items-center mb-6">
-              <ShieldIcon className="w-5 h-5 mr-2 text-primary" />
+              <ShieldIcon className="w-5 h-5  text-primary" />
               <h2 className="text-xl font-semibold text-foreground">
                 {t("settings.privacy.title")}
               </h2>
@@ -522,7 +522,7 @@ function SettingsContent() {
           {/* Security Settings */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
             <div className="flex items-center mb-6">
-              <KeyIcon className="w-5 h-5 mr-2 text-primary" />
+              <KeyIcon className="w-5 h-5  text-primary" />
               <h2 className="text-xl font-semibold text-foreground">
                 {t("settings.security.title")}
               </h2>
@@ -651,7 +651,7 @@ function SettingsContent() {
           {/* Danger Zone */}
           <div className="bg-card border border-destructive/20 rounded-lg p-6 shadow-sm">
             <div className="flex items-center mb-6">
-              <TrashIcon className="w-5 h-5 mr-2 text-destructive" />
+              <TrashIcon className="w-5 h-5  text-destructive" />
               <h2 className="text-xl font-semibold text-destructive">
                 {t("settings.dangerZone.title")}
               </h2>

@@ -16,6 +16,7 @@ import {
   TerminalIcon,
   KeyIcon,
   ListIcon,
+  AlertCircleIcon,
 } from "lucide-react";
 
 export interface McpServer {
@@ -26,24 +27,61 @@ export interface McpServer {
   env?: Record<string, string>;
   enabled: boolean;
   isNew?: boolean;
+  isPersisted?: boolean; // 是否已保存到数据库
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface McpServerItemProps {
   server: McpServer;
   onUpdate: (server: McpServer) => void;
+  onSave: (server: McpServer) => void;
   onDelete: (id: string) => void;
+  onCancel: (id: string) => void;
 }
 
-export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps) {
+export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: McpServerItemProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(server.isNew || false);
   const [editedServer, setEditedServer] = useState<McpServer>(server);
+  const [validationErrors, setValidationErrors] = useState<{
+    name?: string;
+    command?: string;
+  }>({});
+
+  const validateServer = (): boolean => {
+    const errors: { name?: string; command?: string } = {};
+
+    if (!editedServer.name.trim()) {
+      errors.name = t("settings.developer.mcpConfig.validation.nameRequired");
+    }
+
+    if (!editedServer.command.trim()) {
+      errors.command = t("settings.developer.mcpConfig.validation.commandRequired");
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSave = () => {
-    if (!editedServer.name.trim() || !editedServer.command.trim()) {
+    if (!validateServer()) {
       return;
     }
-    onUpdate(editedServer);
+
+    onSave(editedServer);
+    setValidationErrors({});
+  };
+
+  const handleCancel = () => {
+    if (server.isPersisted === false) {
+      // 未保存的新服务器，直接取消
+      onCancel(server.id);
+    } else {
+      // 已保存的服务器，恢复原始数据
+      setEditedServer(server);
+      setValidationErrors({});
+    }
   };
 
   const handleToggleEnabled = () => {
@@ -62,44 +100,55 @@ export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps
   const updateArg = (index: number, value: string) => {
     const newArgs = [...editedServer.args];
     newArgs[index] = value;
-    setEditedServer({ ...editedServer, args: newArgs });
+    const updated = { ...editedServer, args: newArgs };
+    setEditedServer(updated);
+    onUpdate(updated);
   };
 
   const removeArg = (index: number) => {
     const newArgs = editedServer.args.filter((_, i) => i !== index);
-    setEditedServer({ ...editedServer, args: newArgs });
+    const updated = { ...editedServer, args: newArgs };
+    setEditedServer(updated);
+    onUpdate(updated);
   };
 
   const addEnvVar = () => {
     const newKey = `VAR_${Object.keys(editedServer.env || {}).length + 1}`;
     setEditedServer({
       ...editedServer,
-      env: { ...editedServer.env, [newKey]: "" },
+      env: { ...(editedServer.env || {}), [newKey]: "" },
     });
   };
 
   const updateEnvKey = (oldKey: string, newKey: string) => {
-    const env = { ...editedServer.env };
+    const env = { ...(editedServer.env || {}) };
     const value = env[oldKey];
     delete env[oldKey];
     env[newKey] = value;
-    setEditedServer({ ...editedServer, env });
+    const updated = { ...editedServer, env };
+    setEditedServer(updated);
+    onUpdate(updated);
   };
 
   const updateEnvValue = (key: string, value: string) => {
-    setEditedServer({
+    const updated = {
       ...editedServer,
-      env: { ...editedServer.env, [key]: value },
-    });
+      env: { ...(editedServer.env || {}), [key]: value },
+    };
+    setEditedServer(updated);
+    onUpdate(updated);
   };
 
   const removeEnvVar = (key: string) => {
-    const env = { ...editedServer.env };
+    const env = { ...(editedServer.env || {}) };
     delete env[key];
-    setEditedServer({ ...editedServer, env });
+    const updated = { ...editedServer, env };
+    setEditedServer(updated);
+    onUpdate(updated);
   };
 
   const hasChanges = JSON.stringify(editedServer) !== JSON.stringify(server);
+  const canDelete = server.isPersisted !== false; // 只有已保存的服务器才显示删除按钮
 
   return (
     <Card className="group border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md overflow-hidden">
@@ -127,6 +176,12 @@ export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps
                   New
                 </span>
               )}
+              {server.isPersisted === false && (
+                <span className="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-medium flex items-center gap-1">
+                  <AlertCircleIcon className="w-3 h-3" />
+                  Unsaved
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground truncate font-mono mt-0.5">
               {server.command ? (
@@ -151,14 +206,16 @@ export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps
               </span>
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(server.id)}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <TrashIcon className="w-4 h-4" />
-            </Button>
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(server.id)}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -174,12 +231,22 @@ export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps
               </label>
               <Input
                 value={editedServer.name}
-                onChange={(e) =>
-                  setEditedServer({ ...editedServer, name: e.target.value })
-                }
+                onChange={(e) => {
+                  const updated = { ...editedServer, name: e.target.value };
+                  setEditedServer(updated);
+                  onUpdate(updated);
+                }}
                 placeholder={t("settings.developer.mcpConfig.serverNamePlaceholder")}
-                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
+                  validationErrors.name ? 'border-destructive' : ''
+                }`}
               />
+              {validationErrors.name && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircleIcon className="w-3 h-3" />
+                  {validationErrors.name}
+                </p>
+              )}
             </div>
 
             {/* Command */}
@@ -191,12 +258,22 @@ export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps
               </label>
               <Input
                 value={editedServer.command}
-                onChange={(e) =>
-                  setEditedServer({ ...editedServer, command: e.target.value })
-                }
+                onChange={(e) => {
+                  const updated = { ...editedServer, command: e.target.value };
+                  setEditedServer(updated);
+                  onUpdate(updated);
+                }}
                 placeholder={t("settings.developer.mcpConfig.commandPlaceholder")}
-                className="font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                className={`font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
+                  validationErrors.command ? 'border-destructive' : ''
+                }`}
               />
+              {validationErrors.command && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircleIcon className="w-3 h-3" />
+                  {validationErrors.command}
+                </p>
+              )}
             </div>
 
             {/* Arguments */}
@@ -308,11 +385,13 @@ export function McpServerItem({ server, onUpdate, onDelete }: McpServerItemProps
                 className="gap-2 shadow-sm hover:shadow transition-all duration-200"
               >
                 <SaveIcon className="w-4 h-4" />
-                {t("settings.developer.mcpConfig.save")}
+                {server.isPersisted === false
+                  ? t("settings.developer.mcpConfig.create")
+                  : t("settings.developer.mcpConfig.save")}
               </Button>
-              {hasChanges && (
+              {(hasChanges || server.isPersisted === false) && (
                 <Button
-                  onClick={() => setEditedServer(server)}
+                  onClick={handleCancel}
                   variant="outline"
                   className="gap-2"
                 >

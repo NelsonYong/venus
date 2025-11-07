@@ -17,9 +17,7 @@ export function SettingsLayout({ sidebar, children }: SettingsLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-auto">{children}</main>
     </div>
   );
 }
@@ -34,7 +32,11 @@ interface SettingsSidebarProps {
   onItemClick: (id: string) => void;
 }
 
-export function SettingsSidebar({ items, activeItem, onItemClick }: SettingsSidebarProps) {
+export function SettingsSidebar({
+  items,
+  activeItem,
+  onItemClick,
+}: SettingsSidebarProps) {
   return (
     <nav className="p-4 space-y-1">
       {items.map((item) => (
@@ -62,7 +64,11 @@ interface SettingsContentProps {
   children: ReactNode;
 }
 
-export function SettingsContent({ title, description, children }: SettingsContentProps) {
+export function SettingsContent({
+  title,
+  description,
+  children,
+}: SettingsContentProps) {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-6">
@@ -82,9 +88,5 @@ interface SettingsSectionProps {
 }
 
 export function SettingsSection({ children, className }: SettingsSectionProps) {
-  return (
-    <div className={cn("space-y-6", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("space-y-6", className)}>{children}</div>;
 }

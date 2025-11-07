@@ -144,7 +144,9 @@ function SettingsContentPage() {
         setTimeout(() => setMessage(""), 2000);
       } else {
         setError(
-          response.message || response.error || t("settings.themes.updateFailed")
+          response.message ||
+            response.error ||
+            t("settings.themes.updateFailed")
         );
       }
     } catch (error) {
@@ -165,14 +167,18 @@ function SettingsContentPage() {
       });
 
       if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || t("settings.languages.updateSuccess"));
+        setMessage(
+          response.data.message || t("settings.languages.updateSuccess")
+        );
         await refreshAuth();
         await changeLanguage(newLanguage);
         // Auto-hide message after 2 seconds
         setTimeout(() => setMessage(""), 2000);
       } else {
         setError(
-          response.message || response.error || t("settings.languages.updateFailed")
+          response.message ||
+            response.error ||
+            t("settings.languages.updateFailed")
         );
       }
     } catch (error) {
@@ -202,7 +208,9 @@ function SettingsContentPage() {
       );
 
       if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || t("settings.security.updateSuccess"));
+        setMessage(
+          response.data.message || t("settings.security.updateSuccess")
+        );
         setPasswordData({
           currentPassword: "",
           newPassword: "",
@@ -210,7 +218,9 @@ function SettingsContentPage() {
         });
       } else {
         setError(
-          response.message || response.error || t("settings.security.updateFailed")
+          response.message ||
+            response.error ||
+            t("settings.security.updateFailed")
         );
       }
     } catch (error) {
@@ -271,11 +281,15 @@ function SettingsContentPage() {
       const response = await authAPI.deleteAccount(password);
 
       if (response.status === 200 && response.data?.success) {
-        alert(response.data.message || t("settings.dangerZone.deleteAccountSuccess"));
+        alert(
+          response.data.message || t("settings.dangerZone.deleteAccountSuccess")
+        );
         window.location.href = "/login";
       } else {
         setError(
-          response.message || response.error || t("settings.dangerZone.deleteAccountFailed")
+          response.message ||
+            response.error ||
+            t("settings.dangerZone.deleteAccountFailed")
         );
       }
     } catch (error) {
@@ -724,7 +738,7 @@ function SettingsContentPage() {
                     onClick={() => setShowClearHistoryDialog(true)}
                     disabled={isLoading}
                   >
-                    <TrashIcon className="w-4 h-4 mr-2" />
+                    <TrashIcon className="w-4 h-4 " />
                     {t("settings.dangerZone.clearHistoryButton")}
                   </Button>
                 </div>
@@ -741,7 +755,7 @@ function SettingsContentPage() {
                     onClick={handleAccountDelete}
                     disabled={isLoading}
                   >
-                    <TrashIcon className="w-4 h-4 mr-2" />
+                    <TrashIcon className="w-4 h-4 " />
                     {t("settings.dangerZone.deleteAccountButton")}
                   </Button>
                 </div>

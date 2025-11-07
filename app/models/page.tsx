@@ -380,7 +380,7 @@ function ModelCard({
                           disabled={isSaving}
                           size="sm"
                         >
-                          <SaveIcon className="w-4 h-4 mr-2" />
+                          <SaveIcon className="w-4 h-4" />
                           {isSaving ? t("models.saving") : t("models.save")}
                         </Button>
                         <Button
@@ -391,7 +391,7 @@ function ModelCard({
                             setShowDeleteDialog(true);
                           }}
                         >
-                          <TrashIcon className="w-4 h-4 mr-2" />
+                          <TrashIcon className="w-4 h-4" />
                           {t("models.delete")}
                         </Button>
                       </div>
@@ -546,7 +546,7 @@ function ProviderSection({
                 className="w-full border-dashed"
                 onClick={() => onAddModel(provider.id)}
               >
-                <PlusIcon className="w-4 h-4 mr-2" />
+                <PlusIcon className="w-4 h-4 " />
                 {t("models.addModel")}
               </Button>
             </div>

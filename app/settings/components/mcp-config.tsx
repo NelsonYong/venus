@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { McpServerItem, type McpServer } from "./mcp-server-item";
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { mcpAPI } from "@/lib/api/mcp";
 
 export function McpConfig() {
   const { t } = useTranslation();
@@ -22,38 +23,141 @@ export function McpConfig() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 加载服务器列表
+  useEffect(() => {
+    loadServers();
+  }, []);
+
+  const loadServers = async () => {
+    try {
+      setIsLoading(true);
+      const serverList = await mcpAPI.getAll();
+      setServers(serverList);
+    } catch (err) {
+      console.error("Failed to load MCP servers:", err);
+      setError(t("settings.developer.mcpConfig.loadFailed"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAddServer = () => {
     const newServer: McpServer = {
-      id: `mcp-${Date.now()}`,
+      id: `temp-${Date.now()}`, // 临时 ID
       name: "",
       command: "",
       args: [],
       env: {},
       enabled: true,
       isNew: true,
+      isPersisted: false, // 标记为未持久化
     };
-    setServers([...servers, newServer]);
+    setServers([newServer, ...servers]);
   };
 
-  const handleUpdateServer = (updatedServer: McpServer) => {
+  const handleSaveServer = async (server: McpServer) => {
+    setMessage("");
+    setError("");
+
+    try {
+      if (server.isPersisted === false) {
+        // 创建新服务器
+        const created = await mcpAPI.create({
+          name: server.name,
+          command: server.command,
+          args: server.args,
+          env: server.env,
+          enabled: server.enabled,
+        });
+
+        // 替换临时 ID
+        setServers(servers.map((s) =>
+          s.id === server.id ? { ...created, isPersisted: true } : s
+        ));
+
+        setMessage(t("settings.developer.mcpConfig.createSuccess"));
+      } else {
+        // 更新现有服务器
+        const updated = await mcpAPI.update(server.id, {
+          name: server.name,
+          command: server.command,
+          args: server.args,
+          env: server.env,
+          enabled: server.enabled,
+        });
+
+        setServers(servers.map((s) =>
+          s.id === server.id ? { ...updated, isPersisted: true } : s
+        ));
+
+        setMessage(t("settings.developer.mcpConfig.saveSuccess"));
+      }
+
+      setTimeout(() => setMessage(""), 2000);
+    } catch (err: any) {
+      console.error("Failed to save MCP server:", err);
+      setError(err.message || t("settings.developer.mcpConfig.saveFailed"));
+    }
+  };
+
+  const handleUpdateServer = async (updatedServer: McpServer) => {
+    // 只更新本地状态，不立即保存
     setServers(
-      servers.map((s) => (s.id === updatedServer.id ? { ...updatedServer, isNew: false } : s))
+      servers.map((s) => (s.id === updatedServer.id ? updatedServer : s))
     );
-    setMessage(t("settings.developer.mcpConfig.saveSuccess"));
-    setTimeout(() => setMessage(""), 2000);
   };
 
-  const handleDeleteServer = (id: string) => {
-    setServers(servers.filter((s) => s.id !== id));
-    setDeleteId(null);
-    setMessage(t("settings.developer.mcpConfig.deleteSuccess"));
-    setTimeout(() => setMessage(""), 2000);
+  const handleDeleteServer = async (id: string) => {
+    setMessage("");
+    setError("");
+
+    const server = servers.find(s => s.id === id);
+
+    if (!server) return;
+
+    // 如果是未持久化的新服务器，直接从列表移除
+    if (server.isPersisted === false) {
+      setServers(servers.filter((s) => s.id !== id));
+      setDeleteId(null);
+      return;
+    }
+
+    // 否则调用 API 删除
+    try {
+      await mcpAPI.delete(id);
+      setServers(servers.filter((s) => s.id !== id));
+      setDeleteId(null);
+      setMessage(t("settings.developer.mcpConfig.deleteSuccess"));
+      setTimeout(() => setMessage(""), 2000);
+    } catch (err: any) {
+      console.error("Failed to delete MCP server:", err);
+      setError(err.message || t("settings.developer.mcpConfig.deleteFailed"));
+    }
   };
 
   const confirmDelete = (id: string) => {
     setDeleteId(id);
   };
+
+  const handleCancelNew = (id: string) => {
+    // 取消新建服务器
+    setServers(servers.filter((s) => s.id !== id));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-muted-foreground">
+            {t("common.loading")}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -108,10 +212,10 @@ export function McpConfig() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-muted-foreground">
-                {servers.length} {servers.length === 1 ? 'Server' : 'Servers'}
+                {servers.filter(s => s.isPersisted !== false).length} {servers.filter(s => s.isPersisted !== false).length === 1 ? 'Server' : 'Servers'}
               </span>
               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                {servers.filter(s => s.enabled).length} Active
+                {servers.filter(s => s.enabled && s.isPersisted !== false).length} Active
               </span>
             </div>
             <Button
@@ -134,7 +238,9 @@ export function McpConfig() {
                 <McpServerItem
                   server={server}
                   onUpdate={handleUpdateServer}
+                  onSave={handleSaveServer}
                   onDelete={confirmDelete}
+                  onCancel={handleCancelNew}
                 />
               </div>
             ))}

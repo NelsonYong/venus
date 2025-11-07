@@ -65,6 +65,10 @@ export function useChatBot() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // 阻止在流式输出时发送新消息
+    if (status === "streaming") {
+      return;
+    }
     if (input.trim()) {
       // 如果没有 chatId，则生成一个
       if (!searchParams.get("chatId")) {

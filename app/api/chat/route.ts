@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { convertToModelMessages, stepCountIs, streamText, tool, UIMessage } from 'ai';
+import { convertToModelMessages, stepCountIs, streamText, tool, UIMessage, Experimental_Agent as Agent } from 'ai';
 import { billingService } from '@/lib/billing';
 import { NextResponse } from 'next/server';
 import { performWebSearch, formatSearchResults } from '@/lib/search-tool';
@@ -169,7 +169,7 @@ export async function POST(req: Request) {
       weather: tool({
         description: 'Get the current weather information for a specific location. Use this tool when the user asks about weather conditions, temperature, or weather forecasts. Think about what location information you have or need before calling this tool.',
         inputSchema: z.object({
-          location: z.string().describe('The city or location name to get weather for (e.g., "Beijing", "New York", "London")'),
+          location: z.string().describe('The city or location name to get weather for. IMPORTANT: Use the SAME LANGUAGE as the user\'s question (e.g., if user asks in Chinese "北京天气", use "北京", NOT "Beijing")'),
         }),
         execute: async ({ location }) => {
           // 模拟天气数据，实际应用中应该调用真实的天气 API
@@ -188,7 +188,7 @@ export async function POST(req: Request) {
       tools.webSearch = tool({
         description: 'Search the web for current information, news, facts, or any information that requires up-to-date knowledge. Use this tool when: 1) The user asks about recent events or current information, 2) You need to verify facts or get the latest data, 3) The question requires information beyond your training data. Think carefully about what search query would best help answer the user\'s question.',
         inputSchema: z.object({
-          query: z.string().describe('A clear and specific search query that will help find the information needed to answer the user\'s question. Use concise keywords and relevant terms.'),
+          query: z.string().describe('A clear and specific search query. IMPORTANT: Use the SAME LANGUAGE as the user\'s question (e.g., if user asks in Chinese "React 19的优势", use "React 19的优势" or "React 19 优势", NOT "React 19 advantages")'),
         }),
         execute: async ({ query }) => {
           try {
@@ -204,68 +204,13 @@ export async function POST(req: Request) {
     // Create model adapter based on configuration
     const model = createModelAdapter(modelConfig);
 
-    // ReAct 模式的 System Prompt
-    // ReAct (Reasoning + Acting) 是一种决策模式，让模型在推理和行动之间循环
-    const availableTools = Object.keys(tools).join(', ');
-    const reactSystemPrompt = `You are a helpful AI assistant that uses ReAct (Reasoning and Acting) decision-making pattern to solve problems systematically.
-
-**CRITICAL: You MUST use tools when needed. Do not skip tool usage when information is required.**
-
-**Available Tools:** ${availableTools}
-
-**ReAct Pattern - Follow these steps:**
-
-**Step 1: THINK (Reasoning)**
-Before taking any action, always reason about the problem:
-- What is the user asking for?
-- What information do I need to answer this?
-- Do I have the required information in my knowledge, or do I need to use tools?
-- Which tool(s) should I use to get the needed information?
-
-**Step 2: ACT (Tool Usage)**
-If you need information that requires tools, you MUST call the appropriate tool:
-- Use weather tool when asked about weather conditions
-${webSearch ? '- Use webSearch tool when asked about current events, recent information, or facts that need verification' : ''}
-- Call tools with clear, specific parameters
-- Do NOT try to answer without using tools when tools are needed
-
-**Step 3: OBSERVE (Analyze Results)**
-After tool execution:
-- Carefully analyze the tool results
-- Determine if you have enough information to answer the question
-- If information is insufficient, think about what else you need and call additional tools
-- Continue the Think-Act-Observe cycle until you have sufficient information
-
-**Step 4: RESPOND (Final Answer)**
-Once you have sufficient information:
-- Synthesize all findings from tools
-- Provide a clear, comprehensive answer
-- Cite sources when using web search results
-- Output your final answer in markdown format
-
-**IMPORTANT RULES:**
-1. ALWAYS use tools when the question requires information you don't have
-2. NEVER skip tool usage when tools are available and needed
-3. Show your reasoning process explicitly
-4. Call tools immediately when you identify you need them - don't hesitate
-5. Use multiple tools if needed to gather complete information
-
-**Example Flow:**
-User: "What's the weather in Beijing?"
-Think: "User wants weather information. I need to use the weather tool with location 'Beijing'."
-Act: Call weather tool with location="Beijing"
-Observe: "Got weather data: temperature 22°C, sunny"
-Respond: "According to the latest data, Beijing's weather is sunny with a temperature of 22°C..."
-
-${webSearch ? 'REMEMBER: When users ask about current events, news, or recent information, you MUST use the webSearch tool. Do not rely solely on your training data.' : ''}`;
-
     // 添加调试日志
     console.log('🔧 Available tools:', Object.keys(tools));
     console.log('📝 Tools count:', Object.keys(tools).length);
 
     const result = streamText({
       model,
-      system: reactSystemPrompt,
+      system: 'you are a helpful assistant that uses ReAct (Reasoning and Acting) decision-making pattern to solve problems systematically.',
       messages: convertToModelMessages(messages),
       abortSignal: AbortSignal.timeout(60000),
       tools,
@@ -372,13 +317,8 @@ ${webSearch ? 'REMEMBER: When users ask about current events, news, or recent in
             }
 
             // 判断是否应该保存助手回复
-            // 策略：如果用户消息已保存（或即将保存），或者最后一条消息不是助手消息，或者内容不同，则保存
-            const shouldSaveAssistantMessage = assistantResponse && (
-              shouldSaveUserMessage || // 用户消息是新保存的，助手回复也保存
-              !lastMessage || // 没有历史消息，保存
-              lastMessage.role !== 'assistant' || // 最后一条不是助手消息，保存
-              lastMessage.content !== assistantMessageContent // 内容不同，保存
-            );
+            // 策略：只有在保存了用户消息的情况下才保存助手回复，确保一问一答配对
+            const shouldSaveAssistantMessage = assistantResponse && shouldSaveUserMessage;
 
             if (shouldSaveAssistantMessage) {
               messagesToCreate.push({

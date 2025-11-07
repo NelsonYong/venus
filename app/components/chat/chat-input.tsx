@@ -27,6 +27,7 @@ interface ChatInputProps {
   webSearch: boolean;
   onWebSearchToggle: () => void;
   status: string;
+  onStop?: () => void;
   className?: string;
 }
 
@@ -39,6 +40,7 @@ export function ChatInput({
   webSearch,
   onWebSearchToggle,
   status,
+  onStop,
   className,
 }: ChatInputProps) {
   const { t } = useTranslation();
@@ -99,7 +101,7 @@ export function ChatInput({
             </PromptInputModelSelectContent>
           </PromptInputModelSelect>
         </PromptInputTools>
-        <PromptInputSubmit disabled={!input} status={status as ChatStatus} />
+        <PromptInputSubmit disabled={!input && status !== "streaming"} status={status as ChatStatus} onStop={onStop} />
       </PromptInputToolbar>
     </PromptInput>
   );

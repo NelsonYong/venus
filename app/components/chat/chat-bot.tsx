@@ -108,6 +108,8 @@ export function ChatBot() {
     handleNavigationAttempt(() => handleLoadChat(chatId));
   };
 
+  console.log("messages", messages);
+
   return (
     <>
       <AlertDialog open={showLeaveWarning} onOpenChange={setShowLeaveWarning}>
@@ -171,6 +173,7 @@ export function ChatBot() {
                 error={error}
                 isLoadingChat={isLoadingChat}
                 onRegenerate={handleRegenerate}
+                onStop={stop}
               />
             </div>
           </div>

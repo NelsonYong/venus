@@ -22,6 +22,7 @@ interface ChatLayoutProps {
   error?: Error | undefined;
   isLoadingChat?: boolean;
   onRegenerate?: () => void;
+  onStop?: () => void;
 }
 
 export function ChatLayout({
@@ -37,6 +38,7 @@ export function ChatLayout({
   error,
   isLoadingChat = false,
   onRegenerate,
+  onStop,
 }: ChatLayoutProps) {
   const hasMessages = messages.length > 0;
 
@@ -63,6 +65,7 @@ export function ChatLayout({
           webSearch={webSearch}
           onWebSearchToggle={onWebSearchToggle}
           status={status}
+          onStop={onStop}
           className="flex-shrink-0 w-full max-w-3xl mx-auto mb-8"
         />
       </div>
@@ -108,6 +111,7 @@ export function ChatLayout({
         webSearch={webSearch}
         onWebSearchToggle={onWebSearchToggle}
         status={status}
+        onStop={onStop}
         className="flex-shrink-0 w-full max-w-4xl mx-auto mb-2"
       />
     </div>

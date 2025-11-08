@@ -3,6 +3,15 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
+import { ProxyAgent, setGlobalDispatcher } from "undici";
+
+// 设置代理 - 用于访问 GitHub/Google OAuth API
+if (process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+  const dispatcher = new ProxyAgent(proxyUrl!);
+  setGlobalDispatcher(dispatcher);
+  console.log(`[Auth] Using proxy: ${proxyUrl}`);
+}
 
 // NextAuth v5 requires AUTH_SECRET or NEXTAUTH_SECRET
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;

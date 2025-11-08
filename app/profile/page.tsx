@@ -11,13 +11,10 @@ import { profileAPI } from "@/lib/http-client";
 import {
   UserIcon,
   MailIcon,
-  CalendarIcon,
   EditIcon,
   SaveIcon,
   XIcon,
   CameraIcon,
-  LanguagesIcon,
-  PaletteIcon,
 } from "lucide-react";
 import { useConversations } from "../hooks/use-conversations";
 

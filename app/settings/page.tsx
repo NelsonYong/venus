@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/app/contexts/auth-context";
+import { useAuth } from "@/app/hooks/use-auth";
 import { useI18n, useTranslation } from "@/app/contexts/i18n-context";
-import { ProtectedRoute } from "@/app/components/auth/protected-route";
 import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -823,8 +822,8 @@ function SettingsContentPage() {
 
 export default function SettingsPage() {
   return (
-    <ProtectedRoute>
+    
       <SettingsContentPage />
-    </ProtectedRoute>
+    
   );
 }

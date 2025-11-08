@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/app/contexts/auth-context";
 import { useChatHistory } from "./use-conversations";
 import { useAutoSummary } from "./use-auto-summary";
 import { useConversationActions } from "./use-conversation-actions";
 import { defaultModel } from "@/app/constants/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-client";
+import { useAuth } from "./use-auth";
 
 export function useChatBot() {
   const { user } = useAuth();

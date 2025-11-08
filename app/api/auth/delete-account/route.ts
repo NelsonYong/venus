@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateSession, verifyPassword } from "@/lib/auth";
+import { requireAuth, verifyPassword } from "@/lib/auth";
 
 interface DeleteAccountData {
   password: string;
@@ -29,7 +29,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
     
     if (!session) {
       return NextResponse.json(

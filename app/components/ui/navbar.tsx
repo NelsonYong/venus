@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { UserMenu } from "./user-menu";
 import { ThemeToggle } from "../theme-toggle";
-import { useAuth } from "@/app/contexts/auth-context";
+import { useAuth } from "@/app/hooks/use-auth";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

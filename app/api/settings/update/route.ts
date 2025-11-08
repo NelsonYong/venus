@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateSession } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 interface UpdateSettingsData {
   theme?: 'system' | 'light' | 'dark';
@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
     
     if (!session) {
       return NextResponse.json(

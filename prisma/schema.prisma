@@ -10,25 +10,52 @@ datasource db {
 
 model User {
   id              String         @id @default(cuid())
-  email           String         @unique
-  name            String
-  avatar          String?
+  email           String?        @unique
+  emailVerified   DateTime?
+  name            String?
+  image           String?
   createdAt       DateTime       @default(now())
-  emailVerified   Boolean        @default(false)
-  emailVerifiedAt DateTime?
   language        String         @default("zh-CN")
-  password        String
   theme           String         @default("system")
   updatedAt       DateTime       @updatedAt
   conversations   Conversation[]
   messages        Message[]
   sessions        Session[]
+  accounts        Account[]
   userBilling     UserBilling?
   billingRecords  BillingRecord[]
   usageRecords    UsageRecord[]
   mcpServers      McpServer[]
 
   @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model Conversation {
@@ -103,18 +130,17 @@ model ApiUsage {
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  userAgent String?
-  ipAddress String?
-  device    String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  userAgent    String?
+  ipAddress    String?
+  device       String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([expiresAt])
   @@map("sessions")
 }
 

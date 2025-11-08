@@ -1,39 +1,57 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuth } from "@/app/contexts/auth-context";
-import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
+
+// 公开路径，不需要登录
+const publicPaths = ["/auth/signin", "/auth/error", "/api"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // 检查是否是公开路径
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
 
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'auth-logout') {
-        router.push('/login');
-      }
-    };
+    // 如果正在加载，不做任何操作
+    if (status === "loading") return;
 
-    const handleUnauthorized = () => {
-      const currentPath = window.location.pathname;
-      if (!currentPath.includes('/login')) {
-        const loginUrl = new URL('/login', window.location.origin);
-        if (currentPath !== '/') {
-          loginUrl.searchParams.set('redirect', currentPath);
-        }
-        router.push(loginUrl.pathname + loginUrl.search);
-      }
-    };
+    // 如果是公开路径，不需要认证检查
+    if (isPublicPath) return;
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('auth-unauthorized', handleUnauthorized);
+    // 如果未登录且不在公开路径，重定向到登录页
+    if (status === "unauthenticated") {
+      const signInUrl = `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`;
+      router.replace(signInUrl);
+    }
+  }, [status, pathname, isPublicPath, router]);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('auth-unauthorized', handleUnauthorized);
-    };
-  }, [router]);
+  // 显示加载状态
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <div className="text-muted-foreground">加载中...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // 如果未登录且不在公开路径，显示加载状态（正在重定向）
+  if (status === "unauthenticated" && !isPublicPath) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <div className="text-muted-foreground">正在跳转到登录页...</div>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

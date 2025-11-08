@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/contexts/i18n-context";
-import { useAuth } from "@/app/contexts/auth-context";
+import { useAuth } from "@/app/hooks/use-auth";
 
 export function EmptyChatState() {
   const { t } = useTranslation();

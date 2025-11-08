@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/app/contexts/auth-context";
+import { signOut } from "next-auth/react";
+import { useAuth } from "@/app/hooks/use-auth";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 
 export function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,13 +32,14 @@ export function UserMenu() {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      await logout();
+      await signOut({ callbackUrl: "/auth/signin" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -54,14 +56,14 @@ export function UserMenu() {
           className="flex items-center space-x-2 h-auto p-2 hover:bg-muted/50"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
             <AvatarFallback className="text-xs">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start text-left">
             <span className="text-sm font-medium truncate max-w-24">
-              {user.name}
+              {user.name || "用户"}
             </span>
             <span className="text-xs text-muted-foreground truncate max-w-24">
               {user.email}
@@ -74,16 +76,12 @@ export function UserMenu() {
         <div className="p-4 space-y-4">
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="space-y-1">
-              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-sm font-medium">{user.name || "用户"}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("userMenu.registeredSince")}{" "}
-                {new Date(user.createdAt).toLocaleDateString("zh-CN")}
-              </p>
             </div>
           </div>
 

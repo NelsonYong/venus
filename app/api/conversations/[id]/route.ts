@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateSession } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -59,7 +59,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -184,7 +184,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,12 +1,11 @@
 "use client";
 
 import { BillingDashboard } from "@/components/billing-dashboard";
-import { useAuth } from "@/app/contexts/auth-context";
 import { useTranslation } from "@/app/contexts/i18n-context";
-import { ProtectedRoute } from "@/app/components/auth/protected-route";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/hooks/use-auth";
 
 function BillingPageContent() {
   const { user } = useAuth();
@@ -33,7 +32,9 @@ function BillingPageContent() {
             </Button>
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">{t("billing.title")}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {t("billing.title")}
+            </h1>
             <p className="text-muted-foreground text-sm">
               {t("billing.subtitle")}
             </p>
@@ -47,8 +48,8 @@ function BillingPageContent() {
 
 export default function BillingPage() {
   return (
-    <ProtectedRoute>
+    
       <BillingPageContent />
-    </ProtectedRoute>
+    
   );
 }

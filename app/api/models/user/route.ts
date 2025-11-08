@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateSession } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
 
     if (!session) {
       return NextResponse.json(
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
 
     if (!session) {
       return NextResponse.json(

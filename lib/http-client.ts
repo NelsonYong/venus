@@ -15,7 +15,7 @@ class HTTPClient {
     status: number;
   }> {
     const fullURL = `${this.baseURL}${url}`;
-    
+
     const defaultHeaders = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -31,33 +31,12 @@ class HTTPClient {
       const responseData = await response.json().catch(() => null);
 
       if (response.status === 401) {
-        const isAuthRoute = url.includes('/auth/');
-        if (!isAuthRoute) {
-          const refreshResponse = await this.refreshToken();
-          
-          if (refreshResponse.status === 200) {
-            const retryResponse = await fetch(fullURL, {
-              credentials: 'include',
-              ...options,
-              headers: defaultHeaders,
-            });
-            
-            if (retryResponse.ok) {
-              const retryData = await retryResponse.json().catch(() => null);
-              return {
-                data: retryData,
-                status: retryResponse.status,
-              };
-            }
-          }
-          
-          this.handleUnauthorized();
-          return {
-            error: 'Unauthorized',
-            message: 'Please login again',
-            status: 401,
-          };
-        }
+        this.handleUnauthorized();
+        return {
+          error: 'Unauthorized',
+          message: 'Please login again',
+          status: 401,
+        };
       }
 
       if (!response.ok) {
@@ -82,37 +61,18 @@ class HTTPClient {
     }
   }
 
-  private async refreshToken() {
-    try {
-      const response = await fetch(`${this.baseURL}/api/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      return {
-        status: response.status,
-        data: response.ok ? await response.json().catch(() => null) : null,
-      };
-    } catch {
-      return { status: 500, data: null };
-    }
-  }
-
   private handleUnauthorized() {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
-      if (!currentPath.includes('/login')) {
+      if (!currentPath.includes('/auth/signin')) {
         // 触发全局认证失败事件
         window.dispatchEvent(new CustomEvent('auth-unauthorized'));
-        
-        const loginUrl = new URL('/login', window.location.origin);
+
+        const loginUrl = new URL('/auth/signin', window.location.origin);
         if (currentPath !== '/') {
-          loginUrl.searchParams.set('redirect', currentPath);
+          loginUrl.searchParams.set('callbackUrl', currentPath);
         }
-        
+
         // 使用 setTimeout 来避免阻塞当前的 Promise 链
         setTimeout(() => {
           window.location.href = loginUrl.toString();
@@ -187,39 +147,8 @@ export interface AuthError {
   message: string;
 }
 
-export const authAPI = {
-  async login(email: string, password: string) {
-    return httpClient.post<AuthResponse>('/api/auth/login', { email, password });
-  },
-
-  async register(name: string, email: string, password: string) {
-    return httpClient.post<AuthResponse>('/api/auth/register', { name, email, password });
-  },
-
-  async logout() {
-    return httpClient.post<{ success: boolean; message: string }>('/api/auth/logout');
-  },
-
-  async refresh() {
-    return httpClient.post<AuthResponse>('/api/auth/refresh');
-  },
-
-  async changePassword(currentPassword: string, newPassword: string) {
-    return httpClient.put<{ success: boolean; message: string }>('/api/auth/change-password', {
-      currentPassword,
-      newPassword
-    });
-  },
-
-  async deleteAccount(password: string) {
-    return httpClient.delete<{ success: boolean; message: string }>('/api/auth/delete-account', {
-      body: JSON.stringify({
-        password,
-        confirmation: 'DELETE'
-      })
-    });
-  },
-};
+// OAuth authentication is now handled by NextAuth
+// Use signIn() and signOut() from next-auth/react instead
 
 export const profileAPI = {
   async updateProfile(data: { name?: string; avatar?: string }) {

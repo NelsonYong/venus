@@ -1,13 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useAuth } from "./auth-context";
 import { useTranslation as useI18nextTranslation } from "react-i18next";
 import {
   getInitialLanguage,
   setStoredLanguage,
   type SupportedLanguage,
 } from "@/lib/language-utils";
+import { useAuth } from "@/app/hooks/use-auth";
 
 interface I18nContextType {
   locale: string;

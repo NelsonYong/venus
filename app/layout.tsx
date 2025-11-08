@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/theme-context";
-import { AuthProvider } from "./contexts/auth-context";
 import { I18nProvider } from "./contexts/i18n-context";
 import { AuthGuard } from "./components/auth/auth-guard";
 import { QueryProvider } from "./providers/query-provider";
+import { SessionProvider } from "./components/auth/session-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -63,15 +63,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <QueryProvider>
-          <ThemeProvider>
-            <AuthProvider>
+        <SessionProvider>
+          <QueryProvider>
+            <ThemeProvider>
               <I18nProvider>
                 <AuthGuard>{children}</AuthGuard>
               </I18nProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </QueryProvider>
+            </ThemeProvider>
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
-import { validateSession } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 const deepSeek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/app/contexts/auth-context";
+import { useAuth } from "@/app/hooks/use-auth";
 import { useTranslation } from "@/app/contexts/i18n-context";
-import { ProtectedRoute } from "@/app/components/auth/protected-route";
 import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +22,7 @@ import {
 import { useConversations } from "../hooks/use-conversations";
 
 function ProfileContent() {
-  const { user, refreshAuth } = useAuth();
+  const { user } = useAuth();
   const { data: conversations } = useConversations();
 
   const { t } = useTranslation();
@@ -65,8 +64,6 @@ function ProfileContent() {
       if (response.status === 200 && response.data?.success) {
         setMessage(response.data.message || "Profile updated successfully");
         setIsEditing(false);
-        // Refresh user data
-        await refreshAuth();
       } else {
         setError(
           response.message || response.error || "Failed to update profile"
@@ -324,9 +321,5 @@ function ProfileContent() {
 }
 
 export default function ProfilePage() {
-  return (
-    <ProtectedRoute>
-      <ProfileContent />
-    </ProtectedRoute>
-  );
+  return <ProfileContent />;
 }

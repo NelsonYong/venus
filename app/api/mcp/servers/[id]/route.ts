@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateSession } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 interface McpServerUpdateData {
   name?: string;
@@ -37,7 +37,7 @@ export async function PUT(
       );
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
 
     if (!session) {
       return NextResponse.json(
@@ -147,7 +147,7 @@ export async function DELETE(
       );
     }
 
-    const session = await validateSession(token);
+    const session = await requireAuth(token);
 
     if (!session) {
       return NextResponse.json(

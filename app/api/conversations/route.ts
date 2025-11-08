@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateSession } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await validateSession(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const conversations = await prisma.conversation.findMany({
       where: {
-        userId: session.userId,
+        userId: user.id,
         isDeleted: false,
       },
       include: {
@@ -42,15 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await validateSession(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { title, messages, model, modelId } = await request.json();
 
@@ -62,7 +46,7 @@ export async function POST(request: NextRequest) {
           id: modelId,
           OR: [
             { isPreset: true },
-            { createdBy: session.userId },
+            { createdBy: user.id },
           ],
           isActive: true,
         },
@@ -79,13 +63,13 @@ export async function POST(request: NextRequest) {
     const conversation = await prisma.conversation.create({
       data: {
         title: title || "新对话",
-        userId: session.userId,
+        userId: user.id,
         model: modelName,
         messages: {
           create: messages.map((msg: any, index: number) => {
             // Preserve original createdAt timestamps to maintain message order
             let messageTimestamp: Date;
-            
+
             if (msg.createdAt) {
               // Use the provided timestamp
               messageTimestamp = new Date(msg.createdAt);
@@ -95,7 +79,7 @@ export async function POST(request: NextRequest) {
             }
 
             return {
-              userId: session.userId,
+              userId: user.id,
               role: msg.role,
               content: JSON.stringify(msg.parts || msg.content),
               createdAt: messageTimestamp,
@@ -122,21 +106,13 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await validateSession(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     // Soft delete all conversations for the user
     // updatedAt will be automatically updated by Prisma's @updatedAt decorator
     await prisma.conversation.updateMany({
       where: {
-        userId: session.userId,
+        userId: user.id,
         isDeleted: false,
       },
       data: {
@@ -148,7 +124,7 @@ export async function DELETE(request: NextRequest) {
     // Message model doesn't have updatedAt field, so we don't set it
     await prisma.message.updateMany({
       where: {
-        userId: session.userId,
+        userId: user.id,
         isDeleted: false,
       },
       data: {

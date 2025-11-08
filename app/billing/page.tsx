@@ -2,35 +2,22 @@
 
 import { BillingDashboard } from "@/components/billing-dashboard";
 import { useTranslation } from "@/app/contexts/i18n-context";
-import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/hooks/use-auth";
+import { Navbar } from "@/app/components/ui/navbar";
 
 function BillingPageContent() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const router = useRouter();
 
   if (!user) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="w-full space-y-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="flex items-center gap-2 hover:bg-muted/80 -ml-2"
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-              {t("billing.backButton")}
-            </Button>
-          </div>
+    <div className="flex flex-col h-screen">
+      <Navbar />
+      <div className="flex-1 max-w-6xl mx-auto p-6 overflow-auto w-full">
+        <div className="space-y-6 w-full">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">
               {t("billing.title")}
@@ -47,9 +34,5 @@ function BillingPageContent() {
 }
 
 export default function BillingPage() {
-  return (
-    
-      <BillingPageContent />
-    
-  );
+  return <BillingPageContent />;
 }

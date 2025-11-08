@@ -223,3 +223,19 @@ hr {
 .markdown .group button {
   color: #fff;
 }
+
+.markdown li {
+  @apply list-disc list-inside;
+}
+
+.markdown ul {
+  @apply list-disc list-inside;
+}
+
+.markdown ol {
+  @apply list-decimal list-inside;
+}
+
+.markdown blockquote {
+  @apply border-l-2 border-gray-300 pl-4;
+}

@@ -11,7 +11,7 @@ import { profileAPI } from "@/lib/http-client";
 import {
   UserIcon,
   MailIcon,
-  EditIcon,
+  // EditIcon,
   SaveIcon,
   XIcon,
   CameraIcon,
@@ -148,7 +148,7 @@ function ProfileContent() {
                   {/* Name */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
-                      <UserIcon className="w-4 h-4 " />
+                      <UserIcon className="w-4 h-4 mr-2" />
                       {t("profile.name")}
                     </label>
                     {isEditing ? (
@@ -169,7 +169,7 @@ function ProfileContent() {
                   {/* Email */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center">
-                      <MailIcon className="w-4 h-4 " />
+                      <MailIcon className="w-4 h-4 mr-2" />
                       {t("profile.email")}
                     </label>
                     <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">

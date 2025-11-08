@@ -89,27 +89,6 @@ function ProfileContent() {
       <Navbar />
       <div className="flex-1 max-w-6xl mx-auto p-6 overflow-auto w-full">
         <div className="space-y-6 w-full">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {t("profile.title")}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {t("profile.subtitle")}
-              </p>
-            </div>
-            {!isEditing && (
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center space-x-2"
-              >
-                <EditIcon className="w-4 h-4" />
-                <span>{t("profile.editProfile")}</span>
-              </Button>
-            )}
-          </div>
-
           {/* Messages */}
           {error && (
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
@@ -127,6 +106,9 @@ function ProfileContent() {
 
           {/* Profile Card */}
           <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("profile.title")}
+            </h1>
             <div className="flex flex-col md:flex-row items-start space-y-6 md:space-y-0 md:space-x-8">
               {/* Avatar Section */}
               <div className="flex flex-col items-center space-y-4">

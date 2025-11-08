@@ -12,7 +12,7 @@ export function SettingsLayout({ sidebar, children }: SettingsLayoutProps) {
   return (
     <div className="flex h-full w-full bg-background">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card/30 flex-shrink-0">
+      <aside className="w-64 border-r border-border bg-card/30 shrink-0">
         {sidebar}
       </aside>
 

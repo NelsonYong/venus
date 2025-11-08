@@ -5,8 +5,6 @@ import { useAuth } from "@/app/hooks/use-auth";
 import { useI18n, useTranslation } from "@/app/contexts/i18n-context";
 import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { authAPI, settingsAPI } from "@/lib/http-client";
 import { conversationsAPI } from "@/lib/api/conversations";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-client";
@@ -18,13 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ShieldIcon,
-  BellIcon,
+  // ShieldIcon,
+  // BellIcon,
   PaletteIcon,
-  KeyIcon,
+  // KeyIcon,
   TrashIcon,
-  EyeIcon,
-  EyeOffIcon,
   CodeIcon,
 } from "lucide-react";
 import { useTheme } from "../contexts/theme-context";
@@ -55,15 +51,12 @@ type SettingTab =
   | "dangerZone";
 
 function SettingsContentPage() {
-  const { user, refreshAuth } = useAuth();
+  const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { changeLanguage } = useI18n();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
@@ -83,12 +76,6 @@ function SettingsContentPage() {
     },
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
   if (!user) return null;
 
   const sidebarItems = [
@@ -97,21 +84,21 @@ function SettingsContentPage() {
       label: t("settings.appearance.title"),
       icon: <PaletteIcon className="w-4 h-4" />,
     },
-    {
-      id: "notifications",
-      label: t("settings.notifications.title"),
-      icon: <BellIcon className="w-4 h-4" />,
-    },
-    {
-      id: "privacy",
-      label: t("settings.privacy.title"),
-      icon: <ShieldIcon className="w-4 h-4" />,
-    },
-    {
-      id: "security",
-      label: t("settings.security.title"),
-      icon: <KeyIcon className="w-4 h-4" />,
-    },
+    // {
+    //   id: "notifications",
+    //   label: t("settings.notifications.title"),
+    //   icon: <BellIcon className="w-4 h-4" />,
+    // },
+    // {
+    //   id: "privacy",
+    //   label: t("settings.privacy.title"),
+    //   icon: <ShieldIcon className="w-4 h-4" />,
+    // },
+    // {
+    //   id: "security",
+    //   label: t("settings.security.title"),
+    //   icon: <KeyIcon className="w-4 h-4" />,
+    // },
     {
       id: "developer",
       label: t("settings.developer.title"),
@@ -130,24 +117,7 @@ function SettingsContentPage() {
     setError("");
 
     try {
-      const response = await settingsAPI.updateSettings({
-        theme: newTheme as "system" | "light" | "dark",
-        language: settings.language,
-      });
-
-      if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || t("settings.themes.updateSuccess"));
-        await refreshAuth();
-        setTheme(newTheme as "system" | "light" | "dark");
-        // Auto-hide message after 2 seconds
-        setTimeout(() => setMessage(""), 2000);
-      } else {
-        setError(
-          response.message ||
-            response.error ||
-            t("settings.themes.updateFailed")
-        );
-      }
+      setTheme(newTheme as "system" | "light" | "dark");
     } catch (error) {
       console.error("Update theme error:", error);
       setError(t("settings.themes.updateFailedRetry"));
@@ -160,73 +130,10 @@ function SettingsContentPage() {
     setError("");
 
     try {
-      const response = await settingsAPI.updateSettings({
-        theme: settings.theme as "system" | "light" | "dark",
-        language: newLanguage,
-      });
-
-      if (response.status === 200 && response.data?.success) {
-        setMessage(
-          response.data.message || t("settings.languages.updateSuccess")
-        );
-        await refreshAuth();
-        await changeLanguage(newLanguage);
-        // Auto-hide message after 2 seconds
-        setTimeout(() => setMessage(""), 2000);
-      } else {
-        setError(
-          response.message ||
-            response.error ||
-            t("settings.languages.updateFailed")
-        );
-      }
+      await changeLanguage(newLanguage);
     } catch (error) {
       console.error("Update language error:", error);
       setError(t("settings.languages.updateFailedRetry"));
-    }
-  };
-
-  const handlePasswordChange = async () => {
-    setMessage("");
-    setError("");
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError(t("settings.security.passwordMismatch"));
-      return;
-    }
-    if (passwordData.newPassword.length < 8) {
-      setError(t("settings.security.passwordTooShort"));
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await authAPI.changePassword(
-        passwordData.currentPassword,
-        passwordData.newPassword
-      );
-
-      if (response.status === 200 && response.data?.success) {
-        setMessage(
-          response.data.message || t("settings.security.updateSuccess")
-        );
-        setPasswordData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-      } else {
-        setError(
-          response.message ||
-            response.error ||
-            t("settings.security.updateFailed")
-        );
-      }
-    } catch (error) {
-      console.error("Change password error:", error);
-      setError(t("settings.security.updateFailedRetry"));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -255,45 +162,6 @@ function SettingsContentPage() {
     } catch (error) {
       console.error("Clear history error:", error);
       setError(t("settings.dangerZone.clearHistoryFailed"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAccountDelete = async () => {
-    const confirmed = window.confirm(t("settings.dangerZone.confirmDelete"));
-    if (!confirmed) return;
-
-    const doubleConfirm = window.confirm(
-      t("settings.dangerZone.doubleConfirm")
-    );
-    if (!doubleConfirm) return;
-
-    const password = window.prompt(t("settings.dangerZone.enterPassword"));
-    if (!password) return;
-
-    setIsLoading(true);
-    setMessage("");
-    setError("");
-
-    try {
-      const response = await authAPI.deleteAccount(password);
-
-      if (response.status === 200 && response.data?.success) {
-        alert(
-          response.data.message || t("settings.dangerZone.deleteAccountSuccess")
-        );
-        window.location.href = "/login";
-      } else {
-        setError(
-          response.message ||
-            response.error ||
-            t("settings.dangerZone.deleteAccountFailed")
-        );
-      }
-    } catch (error) {
-      console.error("Delete account error:", error);
-      setError(t("settings.dangerZone.deleteAccountFailedRetry"));
     } finally {
       setIsLoading(false);
     }
@@ -551,145 +419,15 @@ function SettingsContentPage() {
           </SettingsContent>
         );
 
-      case "security":
-        return (
-          <SettingsContent
-            title={t("settings.security.title")}
-            description={t("settings.security.description")}
-          >
-            <SettingsSection>
-              {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              )}
-
-              {message && (
-                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-600 dark:text-green-400">
-                    {message}
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <h3 className="font-medium text-foreground">
-                  {t("settings.security.changePassword")}
-                </h3>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      {t("settings.security.currentPassword")}
-                    </label>
-                    <div className="relative mt-1">
-                      <Input
-                        type={showCurrentPassword ? "text" : "password"}
-                        value={passwordData.currentPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            currentPassword: e.target.value,
-                          })
-                        }
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowCurrentPassword(!showCurrentPassword)
-                        }
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                      >
-                        {showCurrentPassword ? (
-                          <EyeOffIcon className="w-4 h-4" />
-                        ) : (
-                          <EyeIcon className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      {t("settings.security.newPassword")}
-                    </label>
-                    <div className="relative mt-1">
-                      <Input
-                        type={showNewPassword ? "text" : "password"}
-                        value={passwordData.newPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            newPassword: e.target.value,
-                          })
-                        }
-                        className="pr-10"
-                        minLength={8}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                      >
-                        {showNewPassword ? (
-                          <EyeOffIcon className="w-4 h-4" />
-                        ) : (
-                          <EyeIcon className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      {t("settings.security.confirmNewPassword")}
-                    </label>
-                    <div className="relative mt-1">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={passwordData.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                        className="pr-10"
-                        minLength={8}
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOffIcon className="w-4 h-4" />
-                        ) : (
-                          <EyeIcon className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handlePasswordChange}
-                  disabled={
-                    isLoading ||
-                    !passwordData.currentPassword ||
-                    !passwordData.newPassword ||
-                    !passwordData.confirmPassword
-                  }
-                >
-                  {t("settings.security.updatePassword")}
-                </Button>
-              </div>
-            </SettingsSection>
-          </SettingsContent>
-        );
+      // case "security":
+      //   return (
+      //     <SettingsContent
+      //       title={t("settings.security.title")}
+      //       description={t("settings.security.description")}
+      //     >
+      //       <SettingsSection></SettingsSection>
+      //     </SettingsContent>
+      //   );
 
       case "developer":
         return (
@@ -739,23 +477,6 @@ function SettingsContentPage() {
                   >
                     <TrashIcon className="w-4 h-4 " />
                     {t("settings.dangerZone.clearHistoryButton")}
-                  </Button>
-                </div>
-
-                <div className="border border-destructive/20 rounded-lg p-4">
-                  <h3 className="font-medium text-foreground mb-2">
-                    {t("settings.dangerZone.deleteAccount")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t("settings.dangerZone.deleteAccountDescription")}
-                  </p>
-                  <Button
-                    variant="destructive"
-                    onClick={handleAccountDelete}
-                    disabled={isLoading}
-                  >
-                    <TrashIcon className="w-4 h-4 " />
-                    {t("settings.dangerZone.deleteAccountButton")}
                   </Button>
                 </div>
               </div>
@@ -821,9 +542,5 @@ function SettingsContentPage() {
 }
 
 export default function SettingsPage() {
-  return (
-    
-      <SettingsContentPage />
-    
-  );
+  return <SettingsContentPage />;
 }

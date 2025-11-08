@@ -19,9 +19,20 @@ const DropdownMenu = React.forwardRef<
     }
   }, [open]);
 
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (ref && "current" in ref && ref.current && !ref.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const container = ref && "current" in ref ? ref.current : null;
+      const content = contentRef.current;
+
+      // 检查点击是否在容器（trigger）或内容区域中
+      const isClickInsideContainer = container && container.contains(target);
+      const isClickInsideContent = content && content.contains(target);
+
+      // 如果点击在容器或内容区域外，则关闭下拉框
+      if (!isClickInsideContainer && !isClickInsideContent) {
         setIsOpen(false);
         onOpenChange?.(false);
       }
@@ -43,6 +54,7 @@ const DropdownMenu = React.forwardRef<
         setIsOpen(open);
         onOpenChange?.(open);
       },
+      contentRef,
     }),
     [isOpen, onOpenChange]
   );
@@ -60,9 +72,11 @@ DropdownMenu.displayName = "DropdownMenu";
 const DropdownMenuContext = React.createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
+  contentRef?: React.RefObject<HTMLDivElement | null>;
 }>({
   open: false,
   setOpen: () => {},
+  contentRef: undefined,
 });
 
 const DropdownMenuTrigger = React.forwardRef<
@@ -72,16 +86,19 @@ const DropdownMenuTrigger = React.forwardRef<
   const { open, setOpen } = React.useContext(DropdownMenuContext);
 
   if (asChild && React.isValidElement(children)) {
+    const childProps = children.props as React.HTMLAttributes<HTMLElement>;
     return React.cloneElement(children, {
-      ...children.props,
+      ...childProps,
       ...props,
       ref,
-      onClick: (e: React.MouseEvent) => {
+      onClick: (e: React.MouseEvent<HTMLElement>) => {
         setOpen(!open);
-        children.props.onClick?.(e);
+        if (childProps.onClick) {
+          childProps.onClick(e as React.MouseEvent<HTMLElement>);
+        }
       },
       "aria-expanded": open,
-    });
+    } as React.HTMLAttributes<HTMLElement>);
   }
 
   return (
@@ -105,20 +122,41 @@ const DropdownMenuContent = React.forwardRef<
     sideOffset?: number;
   }
 >(({ className, children, align = "start", sideOffset = 4, ...props }, ref) => {
-  const { open } = React.useContext(DropdownMenuContext);
+  const { open, contentRef } = React.useContext(DropdownMenuContext);
   const [triggerRect, setTriggerRect] = React.useState<DOMRect | null>(null);
   const triggerRef = React.useRef<HTMLElement | null>(null);
 
-  React.useEffect(() => {
-    if (open && triggerRef.current) {
-      setTriggerRect(triggerRef.current.getBoundingClientRect());
-    }
-  }, [open]);
+  // 合并外部 ref 和内部 contentRef
+  const mergedRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      // 设置 contentRef（用于点击外部检测）
+      if (contentRef && "current" in contentRef) {
+        (contentRef as React.MutableRefObject<HTMLDivElement | null>).current =
+          node;
+      }
+      // 处理外部传入的 ref
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref && "current" in ref) {
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }
+    },
+    [ref, contentRef]
+  );
 
-  React.useEffect(() => {
-    const trigger = document.querySelector('[aria-expanded="true"]') as HTMLElement;
-    if (trigger) {
-      triggerRef.current = trigger;
+  React.useLayoutEffect(() => {
+    if (open) {
+      // 同步查找并设置 trigger 引用，然后立即获取位置
+      const trigger = document.querySelector(
+        '[aria-expanded="true"]'
+      ) as HTMLElement;
+      if (trigger) {
+        triggerRef.current = trigger;
+        // 立即获取位置，避免延迟
+        setTriggerRect(trigger.getBoundingClientRect());
+      }
+    } else {
+      setTriggerRect(null);
     }
   }, [open]);
 
@@ -128,9 +166,9 @@ const DropdownMenuContent = React.forwardRef<
     let left = triggerRect.left;
     let top = triggerRect.bottom + sideOffset;
 
-    if (align === 'center') {
+    if (align === "center") {
       left = triggerRect.left + triggerRect.width / 2;
-    } else if (align === 'end') {
+    } else if (align === "end") {
       left = triggerRect.right;
     }
 
@@ -141,15 +179,15 @@ const DropdownMenuContent = React.forwardRef<
 
   const dropdownContent = (
     <div
-      ref={ref}
+      ref={mergedRef}
       className={cn(
         "fixed z-[9999] min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
         className
       )}
-      style={{ 
-        left: align === 'center' ? left : align === 'end' ? left - 192 : left,
+      style={{
+        left: align === "center" ? left : align === "end" ? left - 192 : left,
         top,
-        transform: align === 'center' ? 'translateX(-50%)' : 'none'
+        transform: align === "center" ? "translateX(-50%)" : "none",
       }}
       {...props}
     >
@@ -157,7 +195,9 @@ const DropdownMenuContent = React.forwardRef<
     </div>
   );
 
-  return typeof window !== 'undefined' ? createPortal(dropdownContent, document.body) : null;
+  return typeof window !== "undefined"
+    ? createPortal(dropdownContent, document.body)
+    : null;
 });
 DropdownMenuContent.displayName = "DropdownMenuContent";
 

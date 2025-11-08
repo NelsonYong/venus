@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { VenusLogoText } from "@/components/ui/venus-logo";
 
 interface NavbarProps {
   onSidebarToggle?: () => void;
@@ -178,9 +179,11 @@ export function Navbar({
                   className="flex items-center cursor-pointer"
                   onClick={redirectChat}
                 >
-                  <h1 className="text-xl font-bold text-foreground">
+                  {/* <h1 className="text-xl font-bold text-foreground">
                     {t("navbar.brand")}
-                  </h1>
+                    </h1> */}
+
+                  <VenusLogoText size={68} />
                 </div>
               )}
             </div>

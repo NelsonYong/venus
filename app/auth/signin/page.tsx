@@ -6,6 +6,7 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { Mail } from "lucide-react";
+import { VenusLogoFull, VenusLogoText } from "@/components/ui/venus-logo";
 
 export default function SignInPage() {
   const { t } = useTranslation();
@@ -48,8 +49,8 @@ export default function SignInPage() {
       <div className="w-full max-w-sm">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="text-4xl font-semibold tracking-tight mb-2">
-            {t("auth.brand.name")}
+          <div className="inline-flex items-center justify-center mb-6">
+            <VenusLogoText />
           </div>
           <p className="text-sm text-muted-foreground">
             {t("auth.login.title")}

@@ -120,7 +120,7 @@ export function MessageRenderer({
                     return (
                       <Response
                         key={`${message.id}-${i}`}
-                        shikiTheme="github-dark"
+                        shikiTheme={["github-light", "github-dark"]}
                         className="markdown"
                       >
                         {part.text}

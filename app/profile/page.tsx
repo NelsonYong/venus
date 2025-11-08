@@ -31,8 +31,8 @@ function ProfileContent() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [editData, setEditData] = useState({
-    name: user?.name || "",
-    avatar: user?.avatar || "",
+    name: user?.name ?? "",
+    image: user?.image ?? "",
   });
 
   const totalConversations = conversations?.length || 0;
@@ -58,7 +58,7 @@ function ProfileContent() {
     try {
       const response = await profileAPI.updateProfile({
         name: editData.name.trim(),
-        avatar: editData.avatar.trim() || undefined,
+        avatar: editData.image.trim() || undefined,
       });
 
       if (response.status === 200 && response.data?.success) {
@@ -79,8 +79,8 @@ function ProfileContent() {
 
   const handleCancel = () => {
     setEditData({
-      name: user.name,
-      avatar: user.avatar || "",
+      name: user.name ?? "",
+      image: user.image ?? "",
     });
     setMessage("");
     setError("");
@@ -135,9 +135,9 @@ function ProfileContent() {
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative group">
                   <Avatar className="w-32 h-32">
-                    <AvatarImage src={editData.avatar} alt={user.name} />
+                    <AvatarImage src={editData.image} alt={user.name ?? ""} />
                     <AvatarFallback className="text-2xl">
-                      {getInitials(user.name)}
+                      {getInitials(user.name ?? "")}
                     </AvatarFallback>
                   </Avatar>
                   {isEditing && (
@@ -152,9 +152,9 @@ function ProfileContent() {
                       {t("profile.avatarUrl")}
                     </label>
                     <Input
-                      value={editData.avatar}
+                      value={editData.image}
                       onChange={(e) =>
-                        setEditData({ ...editData, avatar: e.target.value })
+                        setEditData({ ...editData, image: e.target.value })
                       }
                       placeholder="https://example.com/avatar.jpg"
                       className="text-center"
@@ -197,52 +197,9 @@ function ProfileContent() {
                       {user.email}
                     </p>
                   </div>
-
-                  {/* Join Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground flex items-center">
-                      <CalendarIcon className="w-4 h-4 " />
-                      {t("profile.joinDate")}
-                    </label>
-                    <p className="text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-                      {new Date(user.createdAt).toLocaleDateString("zh-CN", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-
-                  {/* Language */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground flex items-center">
-                      <LanguagesIcon className="w-4 h-4 " />
-                      {t("profile.languagePreference")}
-                    </label>
-                    <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
-                      {user.language === "zh-CN"
-                        ? t("profile.languages.zh-CN")
-                        : user.language}
-                    </p>
-                  </div>
                 </div>
 
                 {/* Theme */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center">
-                    <PaletteIcon className="w-4 h-4 " />
-                    {t("profile.themePreference")}
-                  </label>
-                  <p className="text-foreground bg-muted/50 rounded-md px-3 py-2 inline-block">
-                    {user.theme === "system"
-                      ? t("profile.themes.system")
-                      : user.theme === "light"
-                      ? t("profile.themes.light")
-                      : user.theme === "dark"
-                      ? t("profile.themes.dark")
-                      : user.theme}
-                  </p>
-                </div>
 
                 {/* Action Buttons */}
                 {isEditing && (
@@ -303,10 +260,12 @@ function ProfileContent() {
               </div>
               <div className="text-center space-y-2">
                 <div className="text-3xl font-bold text-primary">
-                  {Math.ceil(
-                    (Date.now() - new Date(user.createdAt).getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  )}
+                  {user.createdAt
+                    ? Math.ceil(
+                        (Date.now() - new Date(user.createdAt).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                    : 0}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {t("profile.stats.daysUsed")}

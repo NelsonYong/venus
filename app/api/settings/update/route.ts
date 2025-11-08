@@ -21,23 +21,7 @@ function validateSettingsData(data: any): data is UpdateSettingsData {
 
 export async function PUT(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     
@@ -69,7 +53,7 @@ export async function PUT(request: NextRequest) {
     updateData.updatedAt = new Date();
 
     const updatedUser = await prisma.user.update({
-      where: { id: session.userId },
+      where: { id: user.id },
       data: updateData,
       select: {
         id: true,

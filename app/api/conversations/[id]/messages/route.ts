@@ -11,15 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await requireAuth(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
     const { messages } = await request.json();
@@ -35,7 +27,7 @@ export async function POST(
     const conversation = await prisma.conversation.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: user.id,
         isDeleted: false,
       },
     });
@@ -74,7 +66,7 @@ export async function POST(
         return prisma.message.create({
           data: {
             conversationId: id,
-            userId: session.userId,
+            userId: user.id,
             role: msg.role,
             content: JSON.stringify(msg.parts || msg.content),
             createdAt: messageCreatedAt,

@@ -28,23 +28,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const serverId = params.id;
 
@@ -60,7 +44,7 @@ export async function PUT(
       );
     }
 
-    if (existingServer.userId !== session.userId) {
+    if (existingServer.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden", message: "You don't have permission to update this server" },
         { status: 403 }
@@ -138,23 +122,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const serverId = params.id;
 
@@ -170,7 +138,7 @@ export async function DELETE(
       );
     }
 
-    if (existingServer.userId !== session.userId) {
+    if (existingServer.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden", message: "You don't have permission to delete this server" },
         { status: 403 }

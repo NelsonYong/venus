@@ -27,26 +27,10 @@ function validateMcpServerData(data: any): data is McpServerData {
 // GET - 获取用户的所有 MCP 服务器
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const servers = await prisma.mcpServer.findMany({
-      where: { userId: session.userId },
+      where: { userId: user.id },
       orderBy: { createdAt: "desc" },
     });
 
@@ -75,23 +59,7 @@ export async function GET(request: NextRequest) {
 // POST - 创建新的 MCP 服务器
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
 
@@ -107,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     const server = await prisma.mcpServer.create({
       data: {
-        userId: session.userId,
+        userId: user.id,
         name: body.name.trim(),
         command: body.command.trim(),
         args: body.args || [],

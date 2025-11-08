@@ -52,8 +52,11 @@ export function useAutoSummary({
           },
           onError: (error) => {
             console.error("Failed to generate summary:", error)
-            // Reset the flag on error to allow retry
-            hasSummarized.current = false
+            // Don't reset the flag for auth errors (401) to prevent infinite retries
+            const isAuthError = error.message.includes('Unauthorized')
+            if (!isAuthError) {
+              hasSummarized.current = false
+            }
           }
         }
       )

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, verifyPassword } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 interface DeleteAccountData {
-  password: string;
   confirmation: string;
 }
 
@@ -11,8 +10,6 @@ function validateDeleteData(data: any): data is DeleteAccountData {
   return (
     typeof data === 'object' &&
     data !== null &&
-    typeof data.password === 'string' &&
-    data.password.length > 0 &&
     typeof data.confirmation === 'string' &&
     data.confirmation === 'DELETE'
   );
@@ -20,62 +17,33 @@ function validateDeleteData(data: any): data is DeleteAccountData {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
-    
+
     if (!validateDeleteData(body)) {
       return NextResponse.json(
-        { 
-          error: "Invalid data", 
-          message: "Password and confirmation 'DELETE' are required" 
+        {
+          error: "Invalid data",
+          message: "Confirmation 'DELETE' is required"
         },
         { status: 400 }
       );
     }
 
-    const { password } = body;
-
-    // Get user with current password
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { 
-        password: true,
+    // Get user info for logging
+    const userInfo = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
         email: true,
         name: true
       }
     });
 
-    if (!user) {
+    if (!userInfo) {
       return NextResponse.json(
         { error: "User not found", message: "User not found" },
         { status: 404 }
-      );
-    }
-
-    // Verify password
-    const isPasswordValid = await verifyPassword(password, user.password);
-    
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Invalid password", message: "Password is incorrect" },
-        { status: 400 }
       );
     }
 
@@ -83,50 +51,44 @@ export async function DELETE(request: NextRequest) {
     await prisma.$transaction(async (tx) => {
       // Delete sessions first (due to foreign key constraints)
       await tx.session.deleteMany({
-        where: { userId: session.userId }
+        where: { userId: user.id }
       });
 
       // Delete messages
       await tx.message.deleteMany({
-        where: { userId: session.userId }
+        where: { userId: user.id }
       });
 
       // Delete conversations
       await tx.conversation.deleteMany({
-        where: { userId: session.userId }
+        where: { userId: user.id }
       });
 
-      // Delete API usage records
+      // Delete API usage records (if exists)
       await tx.apiUsage.deleteMany({
-        where: { userId: session.userId }
+        where: { userId: user.id }
+      }).catch(() => {});
+
+      // Delete accounts (OAuth connections)
+      await tx.account.deleteMany({
+        where: { userId: user.id }
       });
 
       // Finally delete the user
       await tx.user.delete({
-        where: { id: session.userId }
+        where: { id: user.id }
       });
     });
 
-    console.log(`Account deleted for user: ${user.email} (${user.name})`);
+    console.log(`Account deleted for user: ${userInfo.email} (${userInfo.name})`);
 
-    // Clear the auth cookie
-    const response = NextResponse.json(
+    return NextResponse.json(
       {
         success: true,
         message: "Account deleted successfully. We're sorry to see you go.",
       },
       { status: 200 }
     );
-
-    response.cookies.set("auth-token", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 0,
-      path: "/",
-    });
-
-    return response;
 
   } catch (error) {
     console.error("Account deletion error:", error);

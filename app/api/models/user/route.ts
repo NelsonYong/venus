@@ -4,30 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     // Get all preset models and user's configured models
     const models = await prisma.aiModel.findMany({
       where: {
         OR: [
           { isPreset: true },
-          { createdBy: session.userId },
+          { createdBy: user.id },
         ],
       },
       select: {
@@ -67,23 +51,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const { models } = body;
@@ -130,7 +98,7 @@ export async function POST(request: NextRequest) {
       // Delete existing user's models for this provider (exclude preset models)
       await prisma.aiModel.deleteMany({
         where: {
-          createdBy: session.userId,
+          createdBy: user.id,
           provider: provider,
           isPreset: false, // Only delete non-preset models
         },
@@ -148,7 +116,7 @@ export async function POST(request: NextRequest) {
             apiKeyName: "Authorization",
             isActive: model.isActive !== undefined ? model.isActive : true,
             isPreset: false, // User-configured models are not preset
-            createdBy: session.userId,
+            createdBy: user.id,
             modelType: "TEXT",
             headers: {
               "Content-Type": "application/json",

@@ -7,15 +7,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await requireAuth(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { title, isStarred } = await request.json();
     const { id } = await params;
@@ -24,7 +16,7 @@ export async function PATCH(
     const existingConversation = await prisma.conversation.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: user.id,
         isDeleted: false,
       },
     });

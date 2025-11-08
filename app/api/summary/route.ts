@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
-import { requireAuth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 
 const deepSeek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -12,14 +12,9 @@ const languageModel = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate authentication
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await requireAuth(token);
-    if (!session) {
+    // Validate authentication using NextAuth session
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

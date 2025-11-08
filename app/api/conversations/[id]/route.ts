@@ -7,21 +7,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await requireAuth(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
     const conversation = await prisma.conversation.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: user.id,
         isDeleted: false,
       },
       include: {
@@ -54,15 +46,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await requireAuth(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     // Check if request body is empty to avoid JSON parsing errors
     const contentLength = request.headers.get('content-length');
@@ -85,7 +69,7 @@ export async function PUT(
     const existingConversation = await prisma.conversation.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: user.id,
       },
     });
 
@@ -104,7 +88,7 @@ export async function PUT(
           id: modelId,
           OR: [
             { isPreset: true },
-            { createdBy: session.userId },
+            { createdBy: user.id },
           ],
           isActive: true,
         },
@@ -148,7 +132,7 @@ export async function PUT(
               }
 
               return {
-                userId: session.userId,
+                userId: user.id,
                 role: msg.role,
                 content: JSON.stringify(msg.parts || msg.content),
                 createdAt: messageTimestamp,
@@ -179,15 +163,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await requireAuth(token);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -195,7 +171,7 @@ export async function DELETE(
     const conversation = await prisma.conversation.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: user.id,
       },
     });
 

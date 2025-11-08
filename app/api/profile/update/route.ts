@@ -18,26 +18,10 @@ function validateUpdateData(data: any): data is UpdateProfileData {
 
 export async function PUT(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: "No token found", message: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const session = await requireAuth(token);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: "Invalid token", message: "Please login again" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
-    
+
     if (!validateUpdateData(body)) {
       return NextResponse.json(
         { error: "Invalid data", message: "Invalid profile data provided" },
@@ -46,11 +30,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const updateData: any = {};
-    
+
     if (body.name) {
       updateData.name = body.name.trim();
     }
-    
+
     if (body.avatar !== undefined) {
       updateData.avatar = body.avatar || null;
     }
@@ -66,7 +50,7 @@ export async function PUT(request: NextRequest) {
     updateData.updatedAt = new Date();
 
     const updatedUser = await prisma.user.update({
-      where: { id: session.userId },
+      where: { id: user.id },
       data: updateData,
       select: {
         id: true,

@@ -86,23 +86,37 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
       },
     ],
   },
-  // 预留其他提供商的配置
-  // {
-  //   id: "openai",
-  //   name: "openai",
-  //   displayName: "OpenAI",
-  //   description: "OpenAI - GPT 系列模型",
-  //   icon: "🧠",
-  //   enabled: false,
-  //   defaultEndpoint: "https://api.openai.com/v1/chat/completions",
-  //   presets: [
-  //     {
-  //       name: "gpt-4",
-  //       displayName: "GPT-4",
-  //       defaultEndpoint: "https://api.openai.com/v1/chat/completions",
-  //     },
-  //   ],
-  // },
+  {
+    id: "openai",
+    name: "openai",
+    displayName: "OpenAI",
+    description: "OpenAI - GPT 系列模型",
+    icon: "🧠",
+    enabled: true,
+    defaultEndpoint: "https://api.openai.com/v1",
+    presets: [
+      {
+        name: "gpt-4o",
+        displayName: "GPT-4o",
+        defaultEndpoint: "https://api.openai.com/v1",
+      },
+      {
+        name: "gpt-4o-mini",
+        displayName: "GPT-4o Mini",
+        defaultEndpoint: "https://api.openai.com/v1",
+      },
+      {
+        name: "gpt-4-turbo",
+        displayName: "GPT-4 Turbo",
+        defaultEndpoint: "https://api.openai.com/v1",
+      },
+      {
+        name: "gpt-3.5-turbo",
+        displayName: "GPT-3.5 Turbo",
+        defaultEndpoint: "https://api.openai.com/v1",
+      },
+    ],
+  },
 ];
 
 function ModelCard({

@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate all models
+    const supportedProviders = ['deepseek', 'openai', 'anthropic', 'google', 'gemini'];
+
     for (const model of models) {
       if (!model.name || !model.displayName || !model.apiKey || !model.provider) {
         return NextResponse.json(
@@ -72,12 +74,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validate provider (currently only DeepSeek is supported)
-      if (model.provider !== "deepseek") {
+      // Validate provider
+      if (!supportedProviders.includes(model.provider.toLowerCase())) {
         return NextResponse.json(
           {
             success: false,
-            error: "Only DeepSeek models are currently supported",
+            error: `Provider "${model.provider}" is not supported. Supported providers: ${supportedProviders.join(', ')}`,
           },
           { status: 400 }
         );

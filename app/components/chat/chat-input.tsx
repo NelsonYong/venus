@@ -4,20 +4,29 @@ import {
   PromptInput,
   PromptInputButton,
   PromptInputFooter,
-  PromptInputSelect,
-  PromptInputSelectContent,
-  PromptInputSelectItem,
-  PromptInputSelectTrigger,
-  PromptInputSelectValue,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { GlobeIcon } from "lucide-react";
+import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorEmpty,
+  ModelSelectorGroup,
+  ModelSelectorInput,
+  ModelSelectorItem,
+  ModelSelectorList,
+  ModelSelectorLogo,
+  ModelSelectorName,
+  ModelSelectorTrigger,
+} from "@/components/ai-elements/model-selector";
+import { GlobeIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { ChatStatus } from "ai";
 import { useAvailableModels } from "@/app/hooks/use-available-models";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ChatInputProps {
   input: string;
@@ -47,10 +56,12 @@ export function ChatInput({
   const { t } = useTranslation();
   const { models: availableModels, isLoading: isLoadingModels } =
     useAvailableModels(onModelChange);
+  const [open, setOpen] = useState(false);
 
   const handleModelChange = (value: string) => {
     onModelChange(value);
     localStorage.setItem("selectedModelId", value);
+    setOpen(false);
   };
 
   // 按厂商分组模型
@@ -105,6 +116,9 @@ export function ChatInput({
     onSubmit(syntheticEvent);
   };
 
+  // 获取当前选中的模型
+  const selectedModel = availableModels.find((m) => m.id === model);
+
   return (
     <PromptInput
       onSubmit={handlePromptInputSubmit}
@@ -126,45 +140,70 @@ export function ChatInput({
             <GlobeIcon size={16} />
             <span className="hidden sm:inline">{t("chat.search")}</span>
           </PromptInputButton>
-          <PromptInputSelect
-            onValueChange={handleModelChange}
-            value={model}
-            disabled={isLoadingModels}
-          >
-            <PromptInputSelectTrigger className="h-8 text-sm">
-              <PromptInputSelectValue
-                placeholder={
-                  isLoadingModels
-                    ? t("chat.loadingModels")
-                    : t("chat.selectModel")
-                }
+          <ModelSelector open={open} onOpenChange={setOpen}>
+            <ModelSelectorTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 justify-start gap-2"
+                disabled={isLoadingModels}
+              >
+                {selectedModel?.provider && (
+                  <ModelSelectorLogo provider={selectedModel.provider} />
+                )}
+                <span className="truncate text-sm">
+                  {selectedModel?.displayName ||
+                    (isLoadingModels
+                      ? t("chat.loadingModels")
+                      : t("chat.selectModel"))}
+                </span>
+                <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </ModelSelectorTrigger>
+            <ModelSelectorContent title={t("chat.selectModel")}>
+              <ModelSelectorInput
+                placeholder={t("chat.searchModels") || "搜索模型..."}
               />
-            </PromptInputSelectTrigger>
-            <PromptInputSelectContent>
-              {sortedProviders.map((provider) => (
-                <div key={provider}>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                    {providerNames[provider.toLowerCase()] || provider}
-                  </div>
-                  {groupedModels[provider].map((availableModel) => (
-                    <PromptInputSelectItem
-                      key={availableModel.id}
-                      value={availableModel.id}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{availableModel.displayName}</span>
-                        {availableModel.isPreset && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                            {t("models.preset")}
-                          </span>
-                        )}
-                      </div>
-                    </PromptInputSelectItem>
-                  ))}
-                </div>
-              ))}
-            </PromptInputSelectContent>
-          </PromptInputSelect>
+              <ModelSelectorList>
+                <ModelSelectorEmpty>
+                  {t("chat.noModelsFound") || "未找到模型"}
+                </ModelSelectorEmpty>
+                {sortedProviders.map((provider) => (
+                  <ModelSelectorGroup
+                    key={provider}
+                    heading={providerNames[provider.toLowerCase()] || provider}
+                  >
+                    {groupedModels[provider].map((availableModel) => (
+                      <ModelSelectorItem
+                        key={availableModel.id}
+                        value={availableModel.id}
+                        onSelect={() => handleModelChange(availableModel.id)}
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          {availableModel.provider && (
+                            <ModelSelectorLogo
+                              provider={availableModel.provider}
+                            />
+                          )}
+                          <ModelSelectorName>
+                            {availableModel.displayName}
+                          </ModelSelectorName>
+                          {availableModel.isPreset && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                              {t("models.preset")}
+                            </span>
+                          )}
+                          {model === availableModel.id && (
+                            <Check className="ml-auto h-4 w-4" />
+                          )}
+                        </div>
+                      </ModelSelectorItem>
+                    ))}
+                  </ModelSelectorGroup>
+                ))}
+              </ModelSelectorList>
+            </ModelSelectorContent>
+          </ModelSelector>
         </PromptInputTools>
         <PromptInputSubmit
           disabled={!input && status !== "streaming"}

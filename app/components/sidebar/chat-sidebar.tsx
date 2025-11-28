@@ -107,7 +107,7 @@ function ChatItem({
         </div>
 
         {/* Actions */}
-        <div data-delete-button>
+        <div data-delete-button onClick={(e) => e.stopPropagation()}>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -215,6 +215,7 @@ export function ChatSidebar({
   const handleChatSelect = (chatId: string) => {
     router.push(`/?chatId=${chatId}`, { scroll: false });
     onLoadChat(chatId);
+    onClose(); // Close sidebar on mobile after selecting a chat
   };
 
   const handleDeleteChat = (chatId: string) => {
@@ -253,16 +254,30 @@ export function ChatSidebar({
   const groupedChats = groupChatsByDate(regularChats, t);
 
   return (
-    <div
-      className={cn(
-        "h-full bg-background transition-all duration-300 ease-in-out overflow-hidden",
-        isOpen ? "w-80" : "w-0",
-        isOpen ? "border-r border-border" : ""
+    <>
+      {/* Mobile overlay backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
       )}
-    >
-      <div className="flex flex-col h-full w-80">
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "bg-background transition-all duration-300 ease-in-out overflow-hidden",
+          // Desktop: side-by-side layout with height from parent
+          "lg:h-full lg:border-r lg:border-border",
+          isOpen ? "lg:w-80" : "lg:w-0",
+          // Mobile: fixed overlay from left with full viewport height
+          "fixed top-0 bottom-0 left-0 z-50 lg:relative w-80",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        <div className="flex flex-col h-full w-80">
         {/* Header */}
-        <div className="p-3 border-b border-border/50">
+        <div className="p-3 border-b border-border/50 shrink-0">
           <Button
             onClick={handleNewChat}
             className="w-full h-10 justify-start font-medium"
@@ -274,7 +289,7 @@ export function ChatSidebar({
         </div>
 
         {/* Chat History */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 overflow-y-auto">
           <div className="px-2 py-3 space-y-6">
             {isLoading ? (
               <div className="text-center text-sm text-muted-foreground py-8">
@@ -338,5 +353,6 @@ export function ChatSidebar({
         </ScrollArea>
       </div>
     </div>
+    </>
   );
 }

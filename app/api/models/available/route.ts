@@ -6,39 +6,40 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    // Get all active models (preset models and user's configured models)
-    const models = await prisma.aiModel.findMany({
+    // Get all enabled models from user's configured providers
+    const providers = await prisma.modelProvider.findMany({
       where: {
-        OR: [
-          { isPreset: true },
-          { createdBy: user.id },
-        ],
-        isActive: true,
+        userId: user.id,
+        status: "ACTIVE",
       },
-      select: {
-        id: true,
-        name: true,
-        displayName: true,
-        provider: true,
-        isPreset: true,
-        apiEndpoint: true,
-        apiKey: true,
+      include: {
+        discoveredModels: {
+          where: {
+            isEnabled: true,
+          },
+          orderBy: {
+            modelName: "asc",
+          },
+        },
       },
-      orderBy: [
-        { isPreset: "desc" }, // Preset models first
-        { createdAt: "desc" },
-      ],
     });
 
-    // Mask API keys for preset models
-    const maskedModels = models.map(model => ({
-      ...model,
-      apiKey: model.isPreset ? "····" : model.apiKey,
-    }));
+    // Transform discovered models to the expected format
+    const models = providers.flatMap(provider =>
+      provider.discoveredModels.map(model => ({
+        id: model.modelId,
+        name: model.modelName,
+        displayName: model.displayName || model.modelName,
+        provider: provider.provider,
+        isPreset: false,
+        apiEndpoint: provider.apiEndpoint,
+        apiKey: provider.apiKey,
+      }))
+    );
 
     return NextResponse.json({
       success: true,
-      models: maskedModels,
+      models,
     });
   } catch (error) {
     console.error("Get available models error:", error);

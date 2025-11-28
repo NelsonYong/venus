@@ -31,27 +31,22 @@ export async function POST(req: Request) {
     // Get model configuration
     let modelConfig;
     if (modelId) {
-      // User selected a specific model
-      const dbModel = await prisma.aiModel.findFirst({
+      // User selected a specific model - find it in discovered models
+      const discoveredModel = await prisma.discoveredModel.findFirst({
         where: {
-          id: modelId,
-          OR: [
-            { isPreset: true },
-            { createdBy: userId },
-          ],
-          isActive: true,
+          modelId: modelId,
+          isEnabled: true,
+          provider: {
+            userId: userId,
+            status: "ACTIVE",
+          },
         },
-        select: {
-          id: true,
-          name: true,
+        include: {
           provider: true,
-          apiKey: true,
-          apiEndpoint: true,
-          isPreset: true,
-        }
+        },
       });
 
-      if (!dbModel) {
+      if (!discoveredModel) {
         return NextResponse.json(
           { error: 'Model not found or not accessible' },
           { status: 404 }
@@ -59,11 +54,11 @@ export async function POST(req: Request) {
       }
 
       modelConfig = {
-        provider: dbModel.provider,
-        name: dbModel.name,
-        apiKey: dbModel.apiKey,
-        apiEndpoint: dbModel.apiEndpoint,
-        isPreset: dbModel.isPreset,
+        provider: discoveredModel.provider.provider,
+        name: discoveredModel.modelName,
+        apiKey: discoveredModel.provider.apiKey,
+        apiEndpoint: discoveredModel.provider.apiEndpoint,
+        isPreset: false,
       };
     } else {
       // Use default model

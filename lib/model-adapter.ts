@@ -13,7 +13,9 @@ export interface ModelConfig {
  * Create a model adapter based on the provider
  */
 export function createModelAdapter(config: ModelConfig) {
-  switch (config.provider.toLowerCase()) {
+  const provider = config.provider.toLowerCase();
+
+  switch (provider) {
     case 'deepseek':
       return createDeepSeek({
         apiKey: config.isPreset ? process.env.DEEPSEEK_API_KEY : config.apiKey,
@@ -26,12 +28,14 @@ export function createModelAdapter(config: ModelConfig) {
         baseURL: config.isPreset ? undefined : config.apiEndpoint,
       })(config.name);
 
-    // Add more providers as needed
-    // case 'anthropic':
-    //   return createAnthropic({...})(config.name);
-
+    // For other providers using OpenAI-compatible API
+    // Examples: Groq, Together AI, Perplexity, etc.
     default:
-      throw new Error(`Unsupported model provider: ${config.provider}`);
+      // Use OpenAI adapter for OpenAI-compatible APIs
+      return createOpenAI({
+        apiKey: config.apiKey,
+        baseURL: config.apiEndpoint,
+      })(config.name);
   }
 }
 

@@ -155,45 +155,6 @@ model SystemSetting {
   @@map("system_settings")
 }
 
-model AiModel {
-  id              String   @id @default(cuid())
-  name            String
-  displayName     String
-  provider        String
-  modelType       ModelType @default(TEXT)
-  category        String?
-  apiEndpoint     String
-  apiKey          String
-  apiKeyName      String   @default("Authorization")
-  headers         Json?
-  requestFormat   Json?
-  responseFormat  Json?
-  isActive        Boolean  @default(true)
-  isDefault       Boolean  @default(false)
-  isPreset        Boolean  @default(false)
-  maxTokens       Int?
-  supportedFeatures Json?
-  rateLimit       Json?
-  cost            Json?
-  description     String?
-  version         String?
-  tags            String[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  createdBy       String?
-  lastUsedAt      DateTime?
-  usageCount      Int      @default(0)
-  priority        Int      @default(0)
-
-  @@unique([provider, name])
-  @@index([modelType, isActive])
-  @@index([provider, isActive])
-  @@index([isDefault, isActive])
-  @@index([isPreset, isActive])
-  @@index([priority])
-  @@map("ai_models")
-}
-
 model ModelProvider {
   id              String   @id @default(cuid())
   userId          String
@@ -238,19 +199,6 @@ enum ProviderStatus {
   TESTING
   ACTIVE
   ERROR
-}
-
-enum ModelType {
-  TEXT
-  IMAGE_GENERATION
-  IMAGE_ANALYSIS
-  VIDEO_GENERATION
-  VIDEO_ANALYSIS
-  AUDIO_GENERATION
-  AUDIO_TRANSCRIPTION
-  EMBEDDING
-  CODE_GENERATION
-  MULTIMODAL
 }
 
 model UserBilling {

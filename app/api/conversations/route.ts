@@ -41,22 +41,21 @@ export async function POST(request: NextRequest) {
     // If modelId is provided, fetch the model name from database
     let modelName = model || "openai/gpt-4o";
     if (modelId) {
-      const dbModel = await prisma.aiModel.findFirst({
+      const discoveredModel = await prisma.discoveredModel.findFirst({
         where: {
-          id: modelId,
-          OR: [
-            { isPreset: true },
-            { createdBy: user.id },
-          ],
-          isActive: true,
+          modelId: modelId,
+          isEnabled: true,
+          provider: {
+            userId: user.id,
+            status: "ACTIVE",
+          },
         },
-        select: {
+        include: {
           provider: true,
-          name: true,
-        }
+        },
       });
-      if (dbModel) {
-        modelName = `${dbModel.provider}/${dbModel.name}`;
+      if (discoveredModel) {
+        modelName = `${discoveredModel.provider.provider}/${discoveredModel.modelName}`;
       }
     }
 

@@ -258,6 +258,8 @@
     "placeholder": "请输入问题",
     "loadingModels": "加载模型中...",
     "selectModel": "选择模型",
+    "searchModels": "搜索模型...",
+    "noModelsFound": "未找到模型",
     "presetModelNotice": "当前使用预设模型，使用时需要收费",
     "customModelNotice": "当前使用自定义模型，不会产生费用",
     "welcome": {

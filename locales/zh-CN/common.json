@@ -340,6 +340,27 @@
     "apiKey": "API Key",
     "active": "已启用",
     "inactive": "已禁用",
+    "enabled": "已启用",
+    "connected": "已连接",
+    "error": "错误",
+    "modelsEnabled": "个模型已启用",
+    "testConnection": "测试连接",
+    "testing": "测试中",
+    "noModelsDiscovered": "暂未发现可用模型",
+    "availableModels": "可用模型",
+    "models": "个模型",
+    "searchModels": "搜索模型...",
+    "selectAll": "全选",
+    "deselectAll": "全不选",
+    "enableAll": "全部启用",
+    "disableAll": "全部禁用",
+    "noMatchingModels": "没有匹配的模型",
+    "other": "其他",
+    "connectionSuccess": "连接成功！发现 {{count}} 个可用模型",
+    "connectionFailed": "连接失败，请检查 API Key 和端点",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败",
+    "toggleFailed": "切换失败",
     "addModel": "添加模型",
     "delete": "删除",
     "save": "保存配置",
@@ -350,12 +371,25 @@
       "title": "确认删除",
       "message": "确定要删除模型 \"{{name}}\" 吗？此操作无法撤销。"
     },
+    "deleteProviderConfirm": {
+      "title": "确认删除服务商",
+      "message": "确定要删除 {{name}} 配置吗？这将同时删除所有相关的模型配置。"
+    },
     "validation": {
       "required": "模型名称、显示名称和 API Key 为必填项"
     },
     "providers": {
       "deepseek": {
         "info": "ℹ️ 配置您自己的 DeepSeek API Key 以使用 DeepSeek 系列模型。您可以在 DeepSeek 官网申请 API Key。"
+      },
+      "openai": {
+        "info": "ℹ️ 配置您自己的 OpenAI API Key 以使用 GPT 系列模型。您可以在 OpenAI 官网申请 API Key。"
+      },
+      "anthropic": {
+        "info": "ℹ️ 配置您自己的 Anthropic API Key 以使用 Claude 系列模型。您可以在 Anthropic 官网申请 API Key。"
+      },
+      "google": {
+        "info": "ℹ️ 配置您自己的 Google API Key 以使用 Gemini 系列模型。您可以在 Google AI Studio 申请 API Key。"
       }
     }
   }

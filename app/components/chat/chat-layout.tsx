@@ -56,18 +56,19 @@ export function ChatLayout({
           </div>
         )}
         <EmptyChatState />
-        <ChatInput
-          input={input}
-          onInputChange={onInputChange}
-          onSubmit={onSubmit}
-          model={model}
-          onModelChange={onModelChange}
-          webSearch={webSearch}
-          onWebSearchToggle={onWebSearchToggle}
-          status={status}
-          onStop={onStop}
-          className="flex-shrink-0 w-full max-w-3xl mx-auto mb-8"
-        />
+        <div className="shrink-0 w-full max-w-3xl mx-auto px-4 pb-8">
+          <ChatInput
+            input={input}
+            onInputChange={onInputChange}
+            onSubmit={onSubmit}
+            model={model}
+            onModelChange={onModelChange}
+            webSearch={webSearch}
+            onWebSearchToggle={onWebSearchToggle}
+            status={status}
+            onStop={onStop}
+          />
+        </div>
       </div>
     );
   }
@@ -90,30 +91,32 @@ export function ChatLayout({
           <p className="text-sm mt-1">
             {error.message || "发生未知错误，请重试"}
           </p>
-          <p className="text-xs mt-2 opacity-75">
-            提示: 检查网络连接或尝试禁用浏览器扩展
-          </p>
         </div>
       )}
       <Conversation className="flex-1">
         <ConversationContent className="max-w-4xl mx-auto prose">
-          <MessageRenderer messages={messages} status={status} onRegenerate={onRegenerate} />
+          <MessageRenderer
+            messages={messages}
+            status={status}
+            onRegenerate={onRegenerate}
+          />
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
 
-      <ChatInput
-        input={input}
-        onInputChange={onInputChange}
-        onSubmit={onSubmit}
-        model={model}
-        onModelChange={onModelChange}
-        webSearch={webSearch}
-        onWebSearchToggle={onWebSearchToggle}
-        status={status}
-        onStop={onStop}
-        className="flex-shrink-0 w-full max-w-4xl mx-auto mb-2"
-      />
+      <div className="shrink-0 w-full max-w-4xl mx-auto px-4 pb-4">
+        <ChatInput
+          input={input}
+          onInputChange={onInputChange}
+          onSubmit={onSubmit}
+          model={model}
+          onModelChange={onModelChange}
+          webSearch={webSearch}
+          onWebSearchToggle={onWebSearchToggle}
+          status={status}
+          onStop={onStop}
+        />
+      </div>
     </div>
   );
 }

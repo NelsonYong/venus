@@ -194,6 +194,52 @@ model AiModel {
   @@map("ai_models")
 }
 
+model ModelProvider {
+  id              String   @id @default(cuid())
+  userId          String
+  provider        String
+  apiKey          String
+  apiEndpoint     String
+  status          ProviderStatus @default(UNCONFIGURED)
+  lastTestedAt    DateTime?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  discoveredModels DiscoveredModel[]
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("model_providers")
+}
+
+model DiscoveredModel {
+  id              String   @id @default(cuid())
+  providerId      String
+  modelId         String
+  modelName       String
+  displayName     String?
+  description     String?
+  isEnabled       Boolean  @default(false)
+  capabilities    Json?
+  contextWindow   Int?
+  maxTokens       Int?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  provider        ModelProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, modelId])
+  @@index([providerId, isEnabled])
+  @@map("discovered_models")
+}
+
+enum ProviderStatus {
+  UNCONFIGURED
+  TESTING
+  ACTIVE
+  ERROR
+}
+
 enum ModelType {
   TEXT
   IMAGE_GENERATION

@@ -9,15 +9,16 @@ import { Input } from "@/components/ui/input";
 import { httpClient } from "@/lib/http-client";
 import {
   CpuIcon,
-  PlusIcon,
   TrashIcon,
-  SaveIcon,
   EyeIcon,
   EyeOffIcon,
   CheckIcon,
-  XIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  Loader2Icon,
+  AlertCircleIcon,
+  CheckCircleIcon,
+  RefreshCwIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -30,22 +31,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
-interface ModelConfig {
-  id?: string;
-  name: string;
-  displayName: string;
-  apiKey: string;
-  apiEndpoint: string;
-  isActive: boolean;
-  provider: string;
-  isPreset?: boolean;
+interface DiscoveredModel {
+  id: string;
+  modelId: string;
+  modelName: string;
+  displayName?: string;
+  description?: string;
+  isEnabled: boolean;
+  contextWindow?: number;
+  maxTokens?: number;
 }
 
-interface ModelPreset {
-  name: string;
-  displayName: string;
-  defaultEndpoint: string;
+interface ModelProvider {
+  id: string;
+  provider: string;
+  apiKey: string;
+  apiEndpoint: string;
+  status: "UNCONFIGURED" | "TESTING" | "ACTIVE" | "ERROR";
+  lastTestedAt?: string;
+  errorMessage?: string;
+  discoveredModels: DiscoveredModel[];
 }
 
 interface ProviderConfig {
@@ -54,7 +62,6 @@ interface ProviderConfig {
   displayName: string;
   description: string;
   icon: string;
-  presets: ModelPreset[];
   defaultEndpoint: string;
   enabled: boolean;
 }
@@ -67,24 +74,7 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
     description: "DeepSeek AI - 高性能的中文大语言模型",
     icon: "🤖",
     enabled: true,
-    defaultEndpoint: "https://api.deepseek.com/v1/chat/completions",
-    presets: [
-      {
-        name: "deepseek-chat",
-        displayName: "DeepSeek Chat",
-        defaultEndpoint: "https://api.deepseek.com/v1/chat/completions",
-      },
-      {
-        name: "deepseek-coder",
-        displayName: "DeepSeek Coder",
-        defaultEndpoint: "https://api.deepseek.com/v1/chat/completions",
-      },
-      {
-        name: "deepseek-reasoner",
-        displayName: "DeepSeek Reasoner",
-        defaultEndpoint: "https://api.deepseek.com/v1/chat/completions",
-      },
-    ],
+    defaultEndpoint: "https://api.deepseek.com/v1",
   },
   {
     id: "openai",
@@ -94,323 +84,490 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
     icon: "🧠",
     enabled: true,
     defaultEndpoint: "https://api.openai.com/v1",
-    presets: [
-      {
-        name: "gpt-4o",
-        displayName: "GPT-4o",
-        defaultEndpoint: "https://api.openai.com/v1",
-      },
-      {
-        name: "gpt-4o-mini",
-        displayName: "GPT-4o Mini",
-        defaultEndpoint: "https://api.openai.com/v1",
-      },
-      {
-        name: "gpt-4-turbo",
-        displayName: "GPT-4 Turbo",
-        defaultEndpoint: "https://api.openai.com/v1",
-      },
-      {
-        name: "gpt-3.5-turbo",
-        displayName: "GPT-3.5 Turbo",
-        defaultEndpoint: "https://api.openai.com/v1",
-      },
-    ],
+  },
+  {
+    id: "anthropic",
+    name: "anthropic",
+    displayName: "Anthropic",
+    description: "Anthropic - Claude 系列模型",
+    icon: "🤖",
+    enabled: true,
+    defaultEndpoint: "https://api.anthropic.com/v1",
+  },
+  {
+    id: "google",
+    name: "google",
+    displayName: "Google",
+    description: "Google - Gemini 系列模型",
+    icon: "🔷",
+    enabled: true,
+    defaultEndpoint: "https://generativelanguage.googleapis.com/v1",
   },
 ];
 
-function ModelCard({
-  model,
-  index,
-  provider,
-  providerIndex,
-  onRemoveModel,
-  onModelChange,
-  onSelectPreset,
-  showApiKey,
-  onToggleApiKey,
-  onSaveModel,
+function ModelsList({
+  models,
+  onToggle,
+  onBatchToggle,
 }: {
-  model: ModelConfig;
-  index: number;
-  provider: ProviderConfig;
-  providerIndex: number;
-  onRemoveModel: (index: number) => void;
-  onModelChange: (
-    index: number,
-    field: keyof ModelConfig,
-    value: string | boolean
-  ) => void;
-  onSelectPreset: (
-    index: number,
-    preset: ModelPreset,
-    provider: string
-  ) => void;
-  showApiKey: boolean;
-  onToggleApiKey: (index: number) => void;
-  onSaveModel: (index: number) => Promise<void>;
+  models: DiscoveredModel[];
+  onToggle: (modelId: string, isEnabled: boolean) => void;
+  onBatchToggle: (modelIds: string[], isEnabled: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(!model.id); // 新模型默认展开，已保存的默认折叠
-  const [isSaving, setIsSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  if (models.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {t("models.noModelsDiscovered")}
+      </div>
+    );
+  }
+
+  // 按模型系列分组
+  const groupModels = (models: DiscoveredModel[]) => {
+    const groups: Record<string, DiscoveredModel[]> = {};
+
+    models.forEach((model) => {
+      const modelName = model.modelName.toLowerCase();
+      let groupKey = "other";
+
+      // 智能分组逻辑
+      if (modelName.includes("gpt-4")) groupKey = "GPT-4";
+      else if (modelName.includes("gpt-3.5")) groupKey = "GPT-3.5";
+      else if (modelName.includes("o1")) groupKey = "O1";
+      else if (modelName.includes("claude-3.5") || modelName.includes("claude-3-5")) groupKey = "Claude 3.5";
+      else if (modelName.includes("claude-3-opus")) groupKey = "Claude 3 Opus";
+      else if (modelName.includes("claude-3")) groupKey = "Claude 3";
+      else if (modelName.includes("claude")) groupKey = "Claude";
+      else if (modelName.includes("gemini-2")) groupKey = "Gemini 2.0";
+      else if (modelName.includes("gemini-1.5")) groupKey = "Gemini 1.5";
+      else if (modelName.includes("gemini")) groupKey = "Gemini";
+      else if (modelName.includes("deepseek-chat")) groupKey = "DeepSeek Chat";
+      else if (modelName.includes("deepseek-reasoner")) groupKey = "DeepSeek Reasoner";
+      else if (modelName.includes("deepseek")) groupKey = "DeepSeek";
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(model);
+    });
+
+    return groups;
+  };
+
+  // 过滤模型
+  const filteredModels = models.filter((model) =>
+    (model.displayName || model.modelName)
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  const groupedModels = groupModels(filteredModels);
+  const groupKeys = Object.keys(groupedModels).sort((a, b) => {
+    // "other" 组放最后
+    if (a === "other") return 1;
+    if (b === "other") return -1;
+    return a.localeCompare(b);
+  });
+
+  const toggleGroup = (groupKey: string) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(groupKey)) {
+      newExpanded.delete(groupKey);
+    } else {
+      newExpanded.add(groupKey);
+    }
+    setExpandedGroups(newExpanded);
+  };
+
+  const enabledCount = models.filter((m) => m.isEnabled).length;
+  const totalCount = models.length;
+
+  const handleSelectAll = () => {
+    const modelIds = filteredModels.map((m) => m.id);
+    onBatchToggle(modelIds, true);
+  };
+
+  const handleDeselectAll = () => {
+    const modelIds = filteredModels.map((m) => m.id);
+    onBatchToggle(modelIds, false);
+  };
+
+  const handleGroupToggle = (groupModels: DiscoveredModel[], enable: boolean) => {
+    const modelIds = groupModels.map((m) => m.id);
+    onBatchToggle(modelIds, enable);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* 搜索和批量操作 */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder={t("models.searchModels")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1"
+          />
+          <Badge variant="secondary">
+            {enabledCount}/{totalCount} {t("models.enabled")}
+          </Badge>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSelectAll}
+            disabled={filteredModels.length === 0}
+          >
+            {t("models.selectAll")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDeselectAll}
+            disabled={filteredModels.length === 0}
+          >
+            {t("models.deselectAll")}
+          </Button>
+        </div>
+      </div>
+
+      {/* 分组显示 */}
+      {filteredModels.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          {t("models.noMatchingModels")}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {groupKeys.map((groupKey) => {
+            const groupModels = groupedModels[groupKey];
+            const isExpanded = expandedGroups.has(groupKey);
+            const groupEnabledCount = groupModels.filter((m) => m.isEnabled).length;
+
+            return (
+              <Card key={groupKey} className="border-border">
+                <CardContent className="p-0">
+                  {/* 分组头部 */}
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
+                    onClick={() => toggleGroup(groupKey)}
+                  >
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        {isExpanded ? (
+                          <ChevronDownIcon className="w-4 h-4" />
+                        ) : (
+                          <ChevronUpIcon className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground">
+                          {groupKey}
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          {groupEnabledCount}/{groupModels.length} {t("models.enabled")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGroupToggle(groupModels, true);
+                        }}
+                      >
+                        {t("models.enableAll")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGroupToggle(groupModels, false);
+                        }}
+                      >
+                        {t("models.disableAll")}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 分组内容 */}
+                  {isExpanded && (
+                    <div className="border-t border-border">
+                      {groupModels.map((model) => (
+                        <div
+                          key={model.id}
+                          className="flex items-center justify-between p-4 hover:bg-muted/30 border-b border-border last:border-b-0"
+                        >
+                          <div className="flex-1 min-w-0 mr-4">
+                            <div className="flex items-center space-x-2">
+                              <h5 className="text-sm font-medium text-foreground">
+                                {model.displayName || model.modelName}
+                              </h5>
+                              {model.isEnabled && (
+                                <Badge variant="default" className="text-xs">
+                                  {t("models.enabled")}
+                                </Badge>
+                              )}
+                            </div>
+                            {model.description && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {model.description}
+                              </p>
+                            )}
+                            {model.contextWindow && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Context: {model.contextWindow.toLocaleString()} tokens
+                              </p>
+                            )}
+                          </div>
+                          <Switch
+                            checked={model.isEnabled}
+                            onCheckedChange={(checked) => onToggle(model.id, checked)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProviderCard({
+  provider,
+  config,
+  onTest,
+  onSave,
+  onDelete,
+  onToggleModel,
+  onBatchToggleModel,
+}: {
+  provider: ModelProvider | null;
+  config: ProviderConfig;
+  onTest: (provider: string, apiKey: string, apiEndpoint: string) => void;
+  onSave: (provider: string, apiKey: string, apiEndpoint: string) => void;
+  onDelete: (providerId: string) => void;
+  onToggleModel: (modelId: string, isEnabled: boolean) => void;
+  onBatchToggleModel: (modelIds: string[], isEnabled: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [apiKey, setApiKey] = useState(provider?.apiKey || "");
+  const [apiEndpoint, setApiEndpoint] = useState(
+    provider?.apiEndpoint || config.defaultEndpoint
+  );
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const maskApiKey = (key: string) => {
-    if (key.length <= 8) return "***";
-    return key.substring(0, 4) + "***" + key.substring(key.length - 4);
+  const hasConfig = !!provider;
+  const isActive = provider?.status === "ACTIVE";
+  const hasError = provider?.status === "ERROR";
+  const hasModels = (provider?.discoveredModels?.length || 0) > 0;
+  const enabledCount =
+    provider?.discoveredModels?.filter((m) => m.isEnabled).length || 0;
+
+  const handleTest = async () => {
+    if (!apiKey || !apiEndpoint) return;
+
+    setIsTesting(true);
+    try {
+      await onTest(config.id, apiKey, apiEndpoint);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleSave = () => {
+    if (!apiKey || !apiEndpoint) return;
+    onSave(config.id, apiKey, apiEndpoint);
   };
 
   const handleDelete = () => {
-    setShowDeleteDialog(false);
-    onRemoveModel(index);
+    if (provider?.id) {
+      onDelete(provider.id);
+      setShowDeleteDialog(false);
+    }
   };
 
   return (
     <>
-      <Card className="border-border bg-muted/30">
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Header - Always Visible */}
+      <Card className="border-border w-full">
+        <CardContent className="p-6 w-full">
+          <div className="space-y-4 w-full">
+            {/* Provider Header */}
             <div
-              className="flex items-center justify-between cursor-pointer"
+              className="flex items-center justify-between cursor-pointer w-full"
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              <div className="flex-1 flex items-center justify-between">
-                <div className="space-y-1">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <span className="text-3xl flex-shrink-0">{config.icon}</span>
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <h3 className="text-base font-semibold text-foreground">
-                      {model.displayName ||
-                        t("models.modelConfig") + " #" + (providerIndex + 1)}
-                    </h3>
-                    {model.isPreset && (
-                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
-                        {t("models.preset")}
-                      </span>
+                    <h2 className="text-xl font-bold text-foreground">
+                      {config.displayName}
+                    </h2>
+                    {isActive && (
+                      <Badge variant="default" className="bg-green-500">
+                        <CheckCircleIcon className="w-3 h-3 mr-1" />
+                        {t("models.connected")}
+                      </Badge>
                     )}
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        model.isActive
-                          ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                          : "bg-gray-50 dark:bg-gray-900/20 text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      {model.isActive
-                        ? t("models.active")
-                        : t("models.inactive")}
-                    </span>
+                    {hasError && (
+                      <Badge variant="destructive">
+                        <AlertCircleIcon className="w-3 h-3 mr-1" />
+                        {t("models.error")}
+                      </Badge>
+                    )}
+                    {hasModels && (
+                      <Badge variant="secondary">
+                        {enabledCount}/{provider?.discoveredModels?.length}{" "}
+                        {t("models.modelsEnabled")}
+                      </Badge>
+                    )}
                   </div>
-                  {!isExpanded && (
-                    <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-                      <span>
-                        {t("models.modelName")}:{" "}
-                        <span className="font-mono">{model.name}</span>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        {t("models.apiKey")}:{" "}
-                        <span className="font-mono">
-                          {maskApiKey(model.apiKey)}
-                        </span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm">
-                    {isExpanded ? (
-                      <ChevronUpIcon className="w-4 h-4" />
-                    ) : (
-                      <ChevronDownIcon className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Expanded Content */}
-            {isExpanded && (
-              <div className="space-y-4 pt-2 border-t">
-                {/* Preset badge for preset models */}
-                {/* {model.isPreset && (
-                <div className="p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-600 dark:text-blue-400">
-                    ℹ️ {t("models.presetInfo")}
+                  <p className="text-sm text-muted-foreground">
+                    {config.description}
                   </p>
                 </div>
-              )} */}
-
-                {/* Preset Selection - Only for user-configured models */}
-                {!model.isPreset && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      {t("models.selectPreset")}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {provider.presets.map((preset) => (
-                        <Button
-                          key={preset.name}
-                          variant={
-                            model.name === preset.name ? "default" : "outline"
-                          }
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectPreset(index, preset, provider.id);
-                          }}
-                        >
-                          {preset.displayName}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+              </div>
+              <Button variant="ghost" size="sm" className="flex-shrink-0">
+                {isExpanded ? (
+                  <ChevronUpIcon className="w-5 h-5" />
+                ) : (
+                  <ChevronDownIcon className="w-5 h-5" />
                 )}
+              </Button>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Provider Content */}
+            {isExpanded && (
+              <div className="space-y-4 pt-4 border-t w-full">
+                {/* Configuration Form */}
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      {t("models.modelName")}
-                    </label>
-                    <Input
-                      value={model.name}
-                      onChange={(e) =>
-                        onModelChange(index, "name", e.target.value)
-                      }
-                      placeholder={provider.presets[0]?.name || "model-name"}
-                      disabled={model.isPreset}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      {t("models.displayName")}
-                    </label>
-                    <Input
-                      value={model.displayName}
-                      onChange={(e) =>
-                        onModelChange(index, "displayName", e.target.value)
-                      }
-                      placeholder={
-                        provider.presets[0]?.displayName || "Display Name"
-                      }
-                      disabled={model.isPreset}
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-medium text-foreground">
                       {t("models.apiEndpoint")}
                     </label>
                     <Input
-                      value={model.apiEndpoint}
-                      onChange={(e) =>
-                        onModelChange(index, "apiEndpoint", e.target.value)
-                      }
-                      placeholder={provider.defaultEndpoint}
-                      disabled={model.isPreset}
+                      value={apiEndpoint}
+                      onChange={(e) => setApiEndpoint(e.target.value)}
+                      placeholder={config.defaultEndpoint}
                     />
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
                       {t("models.apiKey")}
                     </label>
                     <div className="relative">
                       <Input
                         type={showApiKey ? "text" : "password"}
-                        value={model.apiKey}
-                        onChange={(e) =>
-                          onModelChange(index, "apiKey", e.target.value)
-                        }
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
                         placeholder="sk-xxxxxxxxxxxxx"
                         className="pr-10"
-                        disabled={model.isPreset}
                       />
-                      {!model.isPreset && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleApiKey(index);
-                          }}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                        >
-                          {showApiKey ? (
-                            <EyeOffIcon className="w-4 h-4" />
-                          ) : (
-                            <EyeIcon className="w-4 h-4" />
-                          )}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                      >
+                        {showApiKey ? (
+                          <EyeOffIcon className="w-4 h-4" />
+                        ) : (
+                          <EyeIcon className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between md:col-span-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!model.isPreset) {
-                          onModelChange(index, "isActive", !model.isActive);
-                        }
-                      }}
-                      disabled={model.isPreset}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors ${
-                        model.isActive
-                          ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
-                          : "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400"
-                      } ${
-                        model.isPreset ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                  {/* Action Buttons */}
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={handleTest}
+                      disabled={!apiKey || !apiEndpoint || isTesting}
+                      variant="outline"
+                      className="flex-1"
                     >
-                      {model.isActive ? (
+                      {isTesting ? (
                         <>
-                          <CheckIcon className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            {t("models.active")}
-                          </span>
+                          <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                          {t("models.testing")}
                         </>
                       ) : (
                         <>
-                          <XIcon className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            {t("models.inactive")}
-                          </span>
+                          <RefreshCwIcon className="w-4 h-4 mr-2" />
+                          {t("models.testConnection")}
                         </>
                       )}
-                    </button>
-                    {!model.isPreset && (
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            setIsSaving(true);
-                            try {
-                              await onSaveModel(index);
-                            } finally {
-                              setIsSaving(false);
-                            }
-                          }}
-                          disabled={isSaving}
-                          size="sm"
-                        >
-                          <SaveIcon className="w-4 h-4" />
-                          {isSaving ? t("models.saving") : t("models.save")}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteDialog(true);
-                          }}
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          {t("models.delete")}
-                        </Button>
-                      </div>
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={!apiKey || !apiEndpoint}
+                      className="flex-1"
+                    >
+                      <CheckIcon className="w-4 h-4 mr-2" />
+                      {t("models.save")}
+                    </Button>
+                    {hasConfig && (
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </Button>
                     )}
                   </div>
                 </div>
+
+                {/* Error Message */}
+                {hasError && provider?.errorMessage && (
+                  <Card className="border-destructive bg-destructive/10">
+                    <CardContent className="p-3">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircleIcon className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-destructive">
+                          {provider.errorMessage}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Discovered Models */}
+                {hasModels && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-semibold text-foreground">
+                        {t("models.availableModels")}
+                      </h3>
+                      <Badge variant="secondary">
+                        {provider?.discoveredModels?.length} {t("models.models")}
+                      </Badge>
+                    </div>
+                    <ModelsList
+                      models={provider?.discoveredModels || []}
+                      onToggle={onToggleModel}
+                      onBatchToggle={onBatchToggleModel}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -422,11 +579,11 @@ function ModelCard({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("models.deleteConfirm.title")}
+              {t("models.deleteProviderConfirm.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("models.deleteConfirm.message", {
-                name: model.displayName || model.name,
+              {t("models.deleteProviderConfirm.message", {
+                name: config.displayName,
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -445,240 +602,184 @@ function ModelCard({
   );
 }
 
-function ProviderSection({
-  provider,
-  models,
-  onAddModel,
-  onRemoveModel,
-  onModelChange,
-  onSelectPreset,
-  showApiKeys,
-  onToggleApiKey,
-  onSaveModel,
-}: {
-  provider: ProviderConfig;
-  models: ModelConfig[];
-  onAddModel: (provider: string) => void;
-  onRemoveModel: (index: number) => void;
-  onModelChange: (
-    index: number,
-    field: keyof ModelConfig,
-    value: string | boolean
-  ) => void;
-  onSelectPreset: (
-    index: number,
-    preset: ModelPreset,
-    provider: string
-  ) => void;
-  showApiKeys: { [key: string]: boolean };
-  onToggleApiKey: (index: number) => void;
-  onSaveModel: (index: number) => Promise<void>;
-}) {
-  const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  const providerModels = models
-    .map((model, index) => ({ model, index }))
-    .filter(({ model }) => model.provider === provider.id);
-
-  // Check if there are any user-configured models (non-preset models)
-  const hasUserConfiguredModels = providerModels.some(
-    ({ model }) => !model.isPreset
-  );
-
-  return (
-    <Card className="border-border w-full">
-      <CardContent className="p-6 w-full">
-        <div className="space-y-4 w-full">
-          {/* Provider Header */}
-          <div
-            className="flex items-center justify-between cursor-pointer w-full"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <span className="text-3xl flex-shrink-0">{provider.icon}</span>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-foreground flex items-center space-x-2">
-                  <span>{provider.displayName}</span>
-                  <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                    {providerModels.length} {t("models.configured")}
-                  </span>
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {provider.description}
-                </p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" className="flex-shrink-0">
-              {isExpanded ? (
-                <ChevronUpIcon className="w-5 h-5" />
-              ) : (
-                <ChevronDownIcon className="w-5 h-5" />
-              )}
-            </Button>
-          </div>
-
-          {/* Provider Content */}
-          {isExpanded && (
-            <div className="space-y-4 pt-4 border-t w-full">
-              {/* Info Banner - Only show if no user-configured models */}
-              {!hasUserConfiguredModels && (
-                <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CardContent className="p-3">
-                    <p className="text-sm text-blue-600 dark:text-blue-400">
-                      {t(`models.providers.${provider.id}.info`)}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Models List */}
-              {providerModels.length > 0 && (
-                <div className="space-y-4">
-                  {providerModels.map(({ model, index }, providerIndex) => (
-                    <ModelCard
-                      key={index}
-                      model={model}
-                      index={index}
-                      provider={provider}
-                      providerIndex={providerIndex}
-                      onRemoveModel={onRemoveModel}
-                      onModelChange={onModelChange}
-                      onSelectPreset={onSelectPreset}
-                      showApiKey={showApiKeys[index]}
-                      onToggleApiKey={onToggleApiKey}
-                      onSaveModel={onSaveModel}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Add Model Button */}
-              <Button
-                variant="outline"
-                className="w-full border-dashed"
-                onClick={() => onAddModel(provider.id)}
-              >
-                <PlusIcon className="w-4 h-4 " />
-                {t("models.addModel")}
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ModelsContent() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [models, setModels] = useState<ModelConfig[]>([]);
-  const [showApiKeys, setShowApiKeys] = useState<{ [key: string]: boolean }>(
-    {}
-  );
+  const [providers, setProviders] = useState<ModelProvider[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadModels();
+    loadProviders();
   }, []);
 
-  const loadModels = async () => {
+  const loadProviders = async () => {
     try {
+      setIsLoading(true);
       const response = await httpClient.get<{
         success: boolean;
-        models: ModelConfig[];
-      }>("/api/models/user");
-      if (response.status === 200 && response.data?.models) {
-        setModels(response.data.models);
+        providers: ModelProvider[];
+      }>("/api/models/providers");
+      if (response.status === 200 && response.data?.providers) {
+        setProviders(response.data.providers);
       }
     } catch (error) {
-      console.error("Load models error:", error);
+      console.error("Load providers error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAddModel = (provider: string) => {
-    const providerConfig = MODEL_PROVIDERS.find((p) => p.id === provider);
-    if (!providerConfig) return;
-
-    const newModel: ModelConfig = {
-      name: "",
-      displayName: "",
-      apiKey: "",
-      apiEndpoint: providerConfig.defaultEndpoint,
-      isActive: true,
-      provider: provider,
-    };
-    setModels([...models, newModel]);
-  };
-
-  const handleRemoveModel = (index: number) => {
-    const newModels = models.filter((_, i) => i !== index);
-    setModels(newModels);
-  };
-
-  const handleModelChange = (
-    index: number,
-    field: keyof ModelConfig,
-    value: string | boolean
+  const handleTestProvider = async (
+    provider: string,
+    apiKey: string,
+    apiEndpoint: string
   ) => {
-    const newModels = [...models];
-    newModels[index] = { ...newModels[index], [field]: value };
-    setModels(newModels);
-  };
-
-  const handleSelectPreset = (
-    index: number,
-    preset: ModelPreset,
-    provider: string
-  ) => {
-    handleModelChange(index, "name", preset.name);
-    handleModelChange(index, "displayName", preset.displayName);
-    handleModelChange(index, "apiEndpoint", preset.defaultEndpoint);
-    handleModelChange(index, "provider", provider);
-  };
-
-  const toggleApiKeyVisibility = (index: number) => {
-    setShowApiKeys({
-      ...showApiKeys,
-      [index]: !showApiKeys[index],
-    });
-  };
-
-  const handleSaveModel = async (index: number) => {
     setMessage("");
     setError("");
-
-    const model = models[index];
-
-    // Validate model
-    if (!model.name || !model.displayName || !model.apiKey) {
-      setError(t("models.validation.required"));
-      return;
-    }
 
     try {
       const response = await httpClient.post<{
         success: boolean;
-        message: string;
-      }>("/api/models/user", {
-        models: [model],
+        models: any[];
+        error?: string;
+      }>("/api/models/test-provider", {
+        provider,
+        apiKey,
+        apiEndpoint,
       });
 
       if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || t("models.saveSuccess"));
-        await loadModels();
+        setMessage(
+          t("models.connectionSuccess", {
+            count: response.data.models.length,
+          })
+        );
+
+        // Save provider configuration
+        const saveResponse = await httpClient.post("/api/models/providers", {
+          provider,
+          apiKey,
+          apiEndpoint,
+        });
+
+        if (saveResponse.status === 200 && (saveResponse.data as any)?.success) {
+          const providerConfig = (saveResponse.data as any).provider;
+
+          // Save discovered models
+          await httpClient.put("/api/models/providers", {
+            providerId: providerConfig.id,
+            models: response.data.models,
+          });
+
+          await loadProviders();
+        }
       } else {
-        setError(
-          (response as any).message ||
-            (response as any).error ||
-            t("models.saveFailed")
+        setError(response.data?.error || t("models.connectionFailed"));
+      }
+    } catch (error: any) {
+      console.error("Test provider error:", error);
+      setError(
+        error.response?.data?.error ||
+          error.message ||
+          t("models.connectionFailed")
+      );
+    }
+  };
+
+  const handleSaveProvider = async (
+    provider: string,
+    apiKey: string,
+    apiEndpoint: string
+  ) => {
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await httpClient.post("/api/models/providers", {
+        provider,
+        apiKey,
+        apiEndpoint,
+      });
+
+      if (response.status === 200 && (response.data as any)?.success) {
+        setMessage(t("models.saveSuccess"));
+        await loadProviders();
+      }
+    } catch (error) {
+      console.error("Save provider error:", error);
+      setError(t("models.saveFailed"));
+    }
+  };
+
+  const handleDeleteProvider = async (providerId: string) => {
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await httpClient.delete(
+        `/api/models/providers?providerId=${providerId}`
+      );
+
+      if (response.status === 200 && (response.data as any)?.success) {
+        setMessage(t("models.deleteSuccess"));
+        await loadProviders();
+      }
+    } catch (error) {
+      console.error("Delete provider error:", error);
+      setError(t("models.deleteFailed"));
+    }
+  };
+
+  const handleToggleModel = async (modelId: string, isEnabled: boolean) => {
+    try {
+      const response = await httpClient.patch("/api/models/providers", {
+        modelId,
+        isEnabled,
+      });
+
+      if (response.status === 200 && (response.data as any)?.success) {
+        // Update local state
+        setProviders((prev) =>
+          prev.map((provider) => ({
+            ...provider,
+            discoveredModels: provider.discoveredModels.map((model) =>
+              model.id === modelId ? { ...model, isEnabled } : model
+            ),
+          }))
         );
       }
     } catch (error) {
-      console.error("Save model error:", error);
-      setError(t("models.saveFailed"));
+      console.error("Toggle model error:", error);
+      setError(t("models.toggleFailed"));
+    }
+  };
+
+  const handleBatchToggleModel = async (modelIds: string[], isEnabled: boolean) => {
+    try {
+      // 批量更新多个模型
+      const updatePromises = modelIds.map((modelId) =>
+        httpClient.patch("/api/models/providers", {
+          modelId,
+          isEnabled,
+        })
+      );
+
+      await Promise.all(updatePromises);
+
+      // Update local state
+      setProviders((prev) =>
+        prev.map((provider) => ({
+          ...provider,
+          discoveredModels: provider.discoveredModels.map((model) =>
+            modelIds.includes(model.id) ? { ...model, isEnabled } : model
+          ),
+        }))
+      );
+    } catch (error) {
+      console.error("Batch toggle models error:", error);
+      setError(t("models.toggleFailed"));
     }
   };
 
@@ -697,41 +798,62 @@ function ModelsContent() {
               <CpuIcon className="w-8 h-8 mr-3" />
               {t("models.title")}
             </h1>
-            <p className="text-muted-foreground mt-1">{t("models.subtitle")}</p>
+            <p className="text-muted-foreground mt-1">
+              {t("models.subtitle")}
+            </p>
           </div>
 
           {/* Messages */}
           {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
+            <Card className="border-destructive bg-destructive/10">
+              <CardContent className="p-3">
+                <div className="flex items-start space-x-2">
+                  <AlertCircleIcon className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {message && (
-            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-600 dark:text-green-400">
-                {message}
-              </p>
-            </div>
+            <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+              <CardContent className="p-3">
+                <div className="flex items-start space-x-2">
+                  <CheckCircleIcon className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {message}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          {/* Provider Sections */}
-          <div className="space-y-6 w-full">
-            {enabledProviders.map((provider) => (
-              <ProviderSection
-                key={provider.id}
-                provider={provider}
-                models={models}
-                onAddModel={handleAddModel}
-                onRemoveModel={handleRemoveModel}
-                onModelChange={handleModelChange}
-                onSelectPreset={handleSelectPreset}
-                showApiKeys={showApiKeys}
-                onToggleApiKey={toggleApiKeyVisibility}
-                onSaveModel={handleSaveModel}
-              />
-            ))}
-          </div>
+          {/* Provider Cards */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2Icon className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="space-y-6 w-full">
+              {enabledProviders.map((config) => {
+                const provider = providers.find(
+                  (p) => p.provider === config.id
+                );
+                return (
+                  <ProviderCard
+                    key={config.id}
+                    provider={provider || null}
+                    config={config}
+                    onTest={handleTestProvider}
+                    onSave={handleSaveProvider}
+                    onDelete={handleDeleteProvider}
+                    onToggleModel={handleToggleModel}
+                    onBatchToggleModel={handleBatchToggleModel}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -739,9 +861,5 @@ function ModelsContent() {
 }
 
 export default function ModelsPage() {
-  return (
-    
-      <ModelsContent />
-    
-  );
+  return <ModelsContent />;
 }

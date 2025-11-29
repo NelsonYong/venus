@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { useAuth } from "@/app/hooks/use-auth";
+import { useMobile } from "@/app/hooks/use-mobile";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,10 +20,12 @@ import {
   CreditCardIcon,
   CpuIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function UserMenu() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(false);
 
   if (!user) {
@@ -53,30 +56,44 @@ export function UserMenu() {
       <HoverCardTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center space-x-2 h-auto p-2 hover:bg-muted/50"
+          className={cn(
+            "flex items-center h-auto hover:bg-muted/50",
+            isMobile ? "p-1" : "space-x-2 p-2"
+          )}
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
+            <AvatarImage
+              src={user.image || undefined}
+              alt={user.name || "User"}
+            />
             <AvatarFallback className="text-xs">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col items-start text-left">
-            <span className="text-sm font-medium truncate max-w-24">
-              {user.name || "用户"}
-            </span>
-            <span className="text-xs text-muted-foreground truncate max-w-24">
-              {user.email}
-            </span>
-          </div>
-          <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
+          {/* 移动端隐藏用户信息 */}
+          {!isMobile && (
+            <>
+              <div className="flex flex-col items-start text-left">
+                <span className="text-sm font-medium truncate max-w-24">
+                  {user.name || "用户"}
+                </span>
+                <span className="text-xs text-muted-foreground truncate max-w-24">
+                  {user.email}
+                </span>
+              </div>
+              <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
+            </>
+          )}
         </Button>
       </HoverCardTrigger>
       <HoverCardContent className="w-64 p-0" align="end">
         <div className="p-4 space-y-4">
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
+              <AvatarImage
+                src={user.image || undefined}
+                alt={user.name || "User"}
+              />
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="space-y-1">

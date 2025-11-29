@@ -78,9 +78,11 @@ export function McpConfig() {
         });
 
         // 替换临时 ID
-        setServers(servers.map((s) =>
-          s.id === server.id ? { ...created, isPersisted: true } : s
-        ));
+        setServers(
+          servers.map((s) =>
+            s.id === server.id ? { ...created, isPersisted: true } : s
+          )
+        );
 
         setMessage(t("settings.developer.mcpConfig.createSuccess"));
       } else {
@@ -97,9 +99,11 @@ export function McpConfig() {
           enabled: server.enabled,
         });
 
-        setServers(servers.map((s) =>
-          s.id === server.id ? { ...updated, isPersisted: true } : s
-        ));
+        setServers(
+          servers.map((s) =>
+            s.id === server.id ? { ...updated, isPersisted: true } : s
+          )
+        );
 
         setMessage(t("settings.developer.mcpConfig.saveSuccess"));
       }
@@ -122,7 +126,7 @@ export function McpConfig() {
     setMessage("");
     setError("");
 
-    const server = servers.find(s => s.id === id);
+    const server = servers.find((s) => s.id === id);
 
     if (!server) return;
 
@@ -160,9 +164,7 @@ export function McpConfig() {
       <div className="flex items-center justify-center py-12">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">
-            {t("common.loading")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -221,10 +223,17 @@ export function McpConfig() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-muted-foreground">
-                {servers.filter(s => s.isPersisted !== false).length} {servers.filter(s => s.isPersisted !== false).length === 1 ? 'Server' : 'Servers'}
+                {servers.filter((s) => s.isPersisted !== false).length}{" "}
+                {servers.filter((s) => s.isPersisted !== false).length === 1
+                  ? "Server"
+                  : "Servers"}
               </span>
               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                {servers.filter(s => s.enabled && s.isPersisted !== false).length} Active
+                {
+                  servers.filter((s) => s.enabled && s.isPersisted !== false)
+                    .length
+                }{" "}
+                Active
               </span>
             </div>
             <Button
@@ -257,8 +266,8 @@ export function McpConfig() {
         </div>
       ) : (
         <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-          <div className="relative text-center py-16 border-2 border-dashed border-border rounded-2xl hover:border-primary/30 transition-all duration-300 bg-background/50 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl blur-xl transition-all duration-500" />
+          <div className="relative text-center py-16 border-2 border-dashed border-border rounded-2xl transition-all duration-300 bg-background/50 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
                 <ServerIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
@@ -268,13 +277,14 @@ export function McpConfig() {
                   {t("settings.developer.mcpConfig.noServers")}
                 </p>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Get started by adding your first MCP server to extend AI capabilities
+                  Get started by adding your first MCP server to extend AI
+                  capabilities
                 </p>
               </div>
               <Button
                 onClick={handleAddServer}
                 size="lg"
-                className="gap-2 mt-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                className="gap-2 mt-2 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <PlusIcon className="w-5 h-5" />
                 {t("settings.developer.mcpConfig.addServer")}
@@ -299,9 +309,10 @@ export function McpConfig() {
                 About MCP (Model Context Protocol)
               </h4>
               <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                MCP enables seamless integration with external tools and data sources,
-                empowering AI with capabilities like file system access, database queries,
-                API interactions, and more. Configure your servers to unlock new possibilities.
+                MCP enables seamless integration with external tools and data
+                sources, empowering AI with capabilities like file system
+                access, database queries, API interactions, and more. Configure
+                your servers to unlock new possibilities.
               </p>
             </div>
           </div>
@@ -320,12 +331,10 @@ export function McpConfig() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t("common.cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && handleDeleteServer(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground"
             >
               {t("common.delete")}
             </AlertDialogAction>

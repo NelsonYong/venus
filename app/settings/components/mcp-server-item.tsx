@@ -8,7 +8,6 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 import { Switch } from "@/components/ui/switch";
 import {
   ChevronDownIcon,
-  ChevronRightIcon,
   SaveIcon,
   TrashIcon,
   PlusIcon,
@@ -19,6 +18,7 @@ import {
   AlertCircleIcon,
   GlobeIcon,
   ZapIcon,
+  PencilIcon,
 } from "lucide-react";
 import {
   Select,
@@ -162,12 +162,12 @@ export function McpServerItem({
     const newKey = `VAR_${Object.keys(editedServer.env || {}).length + 1}`;
     setEditedServer({
       ...editedServer,
-      env: { ...(editedServer.env || {}), [newKey]: "" },
+      env: { ...editedServer.env, [newKey]: "" },
     });
   };
 
   const updateEnvKey = (oldKey: string, newKey: string) => {
-    const env = { ...(editedServer.env || {}) };
+    const env = { ...editedServer.env };
     const value = env[oldKey];
     delete env[oldKey];
     env[newKey] = value;
@@ -179,14 +179,14 @@ export function McpServerItem({
   const updateEnvValue = (key: string, value: string) => {
     const updated = {
       ...editedServer,
-      env: { ...(editedServer.env || {}), [key]: value },
+      env: { ...editedServer.env, [key]: value },
     };
     setEditedServer(updated);
     onUpdate(updated);
   };
 
   const removeEnvVar = (key: string) => {
-    const env = { ...(editedServer.env || {}) };
+    const env = { ...editedServer.env };
     delete env[key];
     const updated = { ...editedServer, env };
     setEditedServer(updated);
@@ -197,21 +197,10 @@ export function McpServerItem({
   const canDelete = server.isPersisted !== false; // 只有已保存的服务器才显示删除按钮
 
   return (
-    <Card className="group border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md overflow-hidden">
+    <Card className="group border-border transition-all duration-300 hover:shadow-md overflow-hidden">
       <CardContent className="p-0">
         {/* Header */}
-        <div className="flex items-center gap-3 p-4 bg-muted/30 hover:bg-muted/50 transition-colors duration-200">
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 hover:bg-background rounded-md transition-all duration-200"
-          >
-            {isExpanded ? (
-              <ChevronDownIcon className="w-5 h-5 text-muted-foreground" />
-            ) : (
-              <ChevronRightIcon className="w-5 h-5 text-muted-foreground" />
-            )}
-          </button>
-
+        <div className="flex items-center gap-3 p-4 transition-colors duration-200">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-foreground truncate">
@@ -251,11 +240,12 @@ export function McpServerItem({
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Switch
                 checked={editedServer.enabled}
                 onCheckedChange={handleToggleEnabled}
+                onClick={(e) => e.stopPropagation()}
               />
               <span
                 className={`text-xs font-medium ${
@@ -268,12 +258,33 @@ export function McpServerItem({
               </span>
             </div>
 
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="hover:bg-primary/10 hover:text-primary"
+              title={isExpanded ? "Collapse" : "Edit"}
+            >
+              {isExpanded ? (
+                <ChevronDownIcon className="w-4 h-4" />
+              ) : (
+                <PencilIcon className="w-4 h-4" />
+              )}
+            </Button>
+
             {canDelete && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onDelete(server.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(server.id);
+                }}
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                title="Delete"
               >
                 <TrashIcon className="w-4 h-4" />
               </Button>
@@ -418,7 +429,7 @@ export function McpServerItem({
                     </Button>
                   </div>
                   {(editedServer.args?.length || 0) > 0 && (
-                    <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border">
+                    <div className="space-y-2 p-3 rounded-lg  border border-border">
                       {editedServer.args?.map((arg, index) => (
                         <div key={index} className="flex gap-2">
                           <div className="flex items-center justify-center w-6 h-9 text-xs text-muted-foreground font-medium">
@@ -557,7 +568,7 @@ export function McpServerItem({
                 </Button>
               </div>
               {Object.keys(editedServer.env || {}).length > 0 && (
-                <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border">
+                <div className="space-y-2 p-3 rounded-lg  border border-border">
                   {Object.entries(editedServer.env || {}).map(
                     ([key, value]) => (
                       <div key={key} className="flex gap-2">

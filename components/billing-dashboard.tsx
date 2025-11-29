@@ -115,7 +115,7 @@ export function BillingDashboard({ userId }: { userId: string }) {
   };
 
   if (loading) {
-    return <div className="p-4">{t("billing.loading")}</div>;
+    return <BillingDashboardSkeleton />;
   }
 
   if (!billingInfo) {
@@ -269,7 +269,7 @@ export function BillingDashboard({ userId }: { userId: string }) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -289,7 +289,7 @@ export function BillingDashboard({ userId }: { userId: string }) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex-shrink-0 text-right sm:text-right">
+                  <div className="shrink-0 text-right sm:text-right">
                     <p className="text-sm font-medium text-foreground">
                       ${Number(record.totalCost).toFixed(6)}
                     </p>
@@ -322,6 +322,76 @@ export function BillingDashboard({ userId }: { userId: string }) {
               </p>
             </div>
           )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 骨架屏组件
+function BillingDashboardSkeleton() {
+  return (
+    <div className="w-full space-y-6 animate-pulse">
+      {/* 顶部统计卡片骨架 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <div className="h-4 w-24 bg-muted rounded"></div>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <div className="h-8 w-32 bg-muted rounded"></div>
+              <div className="h-3 w-40 bg-muted rounded"></div>
+              {i === 1 && (
+                <div className="flex gap-2 mt-3">
+                  <div className="h-8 w-16 bg-muted rounded"></div>
+                  <div className="h-8 w-16 bg-muted rounded"></div>
+                </div>
+              )}
+              {i === 4 && (
+                <div className="mt-3 space-y-2">
+                  <div className="h-2 w-full bg-muted rounded-full"></div>
+                  <div className="h-3 w-16 bg-muted rounded ml-auto"></div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* 使用记录骨架 */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="space-y-2">
+            <div className="h-6 w-40 bg-muted rounded"></div>
+            <div className="h-4 w-64 bg-muted rounded"></div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-muted rounded-full"></div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-4 w-48 bg-muted rounded"></div>
+                      <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-1 sm:space-y-0">
+                        <div className="h-3 w-32 bg-muted rounded"></div>
+                        <div className="h-3 w-40 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  <div className="h-4 w-20 bg-muted rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

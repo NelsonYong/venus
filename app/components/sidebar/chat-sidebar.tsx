@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { ChatSession } from "@/app/hooks/use-conversations";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/contexts/i18n-context";
+import { useMobile } from "@/app/hooks/use-mobile";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -194,7 +195,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const router = useRouter();
   const { t } = useTranslation();
-
+  const isMobile = useMobile();
   useEffect(() => {
     if (isOpen && onOpen) {
       onOpen();
@@ -210,6 +211,9 @@ export function ChatSidebar({
   const handleChatSelect = (chatId: string) => {
     router.push(`/?chatId=${chatId}`, { scroll: false });
     onLoadChat(chatId);
+    if (isMobile) {
+      onClose();
+    }
     // onClose();
   };
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/hooks/use-auth";
 import { useI18n, useTranslation } from "@/app/contexts/i18n-context";
 import { Navbar } from "@/app/components/ui/navbar";
@@ -37,6 +38,7 @@ import {
 import {
   SettingsLayout,
   SettingsSidebar,
+  SettingsBottomTabs,
   SettingsContent,
   SettingsSection,
 } from "./layout-components";
@@ -56,11 +58,65 @@ function SettingsContentPage() {
   const { changeLanguage } = useI18n();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState<SettingTab>("appearance");
+
+  // Get initial tab from URL query or default to "appearance"
+  const getInitialTab = (): SettingTab => {
+    const tabParam = searchParams.get("tab");
+    const validTabs: SettingTab[] = [
+      "appearance",
+      "notifications",
+      "privacy",
+      "security",
+      "developer",
+      "dangerZone",
+    ];
+    return validTabs.includes(tabParam as SettingTab)
+      ? (tabParam as SettingTab)
+      : "appearance";
+  };
+
+  const [activeTab, setActiveTab] = useState<SettingTab>(getInitialTab());
+
+  // Sync activeTab with URL query parameter when navigating back/forward
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    const validTabs: SettingTab[] = [
+      "appearance",
+      "notifications",
+      "privacy",
+      "security",
+      "developer",
+      "dangerZone",
+    ];
+    const urlTab = validTabs.includes(tabParam as SettingTab)
+      ? (tabParam as SettingTab)
+      : "appearance";
+
+    if (urlTab !== activeTab) {
+      setActiveTab(urlTab);
+      setMessage("");
+      setError("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (newTab: SettingTab) => {
+    setActiveTab(newTab);
+    setMessage("");
+    setError("");
+
+    // Update URL with new tab parameter
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", newTab);
+    router.push(`/settings?${params.toString()}`, { scroll: false });
+  };
 
   const [settings, setSettings] = useState({
     theme: user?.theme || theme,
@@ -526,11 +582,14 @@ function SettingsContentPage() {
             <SettingsSidebar
               items={sidebarItems}
               activeItem={activeTab}
-              onItemClick={(id) => {
-                setActiveTab(id as SettingTab);
-                setMessage("");
-                setError("");
-              }}
+              onItemClick={(id) => handleTabChange(id as SettingTab)}
+            />
+          }
+          bottomTabs={
+            <SettingsBottomTabs
+              items={sidebarItems}
+              activeItem={activeTab}
+              onItemClick={(id) => handleTabChange(id as SettingTab)}
             />
           }
         >

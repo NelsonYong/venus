@@ -301,6 +301,15 @@
       "copy": "复制",
       "copied": "已复制",
       "regenerate": "重新生成"
+    },
+    "usage": {
+      "contextUsage": "上下文用量",
+      "inputTokens": "输入",
+      "outputTokens": "输出",
+      "reasoningTokens": "推理",
+      "cacheTokens": "缓存",
+      "totalCost": "总成本",
+      "tokens": "tokens"
     }
   },
   "billing": {

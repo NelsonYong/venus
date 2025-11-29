@@ -10,6 +10,8 @@ interface AvailableModel {
   displayName: string;
   provider: string;
   isPreset: boolean;
+  contextWindow?: number;
+  maxTokens?: number;
 }
 
 interface AvailableModelsResponse {

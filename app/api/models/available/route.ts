@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
         isPreset: false,
         apiEndpoint: provider.apiEndpoint,
         apiKey: provider.apiKey,
+        contextWindow: model.contextWindow,
+        maxTokens: model.maxTokens,
       }))
     );
 

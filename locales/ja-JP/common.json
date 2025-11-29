@@ -259,6 +259,15 @@
       "copy": "コピー",
       "copied": "コピーしました",
       "regenerate": "再生成"
+    },
+    "usage": {
+      "contextUsage": "コンテキスト使用量",
+      "inputTokens": "入力",
+      "outputTokens": "出力",
+      "reasoningTokens": "推論",
+      "cacheTokens": "キャッシュ",
+      "totalCost": "総コスト",
+      "tokens": "トークン"
     }
   },
   "billing": {

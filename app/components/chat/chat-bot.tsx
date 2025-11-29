@@ -37,6 +37,7 @@ export function ChatBot() {
     isLoading,
     isLoadingChat,
     error,
+    usage,
 
     // Actions
     setInput,
@@ -108,7 +109,7 @@ export function ChatBot() {
     handleNavigationAttempt(() => handleLoadChat(chatId));
   };
 
-  console.log("messages", messages);
+  // console.log("messages", messages);
 
   return (
     <>
@@ -174,6 +175,7 @@ export function ChatBot() {
                 isLoadingChat={isLoadingChat}
                 onRegenerate={handleRegenerate}
                 onStop={stop}
+                usage={usage}
               />
             </div>
           </div>

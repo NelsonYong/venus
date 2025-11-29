@@ -8,6 +8,7 @@ import {
 import { EmptyChatState } from "./empty-chat-state";
 import { ChatInput } from "./chat-input";
 import { MessageRenderer } from "./message-renderer";
+import type { LanguageModelUsage } from "ai";
 
 interface ChatLayoutProps {
   messages: any[];
@@ -23,6 +24,7 @@ interface ChatLayoutProps {
   isLoadingChat?: boolean;
   onRegenerate?: () => void;
   onStop?: () => void;
+  usage?: LanguageModelUsage;
 }
 
 export function ChatLayout({
@@ -39,6 +41,7 @@ export function ChatLayout({
   isLoadingChat = false,
   onRegenerate,
   onStop,
+  usage,
 }: ChatLayoutProps) {
   const hasMessages = messages.length > 0;
 
@@ -67,6 +70,7 @@ export function ChatLayout({
             onWebSearchToggle={onWebSearchToggle}
             status={status}
             onStop={onStop}
+            usage={usage}
           />
         </div>
       </div>
@@ -98,6 +102,7 @@ export function ChatLayout({
           <MessageRenderer
             messages={messages}
             status={status}
+            isFinished={status === "finished"}
             onRegenerate={onRegenerate}
           />
         </ConversationContent>
@@ -115,6 +120,7 @@ export function ChatLayout({
           onWebSearchToggle={onWebSearchToggle}
           status={status}
           onStop={onStop}
+          usage={usage}
         />
       </div>
     </div>

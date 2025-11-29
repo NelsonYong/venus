@@ -248,6 +248,11 @@ export function useChatBot() {
   const chatId = searchParams.get("chatId");
   const isLoadingChat = Boolean(chatId && messages.length === 0 && isLoading);
 
+  // Get usage from the last message's metadata
+  const lastMessage = messages[messages.length - 1];
+  const messageUsage = lastMessage?.metadata as any;
+
+
   return {
     // State
     input,
@@ -261,6 +266,7 @@ export function useChatBot() {
     isLoading,
     isLoadingChat,
     error,
+    usage: messageUsage, // Use message metadata first, fallback to useChat usage
 
     // Actions
     setInput,

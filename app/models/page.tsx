@@ -7,6 +7,7 @@ import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { httpClient } from "@/lib/http-client";
+import { ModelSelectorLogo } from "@/components/ai-elements/model-selector";
 import {
   CpuIcon,
   TrashIcon,
@@ -61,7 +62,6 @@ interface ProviderConfig {
   name: string;
   displayName: string;
   description: string;
-  icon: string;
   defaultEndpoint: string;
   enabled: boolean;
 }
@@ -72,7 +72,6 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
     name: "deepseek",
     displayName: "DeepSeek",
     description: "DeepSeek AI - 高性能的中文大语言模型",
-    icon: "🤖",
     enabled: true,
     defaultEndpoint: "https://api.deepseek.com/v1",
   },
@@ -81,7 +80,6 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
     name: "openai",
     displayName: "OpenAI",
     description: "OpenAI - GPT 系列模型",
-    icon: "🧠",
     enabled: true,
     defaultEndpoint: "https://api.openai.com/v1",
   },
@@ -90,7 +88,6 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
     name: "anthropic",
     displayName: "Anthropic",
     description: "Anthropic - Claude 系列模型",
-    icon: "🤖",
     enabled: true,
     defaultEndpoint: "https://api.anthropic.com/v1",
   },
@@ -99,7 +96,6 @@ const MODEL_PROVIDERS: ProviderConfig[] = [
     name: "google",
     displayName: "Google",
     description: "Google - Gemini 系列模型",
-    icon: "🔷",
     enabled: true,
     defaultEndpoint: "https://generativelanguage.googleapis.com/v1",
   },
@@ -138,7 +134,11 @@ function ModelsList({
       if (modelName.includes("gpt-4")) groupKey = "GPT-4";
       else if (modelName.includes("gpt-3.5")) groupKey = "GPT-3.5";
       else if (modelName.includes("o1")) groupKey = "O1";
-      else if (modelName.includes("claude-3.5") || modelName.includes("claude-3-5")) groupKey = "Claude 3.5";
+      else if (
+        modelName.includes("claude-3.5") ||
+        modelName.includes("claude-3-5")
+      )
+        groupKey = "Claude 3.5";
       else if (modelName.includes("claude-3-opus")) groupKey = "Claude 3 Opus";
       else if (modelName.includes("claude-3")) groupKey = "Claude 3";
       else if (modelName.includes("claude")) groupKey = "Claude";
@@ -146,7 +146,8 @@ function ModelsList({
       else if (modelName.includes("gemini-1.5")) groupKey = "Gemini 1.5";
       else if (modelName.includes("gemini")) groupKey = "Gemini";
       else if (modelName.includes("deepseek-chat")) groupKey = "DeepSeek Chat";
-      else if (modelName.includes("deepseek-reasoner")) groupKey = "DeepSeek Reasoner";
+      else if (modelName.includes("deepseek-reasoner"))
+        groupKey = "DeepSeek Reasoner";
       else if (modelName.includes("deepseek")) groupKey = "DeepSeek";
 
       if (!groups[groupKey]) {
@@ -196,7 +197,10 @@ function ModelsList({
     onBatchToggle(modelIds, false);
   };
 
-  const handleGroupToggle = (groupModels: DiscoveredModel[], enable: boolean) => {
+  const handleGroupToggle = (
+    groupModels: DiscoveredModel[],
+    enable: boolean
+  ) => {
     const modelIds = groupModels.map((m) => m.id);
     onBatchToggle(modelIds, enable);
   };
@@ -247,7 +251,9 @@ function ModelsList({
           {groupKeys.map((groupKey) => {
             const groupModels = groupedModels[groupKey];
             const isExpanded = expandedGroups.has(groupKey);
-            const groupEnabledCount = groupModels.filter((m) => m.isEnabled).length;
+            const groupEnabledCount = groupModels.filter(
+              (m) => m.isEnabled
+            ).length;
 
             return (
               <Card key={groupKey} className="border-border">
@@ -270,7 +276,8 @@ function ModelsList({
                           {groupKey}
                         </h4>
                         <p className="text-xs text-muted-foreground">
-                          {groupEnabledCount}/{groupModels.length} {t("models.enabled")}
+                          {groupEnabledCount}/{groupModels.length}{" "}
+                          {t("models.enabled")}
                         </p>
                       </div>
                     </div>
@@ -325,13 +332,16 @@ function ModelsList({
                             )}
                             {model.contextWindow && (
                               <p className="text-xs text-muted-foreground mt-1">
-                                Context: {model.contextWindow.toLocaleString()} tokens
+                                Context: {model.contextWindow.toLocaleString()}{" "}
+                                tokens
                               </p>
                             )}
                           </div>
                           <Switch
                             checked={model.isEnabled}
-                            onCheckedChange={(checked) => onToggle(model.id, checked)}
+                            onCheckedChange={(checked) =>
+                              onToggle(model.id, checked)
+                            }
                           />
                         </div>
                       ))}
@@ -415,7 +425,9 @@ function ProviderCard({
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <span className="text-3xl flex-shrink-0">{config.icon}</span>
+                <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                  <ModelSelectorLogo provider={config.id} className="w-8 h-8" />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <h2 className="text-xl font-bold text-foreground">
@@ -558,7 +570,8 @@ function ProviderCard({
                         {t("models.availableModels")}
                       </h3>
                       <Badge variant="secondary">
-                        {provider?.discoveredModels?.length} {t("models.models")}
+                        {provider?.discoveredModels?.length}{" "}
+                        {t("models.models")}
                       </Badge>
                     </div>
                     <ModelsList
@@ -664,7 +677,10 @@ function ModelsContent() {
           apiEndpoint,
         });
 
-        if (saveResponse.status === 200 && (saveResponse.data as any)?.success) {
+        if (
+          saveResponse.status === 200 &&
+          (saveResponse.data as any)?.success
+        ) {
           const providerConfig = (saveResponse.data as any).provider;
 
           // Save discovered models
@@ -756,7 +772,10 @@ function ModelsContent() {
     }
   };
 
-  const handleBatchToggleModel = async (modelIds: string[], isEnabled: boolean) => {
+  const handleBatchToggleModel = async (
+    modelIds: string[],
+    isEnabled: boolean
+  ) => {
     try {
       // 批量更新多个模型
       const updatePromises = modelIds.map((modelId) =>
@@ -798,9 +817,7 @@ function ModelsContent() {
               <CpuIcon className="w-8 h-8 mr-3" />
               {t("models.title")}
             </h1>
-            <p className="text-muted-foreground mt-1">
-              {t("models.subtitle")}
-            </p>
+            <p className="text-muted-foreground mt-1">{t("models.subtitle")}</p>
           </div>
 
           {/* Messages */}

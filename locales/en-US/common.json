@@ -299,6 +299,15 @@
       "copy": "Copy",
       "copied": "Copied",
       "regenerate": "Regenerate"
+    },
+    "usage": {
+      "contextUsage": "Context Usage",
+      "inputTokens": "Input",
+      "outputTokens": "Output",
+      "reasoningTokens": "Reasoning",
+      "cacheTokens": "Cache",
+      "totalCost": "Total cost",
+      "tokens": "tokens"
     }
   },
   "billing": {

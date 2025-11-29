@@ -25,16 +25,19 @@ import { Actions, Action } from "@/components/ai-elements/actions";
 import { Loader } from "@/components/ai-elements/loader";
 import { CopyIcon, CheckIcon, RefreshCwIcon } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
+import { UIMessage } from "ai";
 
 interface MessageRendererProps {
-  messages: any[];
+  messages: UIMessage[];
   status: string;
+  isFinished?: boolean;
   onRegenerate?: () => void;
 }
 
 export function MessageRenderer({
   messages,
   status,
+  isFinished,
   onRegenerate,
 }: MessageRendererProps) {
   const { t } = useTranslation();
@@ -307,34 +310,81 @@ export function MessageRenderer({
             </MessageContent>
           </Message>
 
-          {/* Actions for assistant messages - copy button always visible */}
+          {/* Actions for assistant messages */}
           {message.role === "assistant" && (
-            <div className="flex justify-start mt-2 px-2">
-              <Actions>
-                <Action
-                  tooltip={
-                    copiedId === message.id
-                      ? t("chat.actions.copied")
-                      : t("chat.actions.copy")
-                  }
-                  onClick={() => handleCopy(message)}
-                >
-                  {copiedId === message.id ? (
-                    <CheckIcon className="w-4 h-4" />
-                  ) : (
-                    <CopyIcon className="w-4 h-4" />
-                  )}
-                </Action>
-                {isLastAssistantMessage(index) && onRegenerate && (
-                  <Action
-                    tooltip={t("chat.actions.regenerate")}
-                    onClick={onRegenerate}
-                  >
-                    <RefreshCwIcon className="w-4 h-4" />
-                  </Action>
-                )}
-              </Actions>
-            </div>
+            <>
+              {/* 流式输出时：非最后一条消息显示复制按钮 */}
+              {status === "streaming" && !isLastAssistantMessage(index) && (
+                <div className="flex justify-start mt-2 px-2">
+                  <Actions>
+                    <Action
+                      tooltip={
+                        copiedId === message.id
+                          ? t("chat.actions.copied")
+                          : t("chat.actions.copy")
+                      }
+                      onClick={() => handleCopy(message)}
+                    >
+                      {copiedId === message.id ? (
+                        <CheckIcon className="w-4 h-4" />
+                      ) : (
+                        <CopyIcon className="w-4 h-4" />
+                      )}
+                    </Action>
+                  </Actions>
+                </div>
+              )}
+              {/* 非流式输出时：最后一条消息显示复制和重新生成按钮 */}
+              {status !== "streaming" && isLastAssistantMessage(index) && (
+                <div className="flex justify-start mt-2 px-2">
+                  <Actions>
+                    <Action
+                      tooltip={
+                        copiedId === message.id
+                          ? t("chat.actions.copied")
+                          : t("chat.actions.copy")
+                      }
+                      onClick={() => handleCopy(message)}
+                    >
+                      {copiedId === message.id ? (
+                        <CheckIcon className="w-4 h-4" />
+                      ) : (
+                        <CopyIcon className="w-4 h-4" />
+                      )}
+                    </Action>
+                    {onRegenerate && (
+                      <Action
+                        tooltip={t("chat.actions.regenerate")}
+                        onClick={onRegenerate}
+                      >
+                        <RefreshCwIcon className="w-4 h-4" />
+                      </Action>
+                    )}
+                  </Actions>
+                </div>
+              )}
+              {/* 非流式输出时：非最后一条消息显示复制按钮 */}
+              {status !== "streaming" && !isLastAssistantMessage(index) && (
+                <div className="flex justify-start mt-2 px-2">
+                  <Actions>
+                    <Action
+                      tooltip={
+                        copiedId === message.id
+                          ? t("chat.actions.copied")
+                          : t("chat.actions.copy")
+                      }
+                      onClick={() => handleCopy(message)}
+                    >
+                      {copiedId === message.id ? (
+                        <CheckIcon className="w-4 h-4" />
+                      ) : (
+                        <CopyIcon className="w-4 h-4" />
+                      )}
+                    </Action>
+                  </Actions>
+                </div>
+              )}
+            </>
           )}
 
           {/* Actions for user messages - copy button visible on hover */}

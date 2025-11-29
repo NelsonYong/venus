@@ -20,13 +20,26 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
+import {
+  Context,
+  ContextTrigger,
+  ContextContent,
+  ContextContentHeader,
+  ContextContentBody,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextCacheUsage,
+  ContextContentFooter,
+} from "@/components/ai-elements/context";
 import { GlobeIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { ChatStatus } from "ai";
 import { useAvailableModels } from "@/app/hooks/use-available-models";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import type { LanguageModelUsage } from "ai";
 
 interface ChatInputProps {
   input: string;
@@ -39,6 +52,7 @@ interface ChatInputProps {
   status: string;
   onStop?: () => void;
   className?: string;
+  usage?: LanguageModelUsage & { maxTokens?: number };
 }
 
 export function ChatInput({
@@ -52,6 +66,7 @@ export function ChatInput({
   status,
   onStop,
   className,
+  usage,
 }: ChatInputProps) {
   const { t } = useTranslation();
   const { models: availableModels, isLoading: isLoadingModels } =
@@ -118,6 +133,25 @@ export function ChatInput({
 
   // 获取当前选中的模型
   const selectedModel = availableModels.find((m) => m.id === model);
+
+  // 计算上下文用量
+  const totalTokens = useMemo(() => {
+    if (!usage) return 0;
+    return (usage.inputTokens || 0) + (usage.outputTokens || 0);
+  }, [usage]);
+
+  // console.log("usage", usage);
+
+  // 获取模型的上下文窗口大小
+  const maxTokens = useMemo(() => {
+    if (!usage) return 0;
+    return usage.maxTokens || 0;
+  }, [usage]);
+
+  // 判断是否显示用量指示器
+  const showUsage = usage && (usage.inputTokens || usage.outputTokens);
+
+  // console.log("usage", usage);
 
   return (
     <PromptInput
@@ -204,6 +238,28 @@ export function ChatInput({
               </ModelSelectorList>
             </ModelSelectorContent>
           </ModelSelector>
+
+          {/* Token 用量显示 */}
+          {showUsage && (
+            <Context
+              usedTokens={totalTokens}
+              maxTokens={maxTokens}
+              usage={usage}
+              modelId={selectedModel?.id}
+            >
+              <ContextTrigger className="h-8 text-xs" />
+              <ContextContent>
+                <ContextContentHeader />
+                <ContextContentBody className="space-y-2">
+                  <ContextInputUsage />
+                  <ContextOutputUsage />
+                  <ContextReasoningUsage />
+                  <ContextCacheUsage />
+                </ContextContentBody>
+                <ContextContentFooter />
+              </ContextContent>
+            </Context>
+          )}
         </PromptInputTools>
         <PromptInputSubmit
           disabled={!input && status !== "streaming"}

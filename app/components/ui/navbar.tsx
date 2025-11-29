@@ -100,19 +100,21 @@ export function Navbar({
           {/* Left Side */}
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             {/* Sidebar Toggle Button */}
-            {isShowSidebar && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onSidebarToggle}
-                className="h-8 w-8 flex-shrink-0"
-              >
-                <PanelLeftIcon className="h-4 w-4" />
-              </Button>
-            )}
+            <div>
+              {isShowSidebar && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onSidebarToggle}
+                  className="h-8 w-8 flex-shrink-0"
+                >
+                  <PanelLeftIcon className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
 
             {/* Logo and Brand / Conversation Title */}
-            <div className="flex items-center space-x-2 flex-1 min-w-0">
+            <div className="flex items-center space-x-2 min-w-0">
               {conversationTitle ? (
                 // Show conversation title with edit/star functionality
                 <div className="flex items-center space-x-2 flex-1 min-w-0">

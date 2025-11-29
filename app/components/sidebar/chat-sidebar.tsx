@@ -13,12 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  PlusIcon,
-  MessageSquareIcon,
-  TrashIcon,
-  StarIcon,
-} from "lucide-react";
+import { PlusIcon, MessageSquareIcon, TrashIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { ChatSession } from "@/app/hooks/use-conversations";
@@ -57,7 +52,7 @@ function ChatItem({
 
   const handleClick = (e: React.MouseEvent) => {
     // Only select if clicking on the item itself, not on the delete button
-    if ((e.target as HTMLElement).closest('[data-delete-button]')) {
+    if ((e.target as HTMLElement).closest("[data-delete-button]")) {
       return;
     }
     onSelect(chat.id);
@@ -215,7 +210,7 @@ export function ChatSidebar({
   const handleChatSelect = (chatId: string) => {
     router.push(`/?chatId=${chatId}`, { scroll: false });
     onLoadChat(chatId);
-    onClose(); // Close sidebar on mobile after selecting a chat
+    // onClose();
   };
 
   const handleDeleteChat = (chatId: string) => {
@@ -276,83 +271,83 @@ export function ChatSidebar({
         )}
       >
         <div className="flex flex-col h-full w-80">
-        {/* Header */}
-        <div className="p-3 border-b border-border/50 shrink-0">
-          <Button
-            onClick={handleNewChat}
-            className="w-full h-10 justify-start font-medium"
-            size="sm"
-          >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            {t("sidebar.newChat")}
-          </Button>
-        </div>
-
-        {/* Chat History */}
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="px-2 py-3 space-y-6">
-            {isLoading ? (
-              <div className="text-center text-sm text-muted-foreground py-8">
-                {t("common.loading")}
-              </div>
-            ) : chatHistory.length === 0 ? (
-              <div className="text-center text-sm text-muted-foreground py-8 px-4">
-                <MessageSquareIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("sidebar.noMessages")}</p>
-              </div>
-            ) : (
-              <>
-                {/* Starred Conversations */}
-                {starredChats.length > 0 && (
-                  <div>
-                    <div className="px-3 mb-2">
-                      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {t("sidebar.starred")}
-                      </h2>
-                    </div>
-                    <div className="space-y-1">
-                      {starredChats.map((chat) => (
-                        <ChatItem
-                          key={chat.id}
-                          chat={chat}
-                          currentChatId={currentChatId}
-                          onSelect={handleChatSelect}
-                          onDelete={handleDeleteChat}
-                          formatTimestamp={formatTimestamp}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Grouped Regular Conversations */}
-                {groupedChats.map((group) => (
-                  <div key={group.label}>
-                    <div className="px-3 mb-2">
-                      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {group.label}
-                      </h2>
-                    </div>
-                    <div className="space-y-1">
-                      {group.chats.map((chat) => (
-                        <ChatItem
-                          key={chat.id}
-                          chat={chat}
-                          currentChatId={currentChatId}
-                          onSelect={handleChatSelect}
-                          onDelete={handleDeleteChat}
-                          formatTimestamp={formatTimestamp}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
+          {/* Header */}
+          <div className="p-3 border-b border-border/50 shrink-0">
+            <Button
+              onClick={handleNewChat}
+              className="w-full h-10 justify-start font-medium"
+              size="sm"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              {t("sidebar.newChat")}
+            </Button>
           </div>
-        </ScrollArea>
+
+          {/* Chat History */}
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="px-2 py-3 space-y-6">
+              {isLoading ? (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                  {t("common.loading")}
+                </div>
+              ) : chatHistory.length === 0 ? (
+                <div className="text-center text-sm text-muted-foreground py-8 px-4">
+                  <MessageSquareIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                  <p>{t("sidebar.noMessages")}</p>
+                </div>
+              ) : (
+                <>
+                  {/* Starred Conversations */}
+                  {starredChats.length > 0 && (
+                    <div>
+                      <div className="px-3 mb-2">
+                        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {t("sidebar.starred")}
+                        </h2>
+                      </div>
+                      <div className="space-y-1">
+                        {starredChats.map((chat) => (
+                          <ChatItem
+                            key={chat.id}
+                            chat={chat}
+                            currentChatId={currentChatId}
+                            onSelect={handleChatSelect}
+                            onDelete={handleDeleteChat}
+                            formatTimestamp={formatTimestamp}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grouped Regular Conversations */}
+                  {groupedChats.map((group) => (
+                    <div key={group.label}>
+                      <div className="px-3 mb-2">
+                        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {group.label}
+                        </h2>
+                      </div>
+                      <div className="space-y-1">
+                        {group.chats.map((chat) => (
+                          <ChatItem
+                            key={chat.id}
+                            chat={chat}
+                            currentChatId={currentChatId}
+                            onSelect={handleChatSelect}
+                            onDelete={handleDeleteChat}
+                            formatTimestamp={formatTimestamp}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
-    </div>
     </>
   );
 }

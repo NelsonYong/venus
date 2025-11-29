@@ -317,8 +317,16 @@ model McpServer {
   id        String   @id @default(cuid())
   userId    String
   name      String
-  command   String
+  mode      McpMode  @default(stdio)
+  // stdio mode fields
+  command   String?
   args      String[] @default([])
+  // sse mode fields
+  url       String?
+  // streamable mode fields
+  endpoint  String?
+  apiKey    String?
+  // common fields
   env       Json?
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -327,4 +335,10 @@ model McpServer {
 
   @@index([userId])
   @@map("mcp_servers")
+}
+
+enum McpMode {
+  stdio
+  sse
+  streamable
 }

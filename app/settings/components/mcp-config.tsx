@@ -47,6 +47,7 @@ export function McpConfig() {
     const newServer: McpServer = {
       id: `temp-${Date.now()}`, // 临时 ID
       name: "",
+      mode: "stdio",
       command: "",
       args: [],
       env: {},
@@ -66,8 +67,12 @@ export function McpConfig() {
         // 创建新服务器
         const created = await mcpAPI.create({
           name: server.name,
+          mode: server.mode,
           command: server.command,
           args: server.args,
+          url: server.url,
+          endpoint: server.endpoint,
+          apiKey: server.apiKey,
           env: server.env,
           enabled: server.enabled,
         });
@@ -82,8 +87,12 @@ export function McpConfig() {
         // 更新现有服务器
         const updated = await mcpAPI.update(server.id, {
           name: server.name,
+          mode: server.mode,
           command: server.command,
           args: server.args,
+          url: server.url,
+          endpoint: server.endpoint,
+          apiKey: server.apiKey,
           env: server.env,
           enabled: server.enabled,
         });

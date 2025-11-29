@@ -2,26 +2,48 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
+type McpMode = "stdio" | "sse" | "streamable";
+
 interface McpServerData {
   name: string;
-  command: string;
+  mode: McpMode;
+  // stdio mode fields
+  command?: string;
   args?: string[];
+  // sse mode fields
+  url?: string;
+  // streamable mode fields
+  endpoint?: string;
+  apiKey?: string;
+  // common fields
   env?: Record<string, string>;
   enabled?: boolean;
 }
 
 function validateMcpServerData(data: any): data is McpServerData {
-  return (
+  const isValidBase =
     typeof data === "object" &&
     data !== null &&
     typeof data.name === "string" &&
     data.name.trim().length > 0 &&
-    typeof data.command === "string" &&
-    data.command.trim().length > 0 &&
+    typeof data.mode === "string" &&
+    ["stdio", "sse", "streamable"].includes(data.mode) &&
     (!data.args || Array.isArray(data.args)) &&
     (!data.env || typeof data.env === "object") &&
-    (!data.enabled || typeof data.enabled === "boolean")
-  );
+    (!data.enabled || typeof data.enabled === "boolean");
+
+  if (!isValidBase) return false;
+
+  // 根据模式验证必填字段
+  if (data.mode === "stdio") {
+    return typeof data.command === "string" && data.command.trim().length > 0;
+  } else if (data.mode === "sse") {
+    return typeof data.url === "string" && data.url.trim().length > 0;
+  } else if (data.mode === "streamable") {
+    return typeof data.endpoint === "string" && data.endpoint.trim().length > 0;
+  }
+
+  return false;
 }
 
 // GET - 获取用户的所有 MCP 服务器
@@ -39,8 +61,12 @@ export async function GET(request: NextRequest) {
       servers: servers.map((server) => ({
         id: server.id,
         name: server.name,
+        mode: server.mode,
         command: server.command,
         args: server.args,
+        url: server.url,
+        endpoint: server.endpoint,
+        apiKey: server.apiKey,
         env: server.env || {},
         enabled: server.enabled,
         createdAt: server.createdAt,
@@ -67,7 +93,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Invalid data",
-          message: "Invalid MCP server data. Name and command are required.",
+          message: "Invalid MCP server data. Name, mode, and mode-specific fields are required.",
         },
         { status: 400 }
       );
@@ -77,8 +103,12 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         name: body.name.trim(),
-        command: body.command.trim(),
+        mode: body.mode,
+        command: body.command?.trim() || null,
         args: body.args || [],
+        url: body.url?.trim() || null,
+        endpoint: body.endpoint?.trim() || null,
+        apiKey: body.apiKey?.trim() || null,
         env: body.env || {},
         enabled: body.enabled !== undefined ? body.enabled : true,
       },
@@ -91,8 +121,12 @@ export async function POST(request: NextRequest) {
         server: {
           id: server.id,
           name: server.name,
+          mode: server.mode,
           command: server.command,
           args: server.args,
+          url: server.url,
+          endpoint: server.endpoint,
+          apiKey: server.apiKey,
           env: server.env || {},
           enabled: server.enabled,
           createdAt: server.createdAt,

@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
+type McpMode = "stdio" | "sse" | "streamable";
+
 interface McpServerUpdateData {
   name?: string;
+  mode?: McpMode;
   command?: string;
   args?: string[];
+  url?: string;
+  endpoint?: string;
+  apiKey?: string;
   env?: Record<string, string>;
   enabled?: boolean;
 }
@@ -15,8 +21,12 @@ function validateMcpServerUpdateData(data: any): data is McpServerUpdateData {
     typeof data === "object" &&
     data !== null &&
     (!data.name || (typeof data.name === "string" && data.name.trim().length > 0)) &&
-    (!data.command || (typeof data.command === "string" && data.command.trim().length > 0)) &&
+    (!data.mode || (typeof data.mode === "string" && ["stdio", "sse", "streamable"].includes(data.mode))) &&
+    (!data.command || typeof data.command === "string") &&
     (!data.args || Array.isArray(data.args)) &&
+    (!data.url || typeof data.url === "string") &&
+    (!data.endpoint || typeof data.endpoint === "string") &&
+    (!data.apiKey || typeof data.apiKey === "string") &&
     (!data.env || typeof data.env === "object") &&
     (!data.enabled || typeof data.enabled === "boolean")
   );
@@ -65,11 +75,23 @@ export async function PUT(
     if (body.name !== undefined) {
       updateData.name = body.name.trim();
     }
+    if (body.mode !== undefined) {
+      updateData.mode = body.mode;
+    }
     if (body.command !== undefined) {
-      updateData.command = body.command.trim();
+      updateData.command = body.command.trim() || null;
     }
     if (body.args !== undefined) {
       updateData.args = body.args;
+    }
+    if (body.url !== undefined) {
+      updateData.url = body.url.trim() || null;
+    }
+    if (body.endpoint !== undefined) {
+      updateData.endpoint = body.endpoint.trim() || null;
+    }
+    if (body.apiKey !== undefined) {
+      updateData.apiKey = body.apiKey.trim() || null;
     }
     if (body.env !== undefined) {
       updateData.env = body.env;
@@ -96,8 +118,12 @@ export async function PUT(
       server: {
         id: updatedServer.id,
         name: updatedServer.name,
+        mode: updatedServer.mode,
         command: updatedServer.command,
         args: updatedServer.args,
+        url: updatedServer.url,
+        endpoint: updatedServer.endpoint,
+        apiKey: updatedServer.apiKey,
         env: updatedServer.env || {},
         enabled: updatedServer.enabled,
         createdAt: updatedServer.createdAt,

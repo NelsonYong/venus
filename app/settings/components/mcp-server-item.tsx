@@ -17,13 +17,32 @@ import {
   KeyIcon,
   ListIcon,
   AlertCircleIcon,
+  GlobeIcon,
+  ZapIcon,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export type McpMode = "stdio" | "sse" | "streamable";
 
 export interface McpServer {
   id: string;
   name: string;
-  command: string;
-  args: string[];
+  mode: McpMode;
+  // stdio mode fields
+  command?: string;
+  args?: string[];
+  // sse mode fields
+  url?: string;
+  // streamable mode fields
+  endpoint?: string;
+  apiKey?: string;
+  // common fields
   env?: Record<string, string>;
   enabled: boolean;
   isNew?: boolean;
@@ -40,24 +59,51 @@ interface McpServerItemProps {
   onCancel: (id: string) => void;
 }
 
-export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: McpServerItemProps) {
+export function McpServerItem({
+  server,
+  onUpdate,
+  onSave,
+  onDelete,
+  onCancel,
+}: McpServerItemProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(server.isNew || false);
   const [editedServer, setEditedServer] = useState<McpServer>(server);
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
     command?: string;
+    url?: string;
+    endpoint?: string;
   }>({});
 
   const validateServer = (): boolean => {
-    const errors: { name?: string; command?: string } = {};
+    const errors: {
+      name?: string;
+      command?: string;
+      url?: string;
+      endpoint?: string;
+    } = {};
 
     if (!editedServer.name.trim()) {
       errors.name = t("settings.developer.mcpConfig.validation.nameRequired");
     }
 
-    if (!editedServer.command.trim()) {
-      errors.command = t("settings.developer.mcpConfig.validation.commandRequired");
+    if (editedServer.mode === "stdio") {
+      if (!editedServer.command?.trim()) {
+        errors.command = t(
+          "settings.developer.mcpConfig.validation.commandRequired"
+        );
+      }
+    } else if (editedServer.mode === "sse") {
+      if (!editedServer.url?.trim()) {
+        errors.url = t("settings.developer.mcpConfig.validation.urlRequired");
+      }
+    } else if (editedServer.mode === "streamable") {
+      if (!editedServer.endpoint?.trim()) {
+        errors.endpoint = t(
+          "settings.developer.mcpConfig.validation.endpointRequired"
+        );
+      }
     }
 
     setValidationErrors(errors);
@@ -93,12 +139,12 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
   const addArg = () => {
     setEditedServer({
       ...editedServer,
-      args: [...editedServer.args, ""],
+      args: [...(editedServer?.args ?? []), ""],
     });
   };
 
   const updateArg = (index: number, value: string) => {
-    const newArgs = [...editedServer.args];
+    const newArgs = [...(editedServer?.args ?? [])];
     newArgs[index] = value;
     const updated = { ...editedServer, args: newArgs };
     setEditedServer(updated);
@@ -106,7 +152,7 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
   };
 
   const removeArg = (index: number) => {
-    const newArgs = editedServer.args.filter((_, i) => i !== index);
+    const newArgs = editedServer?.args?.filter((_, i) => i !== index) ?? [];
     const updated = { ...editedServer, args: newArgs };
     setEditedServer(updated);
     onUpdate(updated);
@@ -184,13 +230,23 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
               )}
             </div>
             <p className="text-xs text-muted-foreground truncate font-mono mt-0.5">
-              {server.command ? (
+              {server.mode === "stdio" && server.command ? (
                 <>
                   <TerminalIcon className="w-3 h-3 inline mr-1" />
-                  {server.command} {server.args.join(" ")}
+                  {server.command} {server.args?.join(" ")}
+                </>
+              ) : server.mode === "sse" && server.url ? (
+                <>
+                  <GlobeIcon className="w-3 h-3 inline mr-1" />
+                  {server.url}
+                </>
+              ) : server.mode === "streamable" && server.endpoint ? (
+                <>
+                  <ZapIcon className="w-3 h-3 inline mr-1" />
+                  {server.endpoint}
                 </>
               ) : (
-                "No command configured"
+                "No configuration"
               )}
             </p>
           </div>
@@ -201,8 +257,14 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
                 checked={editedServer.enabled}
                 onCheckedChange={handleToggleEnabled}
               />
-              <span className={`text-xs font-medium ${editedServer.enabled ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                {editedServer.enabled ? 'ON' : 'OFF'}
+              <span
+                className={`text-xs font-medium ${
+                  editedServer.enabled
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {editedServer.enabled ? "ON" : "OFF"}
               </span>
             </div>
 
@@ -236,9 +298,11 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
                   setEditedServer(updated);
                   onUpdate(updated);
                 }}
-                placeholder={t("settings.developer.mcpConfig.serverNamePlaceholder")}
+                placeholder={t(
+                  "settings.developer.mcpConfig.serverNamePlaceholder"
+                )}
                 className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
-                  validationErrors.name ? 'border-destructive' : ''
+                  validationErrors.name ? "border-destructive" : ""
                 }`}
               />
               {validationErrors.name && (
@@ -249,79 +313,228 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
               )}
             </div>
 
-            {/* Command */}
+            {/* Mode Selection */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <TerminalIcon className="w-4 h-4 text-primary" />
-                {t("settings.developer.mcpConfig.command")}
+                <ZapIcon className="w-4 h-4 text-primary" />
+                {t("settings.developer.mcpConfig.mode")}
                 <span className="text-destructive">*</span>
               </label>
-              <Input
-                value={editedServer.command}
-                onChange={(e) => {
-                  const updated = { ...editedServer, command: e.target.value };
+              <Select
+                value={editedServer.mode}
+                onValueChange={(value: McpMode) => {
+                  const updated = { ...editedServer, mode: value };
                   setEditedServer(updated);
                   onUpdate(updated);
+                  setValidationErrors({});
                 }}
-                placeholder={t("settings.developer.mcpConfig.commandPlaceholder")}
-                className={`font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
-                  validationErrors.command ? 'border-destructive' : ''
-                }`}
-              />
-              {validationErrors.command && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertCircleIcon className="w-3 h-3" />
-                  {validationErrors.command}
-                </p>
-              )}
+              >
+                <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stdio">
+                    <div className="flex items-center gap-2">
+                      <TerminalIcon className="w-4 h-4" />
+                      <span>
+                        STDIO - {t("settings.developer.mcpConfig.modeStdio")}
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="sse">
+                    <div className="flex items-center gap-2">
+                      <GlobeIcon className="w-4 h-4" />
+                      <span>
+                        SSE - {t("settings.developer.mcpConfig.modeSse")}
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="streamable">
+                    <div className="flex items-center gap-2">
+                      <ZapIcon className="w-4 h-4" />
+                      <span>
+                        Streamable -{" "}
+                        {t("settings.developer.mcpConfig.modeStreamable")}
+                      </span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Arguments */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <ListIcon className="w-4 h-4 text-primary" />
-                  {t("settings.developer.mcpConfig.args")}
-                  <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">
-                    {editedServer.args.length}
-                  </span>
-                </label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addArg}
-                  className="gap-2 h-8"
-                >
-                  <PlusIcon className="w-3 h-3" />
-                  Add
-                </Button>
-              </div>
-              {editedServer.args.length > 0 && (
-                <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border">
-                  {editedServer.args.map((arg, index) => (
-                    <div key={index} className="flex gap-2">
-                      <div className="flex items-center justify-center w-6 h-9 text-xs text-muted-foreground font-medium">
-                        {index + 1}
-                      </div>
-                      <Input
-                        value={arg}
-                        onChange={(e) => updateArg(index, e.target.value)}
-                        placeholder={t("settings.developer.mcpConfig.argsPlaceholder")}
-                        className="font-mono text-sm flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeArg(index)}
-                        className="hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <XIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+            {/* STDIO Mode Configuration */}
+            {editedServer.mode === "stdio" && (
+              <>
+                {/* Command */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <TerminalIcon className="w-4 h-4 text-primary" />
+                    {t("settings.developer.mcpConfig.command")}
+                    <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    value={editedServer.command || ""}
+                    onChange={(e) => {
+                      const updated = {
+                        ...editedServer,
+                        command: e.target.value,
+                      };
+                      setEditedServer(updated);
+                      onUpdate(updated);
+                    }}
+                    placeholder={t(
+                      "settings.developer.mcpConfig.commandPlaceholder"
+                    )}
+                    className={`font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
+                      validationErrors.command ? "border-destructive" : ""
+                    }`}
+                  />
+                  {validationErrors.command && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircleIcon className="w-3 h-3" />
+                      {validationErrors.command}
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {/* Arguments */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <ListIcon className="w-4 h-4 text-primary" />
+                      {t("settings.developer.mcpConfig.args")}
+                      <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">
+                        {editedServer.args?.length || 0}
+                      </span>
+                    </label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addArg}
+                      className="gap-2 h-8"
+                    >
+                      <PlusIcon className="w-3 h-3" />
+                      Add
+                    </Button>
+                  </div>
+                  {(editedServer.args?.length || 0) > 0 && (
+                    <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border">
+                      {editedServer.args?.map((arg, index) => (
+                        <div key={index} className="flex gap-2">
+                          <div className="flex items-center justify-center w-6 h-9 text-xs text-muted-foreground font-medium">
+                            {index + 1}
+                          </div>
+                          <Input
+                            value={arg}
+                            onChange={(e) => updateArg(index, e.target.value)}
+                            placeholder={t(
+                              "settings.developer.mcpConfig.argsPlaceholder"
+                            )}
+                            className="font-mono text-sm flex-1"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeArg(index)}
+                            className="hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <XIcon className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* SSE Mode Configuration */}
+            {editedServer.mode === "sse" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <GlobeIcon className="w-4 h-4 text-primary" />
+                  {t("settings.developer.mcpConfig.url")}
+                  <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  value={editedServer.url || ""}
+                  onChange={(e) => {
+                    const updated = { ...editedServer, url: e.target.value };
+                    setEditedServer(updated);
+                    onUpdate(updated);
+                  }}
+                  placeholder={t("settings.developer.mcpConfig.urlPlaceholder")}
+                  className={`font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
+                    validationErrors.url ? "border-destructive" : ""
+                  }`}
+                />
+                {validationErrors.url && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircleIcon className="w-3 h-3" />
+                    {validationErrors.url}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Streamable Mode Configuration */}
+            {editedServer.mode === "streamable" && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <ZapIcon className="w-4 h-4 text-primary" />
+                    {t("settings.developer.mcpConfig.endpoint")}
+                    <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    value={editedServer.endpoint || ""}
+                    onChange={(e) => {
+                      const updated = {
+                        ...editedServer,
+                        endpoint: e.target.value,
+                      };
+                      setEditedServer(updated);
+                      onUpdate(updated);
+                    }}
+                    placeholder={t(
+                      "settings.developer.mcpConfig.endpointPlaceholder"
+                    )}
+                    className={`font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${
+                      validationErrors.endpoint ? "border-destructive" : ""
+                    }`}
+                  />
+                  {validationErrors.endpoint && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircleIcon className="w-3 h-3" />
+                      {validationErrors.endpoint}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <KeyIcon className="w-4 h-4 text-primary" />
+                    {t("settings.developer.mcpConfig.apiKey")}
+                  </label>
+                  <Input
+                    value={editedServer.apiKey || ""}
+                    onChange={(e) => {
+                      const updated = {
+                        ...editedServer,
+                        apiKey: e.target.value,
+                      };
+                      setEditedServer(updated);
+                      onUpdate(updated);
+                    }}
+                    placeholder={t(
+                      "settings.developer.mcpConfig.apiKeyPlaceholder"
+                    )}
+                    className="font-mono text-sm transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    type="password"
+                  />
+                </div>
+              </>
+            )}
 
             {/* Environment Variables */}
             <div className="space-y-3">
@@ -345,34 +558,38 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
               </div>
               {Object.keys(editedServer.env || {}).length > 0 && (
                 <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border">
-                  {Object.entries(editedServer.env || {}).map(([key, value]) => (
-                    <div key={key} className="flex gap-2">
-                      <Input
-                        value={key}
-                        onChange={(e) => updateEnvKey(key, e.target.value)}
-                        placeholder={t("settings.developer.mcpConfig.envKey")}
-                        className="flex-1 font-mono text-sm"
-                      />
-                      <div className="flex items-center justify-center text-muted-foreground px-1">
-                        =
+                  {Object.entries(editedServer.env || {}).map(
+                    ([key, value]) => (
+                      <div key={key} className="flex gap-2">
+                        <Input
+                          value={key}
+                          onChange={(e) => updateEnvKey(key, e.target.value)}
+                          placeholder={t("settings.developer.mcpConfig.envKey")}
+                          className="flex-1 font-mono text-sm"
+                        />
+                        <div className="flex items-center justify-center text-muted-foreground px-1">
+                          =
+                        </div>
+                        <Input
+                          value={value}
+                          onChange={(e) => updateEnvValue(key, e.target.value)}
+                          placeholder={t(
+                            "settings.developer.mcpConfig.envValue"
+                          )}
+                          className="flex-1 font-mono text-sm"
+                          type="password"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeEnvVar(key)}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <XIcon className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Input
-                        value={value}
-                        onChange={(e) => updateEnvValue(key, e.target.value)}
-                        placeholder={t("settings.developer.mcpConfig.envValue")}
-                        className="flex-1 font-mono text-sm"
-                        type="password"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeEnvVar(key)}
-                        className="hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <XIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               )}
             </div>
@@ -381,7 +598,14 @@ export function McpServerItem({ server, onUpdate, onSave, onDelete, onCancel }: 
             <div className="flex gap-3 pt-4 border-t border-border">
               <Button
                 onClick={handleSave}
-                disabled={!editedServer.name.trim() || !editedServer.command.trim()}
+                disabled={
+                  !editedServer.name.trim() ||
+                  (editedServer.mode === "stdio" &&
+                    !editedServer.command?.trim()) ||
+                  (editedServer.mode === "sse" && !editedServer.url?.trim()) ||
+                  (editedServer.mode === "streamable" &&
+                    !editedServer.endpoint?.trim())
+                }
                 className="gap-2 shadow-sm hover:shadow transition-all duration-200"
               >
                 <SaveIcon className="w-4 h-4" />

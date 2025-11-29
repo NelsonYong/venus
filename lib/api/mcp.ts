@@ -1,11 +1,21 @@
 import { httpClient } from '@/lib/http-client'
 
+export type McpMode = 'stdio' | 'sse' | 'streamable'
+
 export interface McpServer {
   id: string
   name: string
-  command: string
-  args: string[]
-  env: Record<string, string>
+  mode: McpMode
+  // stdio mode fields
+  command?: string
+  args?: string[]
+  // sse mode fields
+  url?: string
+  // streamable mode fields
+  endpoint?: string
+  apiKey?: string
+  // common fields
+  env?: Record<string, string>
   enabled: boolean
   createdAt?: string
   updatedAt?: string
@@ -13,16 +23,24 @@ export interface McpServer {
 
 export interface CreateMcpServerRequest {
   name: string
-  command: string
+  mode: McpMode
+  command?: string
   args?: string[]
+  url?: string
+  endpoint?: string
+  apiKey?: string
   env?: Record<string, string>
   enabled?: boolean
 }
 
 export interface UpdateMcpServerRequest {
   name?: string
+  mode?: McpMode
   command?: string
   args?: string[]
+  url?: string
+  endpoint?: string
+  apiKey?: string
   env?: Record<string, string>
   enabled?: boolean
 }

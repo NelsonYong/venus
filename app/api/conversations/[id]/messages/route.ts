@@ -3,25 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
 /**
- * Append new messages to a conversation (incremental save)
- * This endpoint only adds new messages without deleting existing ones
+ * DELETE /api/conversations/[id]/messages
+ * Delete the last N messages from a conversation
  */
-export async function POST(
+export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-
     const { id } = await params;
-    const { messages } = await request.json();
-
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: "Messages array is required" },
-        { status: 400 }
-      );
-    }
+    
+    // Get count from query params (default to 1)
+    const searchParams = request.nextUrl.searchParams;
+    const count = parseInt(searchParams.get('count') || '1', 10);
 
     // Verify the conversation belongs to the user
     const conversation = await prisma.conversation.findFirst({
@@ -29,6 +24,13 @@ export async function POST(
         id,
         userId: user.id,
         isDeleted: false,
+      },
+      include: {
+        messages: {
+          where: { isDeleted: false },
+          orderBy: { createdAt: 'desc' },
+          take: count,
+        },
       },
     });
 
@@ -39,59 +41,29 @@ export async function POST(
       );
     }
 
-    // Get existing message count to determine order
-    const existingMessages = await prisma.message.findMany({
-      where: { conversationId: id, isDeleted: false },
-      orderBy: { createdAt: "asc" },
-      select: { id: true, createdAt: true },
-    });
+    // Soft delete the last N messages
+    const messageIds = conversation.messages.map(msg => msg.id);
+    
+    if (messageIds.length > 0) {
+      await prisma.message.updateMany({
+        where: {
+          id: { in: messageIds },
+        },
+        data: {
+          isDeleted: true,
+        },
+      });
+    }
 
-    // Append new messages with proper timestamps
-    const newMessages = await prisma.$transaction(
-      messages.map((msg: {
-        role: string;
-        parts?: unknown;
-        content?: unknown;
-        createdAt?: string | Date;
-      }, index: number) => {
-        // Use the provided createdAt if available, otherwise generate one
-        let messageCreatedAt: Date;
-        if (msg.createdAt) {
-          messageCreatedAt = new Date(msg.createdAt);
-        } else {
-          // If no createdAt provided, use current time + offset based on position
-          messageCreatedAt = new Date(Date.now() + index * 100);
-        }
-
-        return prisma.message.create({
-          data: {
-            conversationId: id,
-            userId: user.id,
-            role: msg.role,
-            content: JSON.stringify(msg.parts || msg.content),
-            createdAt: messageCreatedAt,
-          },
-        });
-      })
-    );
-
-    // Update conversation's updatedAt timestamp
-    await prisma.conversation.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    });
-
-    return NextResponse.json({
-      success: true,
-      messagesAdded: newMessages.length,
-      messages: newMessages,
+    return NextResponse.json({ 
+      success: true, 
+      deletedCount: messageIds.length 
     });
   } catch (error) {
-    console.error("Error appending messages:", error);
+    console.error("Error deleting messages:", error);
     return NextResponse.json(
-      { error: "Failed to append messages" },
+      { error: "Failed to delete messages" },
       { status: 500 }
     );
   }
 }
-

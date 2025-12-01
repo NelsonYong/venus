@@ -24,15 +24,15 @@ export function Citations({ citations, onOpenSidebar }: CitationsProps) {
   const citationsWithThumbnails = citations.filter((c) => c.thumbnail);
 
   return (
-    <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+    <div className="mt-4 pt-3 border-t border-border">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <BookOpen className="w-4 h-4" />
           <span>{citations.length} 个引用来源</span>
         </div>
         <button
           onClick={onOpenSidebar}
-          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+          className="text-xs text-foreground hover:text-primary font-medium transition-colors underline underline-offset-2"
         >
           查看全部
         </button>
@@ -45,7 +45,7 @@ export function Citations({ citations, onOpenSidebar }: CitationsProps) {
             <button
             key={citation.id}
               onClick={onOpenSidebar}
-              className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 hover:ring-2 hover:ring-blue-500 transition-all"
+              className="group relative aspect-square rounded-lg overflow-hidden bg-muted hover:ring-2 hover:ring-ring transition-all"
             >
                 <img
                   src={citation.thumbnail}
@@ -56,7 +56,7 @@ export function Citations({ citations, onOpenSidebar }: CitationsProps) {
                   }}
                 />
               {/* 引用编号角标 */}
-              <div className="absolute top-1 left-1 inline-flex items-center justify-center w-5 h-5 text-[10px] font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-full shadow">
+              <div className="absolute top-1 left-1 inline-flex items-center justify-center w-5 h-5 text-[10px] font-medium text-primary-foreground bg-primary rounded-full shadow">
                   {citation.id}
               </div>
             </button>
@@ -65,7 +65,7 @@ export function Citations({ citations, onOpenSidebar }: CitationsProps) {
           {citationsWithThumbnails.length > 4 && (
             <button
               onClick={onOpenSidebar}
-              className="aspect-square rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 font-medium text-sm transition-colors"
+              className="aspect-square rounded-lg bg-muted hover:bg-accent flex items-center justify-center text-muted-foreground font-medium text-sm transition-colors"
             >
               +{citationsWithThumbnails.length - 4}
             </button>

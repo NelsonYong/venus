@@ -53,6 +53,7 @@ export function useChatBot() {
   const isMounted = useRef(false);
   const isNewChat = useRef(false);
   const lastSavedMessagesLength = useRef(0);
+  const lastLoadedChatId = useRef<string | null>(null);
 
   // Auto-summary hook for generating titles
   const { resetSummaryStatus } = useAutoSummary({
@@ -70,13 +71,19 @@ export function useChatBot() {
       return;
     }
     if (input.trim()) {
+      // 保存 input 的值，避免在异步操作前被清空
+      const messageText = input.trim();
+      setInput("");
+
       // 如果没有 chatId，则生成一个
       if (!searchParams.get("chatId")) {
         saveChatSession([], undefined, model).then((chatId) => {
-          router.push(`/?chatId=${chatId}`, { scroll: false });
-          if (chatId)
+          if (chatId) {
+            // Mark this chat as loaded to prevent useEffect from reloading it
+            lastLoadedChatId.current = chatId;
+            router.push(`/?chatId=${chatId}`, { scroll: false });
             sendMessage(
-              { text: input },
+              { text: messageText },
               {
                 body: {
                   modelId: model,
@@ -86,10 +93,11 @@ export function useChatBot() {
                 },
               }
             );
+          }
         });
-      } else
+      } else {
         sendMessage(
-          { text: input },
+          { text: messageText },
           {
             body: {
               modelId: model,
@@ -99,13 +107,14 @@ export function useChatBot() {
             },
           }
         );
-      setInput("");
+      }
     }
   };
 
   const handleNewChat = () => {
     isNewChat.current = true;
     lastSavedMessagesLength.current = 0;
+    lastLoadedChatId.current = null;
     resetSummaryStatus();
     startNewChat();
     setMessages([]);
@@ -119,6 +128,7 @@ export function useChatBot() {
         // Reset tracking refs for loaded chat
         isNewChat.current = false;
         lastSavedMessagesLength.current = chatMessages.length;
+        lastLoadedChatId.current = chatId;
         // Don't reset summary status for loaded chats (they likely already have titles)
         setMessages(chatMessages);
       }
@@ -160,12 +170,24 @@ export function useChatBot() {
     }
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     if (messages.length === 0) return;
 
-    // Find the last user message
-    let lastUserMessageIndex = -1;
+    // Find the last assistant message
+    let lastAssistantMessageIndex = -1;
     for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") {
+        lastAssistantMessageIndex = i;
+        break;
+      }
+    }
+
+    // If there's no assistant message, nothing to regenerate
+    if (lastAssistantMessageIndex === -1) return;
+
+    // Find the last user message (should be before the assistant message)
+    let lastUserMessageIndex = -1;
+    for (let i = lastAssistantMessageIndex - 1; i >= 0; i--) {
       if (messages[i].role === "user") {
         lastUserMessageIndex = i;
         break;
@@ -176,7 +198,22 @@ export function useChatBot() {
 
     const lastUserMessage = messages[lastUserMessageIndex];
 
-    // Remove all messages after and including the last user message
+    // Calculate how many messages to delete from backend
+    const messagesToDeleteCount = messages.length - lastUserMessageIndex;
+
+    // Delete old messages from backend first
+    if (currentChatId) {
+      try {
+        await fetch(`/api/conversations/${currentChatId}/messages?count=${messagesToDeleteCount}`, {
+          method: 'DELETE',
+        });
+      } catch (error) {
+        console.error('Failed to delete old messages:', error);
+        // Continue anyway, frontend state will be updated
+      }
+    }
+
+    // Remove the last user message and all messages after it from frontend
     // sendMessage will automatically add the user message back
     setMessages(messages.slice(0, lastUserMessageIndex));
 
@@ -239,10 +276,19 @@ export function useChatBot() {
   useEffect(() => {
     const chatId = searchParams.get("chatId");
     if (chatId && !isLoading) {
-      handleLoadChat(chatId);
+      // Only load chat if:
+      // 1. The chat ID has actually changed from the last loaded one
+      // 2. AND we're not currently streaming (avoid overwriting messages being sent)
+      const isChatIdChanged = lastLoadedChatId.current !== chatId;
+      const shouldLoadChat = isChatIdChanged && status !== "streaming";
+
+      if (shouldLoadChat) {
+        handleLoadChat(chatId);
+        lastLoadedChatId.current = chatId;
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, isLoading]);
+  }, [searchParams, isLoading, status]);
 
   // Check if we have a chatId in URL but messages haven't loaded yet
   const chatId = searchParams.get("chatId");

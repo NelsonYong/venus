@@ -22,6 +22,7 @@ interface ChatLayoutProps {
   onWebSearchToggle: () => void;
   error?: Error | undefined;
   isLoadingChat?: boolean;
+  hasChatId?: boolean;
   onRegenerate?: () => void;
   onStop?: () => void;
   usage?: LanguageModelUsage;
@@ -39,14 +40,15 @@ export function ChatLayout({
   onWebSearchToggle,
   error,
   isLoadingChat = false,
+  hasChatId = false,
   onRegenerate,
   onStop,
   usage,
 }: ChatLayoutProps) {
   const hasMessages = messages.length > 0;
 
-  // Don't show empty state if we're loading a chat from URL
-  if (!hasMessages && !isLoadingChat) {
+  // Don't show empty state if we're loading a chat from URL or if there's a chatId in URL
+  if (!hasMessages && !isLoadingChat && !hasChatId) {
     // Empty state with centered layout
     return (
       <div className="flex flex-col h-full">
@@ -77,8 +79,8 @@ export function ChatLayout({
     );
   }
 
-  // Show loading state while chat is being loaded
-  if (isLoadingChat) {
+  // Show loading state while chat is being loaded or when there's a chatId but no messages yet
+  if (isLoadingChat || (hasChatId && !hasMessages)) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-gray-500 dark:text-gray-400">加载中...</div>

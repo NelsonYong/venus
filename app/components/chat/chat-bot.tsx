@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/app/components/ui/navbar";
 import { ChatSidebar } from "@/app/components/sidebar/chat-sidebar";
 import { ChatLayout } from "./chat-layout";
@@ -19,10 +20,14 @@ import {
 
 export function ChatBot() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<
     (() => void) | null
   >(null);
+
+  // Check if there's a chatId in the URL
+  const hasChatId = Boolean(searchParams.get("chatId"));
 
   const {
     // State
@@ -173,6 +178,7 @@ export function ChatBot() {
                 onWebSearchToggle={() => setWebSearch(!webSearch)}
                 error={error}
                 isLoadingChat={isLoadingChat}
+                hasChatId={hasChatId}
                 onRegenerate={handleRegenerate}
                 onStop={stop}
                 usage={usage}

@@ -20,6 +20,9 @@ export async function GET(
         messages: {
           where: { isDeleted: false },
           orderBy: { createdAt: "asc" },
+          include: {
+            citations: true, // Include citations for each message
+          },
         },
       },
     });

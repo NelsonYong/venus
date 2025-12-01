@@ -44,6 +44,17 @@ export interface Conversation {
   messages: ConversationMessage[]
 }
 
+export interface MessageCitation {
+  id: string
+  messageId: string
+  citationId: number
+  url: string
+  title: string
+  snippet?: string | null
+  thumbnail?: string | null
+  createdAt: string
+}
+
 export interface ConversationMessage {
   id: string
   conversationId: string
@@ -52,6 +63,7 @@ export interface ConversationMessage {
   content: string
   createdAt: string
   isDeleted: boolean
+  citations?: MessageCitation[]
 }
 
 export interface CreateConversationRequest {
@@ -157,12 +169,27 @@ export const conversationsAPI = {
 export function transformApiMessageToUIMessage(apiMessage: ConversationMessage): UIMessage {
   try {
     const parts = JSON.parse(apiMessage.content)
-    return {
+    const uiMessage: UIMessage = {
       id: apiMessage.id,
       role: apiMessage.role as 'user' | 'assistant' | 'system',
       parts: Array.isArray(parts) ? parts : [{ type: 'text', text: parts }],
       createdAt: new Date(apiMessage.createdAt),
     }
+
+    // Add citations metadata if available
+    if (apiMessage.citations && apiMessage.citations.length > 0) {
+      uiMessage.metadata = {
+        citations: apiMessage.citations.map(citation => ({
+          id: citation.citationId,
+          url: citation.url,
+          title: citation.title,
+          snippet: citation.snippet || undefined,
+          thumbnail: citation.thumbnail || undefined,
+        }))
+      }
+    }
+
+    return uiMessage
   } catch {
     // Fallback for simple text content
     return {

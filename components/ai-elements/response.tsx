@@ -79,21 +79,19 @@ export const Response = memo(
                     key={`tooltip-${citationId}-${baseKey}-${index}-${keyCounterRef.current}`}
                   >
                     <TooltipTrigger asChild>{badgeElement}</TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      sideOffset={8}
-                      className="max-w-sm p-3 space-y-2 bg-popover text-popover-foreground border border-border shadow-lg [&>svg]:hidden"
-                    >
-                      <div className="font-semibold text-sm line-clamp-2">
-                        {citation.title}
-                      </div>
-                      {citation.snippet && (
-                        <div className="text-xs text-muted-foreground line-clamp-3">
-                          {citation.snippet}
+                    <TooltipContent side="top" sideOffset={8}>
+                      <div className="max-w-sm space-y-1">
+                        <div className="font-semibold text-sm line-clamp-2">
+                          {citation.title}
                         </div>
-                      )}
-                      <div className="text-xs text-muted-foreground truncate opacity-70">
-                        {new URL(citation.url).hostname}
+                        {citation.snippet && (
+                          <div className="text-xs opacity-90 line-clamp-3">
+                            {citation.snippet}
+                          </div>
+                        )}
+                        <div className="text-xs opacity-70 truncate">
+                          {new URL(citation.url).hostname}
+                        </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>

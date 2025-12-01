@@ -70,7 +70,7 @@ export const Response = memo(
                 <Badge
                   key={`citation-${citationId}-${baseKey}-${index}-${keyCounterRef.current}`}
                   variant="outline"
-                  className="mx-1 cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs inline-flex items-center"
+                  className="cursor-pointer rounded-[50%] ml-0.5 h-4 w-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-[10px] inline-flex items-center"
                   onClick={() => onCitationClick?.(citationId)}
                 >
                   {citationId}

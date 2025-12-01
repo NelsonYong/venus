@@ -184,9 +184,7 @@ export function Navbar({
           {/* Right Side - Theme Toggle & User Menu */}
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 shrink-0">
             {/* 移动端可选：隐藏主题切换按钮 */}
-            <div className="hidden xs:block">
-              <ThemeToggle />
-            </div>
+            <div className="xs:block">{!isMobile && <ThemeToggle />}</div>
 
             {user ? (
               <UserMenu />

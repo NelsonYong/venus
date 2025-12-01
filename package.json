@@ -44,6 +44,7 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@upstash/redis": "^1.35.7",
+    "@vercel/blob": "^2.0.0",
     "@xyflow/react": "^12.9.3",
     "ai": "6.0.0-beta.94",
     "bcryptjs": "^3.0.2",

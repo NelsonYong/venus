@@ -54,14 +54,8 @@ export const Response = memo(
       return parts
         .map((part, index) => {
           const citationMatch = part.match(/\[citation:(\d+)\]/);
-
-          console.log("citationMatch", citationMatch);
-
           if (citationMatch) {
             const citationId = parseInt(citationMatch[1]);
-
-            console.log("citationId", citationId);
-
             if (citationId) {
               keyCounterRef.current++;
               const citation = citations.find((c) => c.id === citationId);

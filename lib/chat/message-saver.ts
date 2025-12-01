@@ -3,19 +3,28 @@ import { prisma } from '@/lib/prisma';
 import { cleanReActStepMarkers } from './text-cleaner';
 import { type Citation } from '@/lib/search-tool';
 
+interface UploadedAttachment {
+  url: string;
+  filename: string;
+  size: number;
+  type: string;
+  contentType: string;
+}
+
 interface SaveMessagesOptions {
   conversationId: string;
   userId: string;
   lastUserMessage: UIMessage;
   assistantResponse: string;
   citations?: Citation[];
+  uploadedAttachments?: UploadedAttachment[];
 }
 
 /**
  * Save conversation messages to database
  */
 export async function saveMessages(options: SaveMessagesOptions) {
-  const { conversationId, userId, lastUserMessage, assistantResponse, citations } = options;
+  const { conversationId, userId, lastUserMessage, assistantResponse, citations, uploadedAttachments } = options;
 
   try {
     // Clean ReAct step markers from assistant response
@@ -32,7 +41,14 @@ export async function saveMessages(options: SaveMessagesOptions) {
     });
 
     const now = Date.now();
-    const messagesToCreate = [];
+    const messagesToCreate: Array<{
+      conversationId: string;
+      userId: string;
+      role: string;
+      content: string;
+      createdAt: Date;
+      uploadedAttachments?: any;
+    }> = [];
 
     const userMessageContent = JSON.stringify(lastUserMessage.parts);
     const assistantMessageContent = JSON.stringify([{ type: 'text', text: cleanedResponse }]);
@@ -51,6 +67,7 @@ export async function saveMessages(options: SaveMessagesOptions) {
         role: lastUserMessage.role,
         content: userMessageContent,
         createdAt: new Date(now),
+        uploadedAttachments: uploadedAttachments && uploadedAttachments.length > 0 ? JSON.parse(JSON.stringify(uploadedAttachments)) : undefined,
       });
     }
 
@@ -69,7 +86,7 @@ export async function saveMessages(options: SaveMessagesOptions) {
 
     // Save to database using transaction
     if (messagesToCreate.length > 0) {
-      const result = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         // Create messages
         const createdMessages = await Promise.all(
           messagesToCreate.map(msg => tx.message.create({ data: msg }))

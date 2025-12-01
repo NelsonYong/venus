@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import {
+  Message,
+  MessageContent,
+  MessageAttachment,
+  MessageAttachments,
+} from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import {
   Source,
@@ -46,6 +51,8 @@ export function MessageRenderer({
   const [highlightedCitationId, setHighlightedCitationId] = useState<
     number | undefined
   >();
+
+  console.log("messages", messages);
 
   const handleCopy = async (message: any) => {
     const textParts = message.parts
@@ -95,6 +102,21 @@ export function MessageRenderer({
     <>
       {messages.map((message, index) => {
         const messageCitations = (message as any).metadata?.citations || [];
+
+        // 读取附件：优先从 data（实时消息），然后从 metadata（历史消息）
+        let messageAttachments = [];
+
+        // 1. 从 data 读取（实时消息，发送时添加的）
+        if ((message as any).data?.uploadedAttachments) {
+          messageAttachments = (message as any).data.uploadedAttachments;
+        }
+        // 2. 从 metadata 读取（历史消息，数据库加载的）
+        else if ((message as any).metadata?.uploadedAttachments) {
+          messageAttachments = (message as any).metadata.uploadedAttachments;
+        }
+
+        console.log("消息附件:", message.id, messageAttachments);
+
         return (
           <div key={message.id} className="group flex flex-col">
             {message.role === "assistant" && (
@@ -125,6 +147,22 @@ export function MessageRenderer({
               </Sources>
             )}
             <Message from={message.role} key={message.id} className="pb-0">
+              {/* 显示用户上传的文件附件 */}
+              {message.role === "user" && messageAttachments.length > 0 && (
+                <MessageAttachments className="mb-2">
+                  {messageAttachments.map((attachment: any, idx: number) => (
+                    <MessageAttachment
+                      key={idx}
+                      data={{
+                        type: "file" as const,
+                        url: attachment.url,
+                        mediaType: attachment.contentType || attachment.type,
+                        filename: attachment.filename,
+                      }}
+                    />
+                  ))}
+                </MessageAttachments>
+              )}
               <MessageContent>
                 {message.parts.map((part: any, i: number) => {
                   // 忽略 step-start 类型（步骤标记，不需要显示）

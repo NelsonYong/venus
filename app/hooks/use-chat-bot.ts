@@ -64,15 +64,15 @@ export function useChatBot() {
     updateChatTitle,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (message: any, attachments: any[]) => {
     // 阻止在流式输出时发送新消息
     if (status === "streaming") {
       return;
     }
-    if (input.trim()) {
-      // 保存 input 的值，避免在异步操作前被清空
-      const messageText = input.trim();
+
+    const messageText = message.text?.trim() || "";
+
+    if (messageText || attachments.length > 0) {
       setInput("");
 
       // 如果没有 chatId，则生成一个
@@ -82,6 +82,7 @@ export function useChatBot() {
             // Mark this chat as loaded to prevent useEffect from reloading it
             lastLoadedChatId.current = chatId;
             router.push(`/?chatId=${chatId}`, { scroll: false });
+
             sendMessage(
               { text: messageText },
               {
@@ -90,9 +91,24 @@ export function useChatBot() {
                   webSearch: webSearch,
                   userId: user?.id,
                   conversationId: chatId,
+                  uploadedAttachments: attachments,
                 },
               }
             );
+
+            // 使用 setTimeout 在消息添加后立即更新它
+            setTimeout(() => {
+              setMessages((prevMessages) => {
+                const newMessages = [...prevMessages];
+                const lastUserMessage = newMessages[newMessages.length - 1];
+                if (lastUserMessage && lastUserMessage.role === 'user') {
+                  (lastUserMessage as any).data = {
+                    uploadedAttachments: attachments,
+                  };
+                }
+                return newMessages;
+              });
+            }, 100);
           }
         });
       } else {
@@ -104,9 +120,24 @@ export function useChatBot() {
               webSearch: webSearch,
               userId: user?.id,
               conversationId: currentChatId,
+              uploadedAttachments: attachments,
             },
           }
         );
+
+        // 使用 setTimeout 在消息添加后立即更新它
+        setTimeout(() => {
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages];
+            const lastUserMessage = newMessages[newMessages.length - 1];
+            if (lastUserMessage && lastUserMessage.role === 'user') {
+              (lastUserMessage as any).data = {
+                uploadedAttachments: attachments,
+              };
+            }
+            return newMessages;
+          });
+        }, 100);
       }
     }
   };

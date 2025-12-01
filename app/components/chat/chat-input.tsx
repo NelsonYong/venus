@@ -2,11 +2,21 @@
 
 import {
   PromptInput,
+  PromptInputActionAddAttachments,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuTrigger,
+  PromptInputAttachment,
+  PromptInputAttachments,
+  PromptInputBody,
   PromptInputButton,
   PromptInputFooter,
+  type PromptInputMessage,
+  PromptInputProvider,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
+  usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input";
 import {
   ModelSelector,
@@ -37,14 +47,25 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 import { ChatStatus } from "ai";
 import { useAvailableModels } from "@/app/hooks/use-available-models";
 import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { LanguageModelUsage } from "ai";
+
+export interface UploadedAttachment {
+  url: string;
+  filename: string;
+  size: number;
+  type: string;
+  contentType: string;
+}
 
 interface ChatInputProps {
   input: string;
   onInputChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (
+    message: PromptInputMessage,
+    attachments: UploadedAttachment[]
+  ) => void;
   model: string;
   onModelChange: (value: string) => void;
   webSearch: boolean;
@@ -55,8 +76,9 @@ interface ChatInputProps {
   usage?: LanguageModelUsage & { maxTokens?: number };
 }
 
-export function ChatInput({
-  input,
+// 文件上传到服务器的内部组件
+function ChatInputInner({
+  input: _input,
   onInputChange,
   onSubmit,
   model,
@@ -72,6 +94,14 @@ export function ChatInput({
   const { models: availableModels, isLoading: isLoadingModels } =
     useAvailableModels(onModelChange);
   const [open, setOpen] = useState(false);
+  const [uploadedAttachments, setUploadedAttachments] = useState<
+    UploadedAttachment[]
+  >([]);
+  const [uploading, setUploading] = useState(false);
+  const attachmentsContext = usePromptInputAttachments();
+  const uploadingFiles = useRef(new Set<string>());
+
+  const { files } = attachmentsContext;
 
   const handleModelChange = (value: string) => {
     onModelChange(value);
@@ -116,19 +146,105 @@ export function ChatInput({
     return indexA - indexB;
   });
 
+  // 当文件列表变化时，上传新文件到服务器
+  useEffect(() => {
+    const uploadNewFiles = async () => {
+      // 找出还没有上传的文件
+      const newFiles = files.filter(
+        (file) =>
+          file.url.startsWith("blob:") && !uploadingFiles.current.has(file.id)
+      );
+
+      if (newFiles.length === 0) return;
+
+      // 标记这些文件正在上传
+      newFiles.forEach((file) => uploadingFiles.current.add(file.id));
+      setUploading(true);
+
+      try {
+        // 从 blob URLs 获取文件
+        const filePromises = newFiles.map(async (fileUIPart) => {
+          if (fileUIPart.url && fileUIPart.url.startsWith("blob:")) {
+            const response = await fetch(fileUIPart.url);
+            const blob = await response.blob();
+            return {
+              file: new File([blob], fileUIPart.filename || "file", {
+                type: fileUIPart.mediaType || "application/octet-stream",
+              }),
+              id: fileUIPart.id,
+            };
+          }
+          return null;
+        });
+
+        const filesWithIds = (await Promise.all(filePromises)).filter(
+          (f) => f !== null
+        ) as { file: File; id: string }[];
+
+        // 上传到服务器
+        const formData = new FormData();
+        filesWithIds.forEach(({ file }) => {
+          formData.append("files", file);
+        });
+
+        const response = await fetch("/api/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+
+        const data = await response.json();
+        const uploaded: UploadedAttachment[] = data.files;
+
+        // 保存上传结果
+        setUploadedAttachments((prev) => {
+          // 创建一个 Map 来存储已有的附件
+          const existingMap = new Map(
+            prev.map((item) => [item.filename, item])
+          );
+
+          // 添加新上传的附件
+          uploaded.forEach((item) => {
+            existingMap.set(item.filename, item);
+          });
+
+          return Array.from(existingMap.values());
+        });
+
+        // 移除上传标记
+        filesWithIds.forEach(({ id }) => uploadingFiles.current.delete(id));
+      } catch (error) {
+        console.error("Upload error:", error);
+        // 上传失败，移除标记以便重试
+        newFiles.forEach((file) => uploadingFiles.current.delete(file.id));
+      } finally {
+        setUploading(false);
+      }
+    };
+
+    uploadNewFiles();
+  }, [files]);
+
   const handlePromptInputSubmit = async (
-    message: { text: string; files: any[] },
+    message: PromptInputMessage,
     event: React.FormEvent<HTMLFormElement>
   ) => {
-    // Create a synthetic form event that matches the expected signature
-    const syntheticEvent = {
-      ...event,
-      preventDefault: () => event.preventDefault(),
-      currentTarget: event.currentTarget,
-    } as React.FormEvent;
+    event.preventDefault();
 
-    // Call the original onSubmit handler
-    onSubmit(syntheticEvent);
+    // 如果还在上传中，不允许提交
+    if (uploading) {
+      return;
+    }
+
+    // 使用已经上传好的附件
+    onSubmit(message, uploadedAttachments);
+
+    // 清空上传的附件
+    setUploadedAttachments([]);
+    uploadingFiles.current.clear();
   };
 
   // 获取当前选中的模型
@@ -155,17 +271,32 @@ export function ChatInput({
 
   return (
     <PromptInput
+      globalDrop
+      maxFiles={5}
+      multiple
       onSubmit={handlePromptInputSubmit}
       className={cn("w-full", className)}
     >
-      <PromptInputTextarea
-        placeholder={t("chat.placeholder")}
-        onChange={(e) => onInputChange(e.target.value)}
-        value={input}
-        className="min-h-[56px] py-2.5 px-3 text-sm"
-      />
+      <PromptInputAttachments>
+        {(attachment) => <PromptInputAttachment data={attachment} />}
+      </PromptInputAttachments>
+      <PromptInputBody>
+        <PromptInputTextarea
+          placeholder={t("chat.placeholder")}
+          onChange={(e) => onInputChange(e.target.value)}
+          className="min-h-[56px] py-2.5 px-3 text-sm"
+        />
+      </PromptInputBody>
       <PromptInputFooter>
         <PromptInputTools>
+          <PromptInputActionMenu>
+            <PromptInputActionMenuTrigger />
+            <PromptInputActionMenuContent>
+              <PromptInputActionAddAttachments
+                label={t("chat.addFiles") || "添加文件"}
+              />
+            </PromptInputActionMenuContent>
+          </PromptInputActionMenu>
           <PromptInputButton
             variant={webSearch ? "default" : "ghost"}
             onClick={onWebSearchToggle}
@@ -262,8 +393,8 @@ export function ChatInput({
           )}
         </PromptInputTools>
         <PromptInputSubmit
-          disabled={!input && status !== "streaming"}
-          status={status as ChatStatus}
+          disabled={uploading}
+          status={uploading ? "submitted" : (status as ChatStatus)}
           onClick={(e) => {
             if (status === "streaming" && onStop) {
               e.preventDefault();
@@ -275,5 +406,13 @@ export function ChatInput({
         />
       </PromptInputFooter>
     </PromptInput>
+  );
+}
+
+export function ChatInput(props: ChatInputProps) {
+  return (
+    <PromptInputProvider initialInput={props.input}>
+      <ChatInputInner {...props} />
+    </PromptInputProvider>
   );
 }

@@ -9,8 +9,40 @@ export interface ModelConfig {
   isPreset: boolean;
 }
 
+export type ModelType = 'text' | 'image';
+
 /**
- * Create a model adapter based on the provider
+ * Image model patterns to detect image generation models
+ */
+const IMAGE_MODEL_PATTERNS = [
+  'dall-e',
+  'dalle',
+  'gpt-image',
+  'imagen',
+  'stable-diffusion',
+  'midjourney',
+  'flux',
+  '/image',
+  '-image-',
+];
+
+/**
+ * Check if a model is an image generation model
+ */
+export function isImageModel(modelName: string): boolean {
+  const lowerName = modelName.toLowerCase();
+  return IMAGE_MODEL_PATTERNS.some(pattern => lowerName.includes(pattern));
+}
+
+/**
+ * Get the model type (text or image)
+ */
+export function getModelType(modelName: string): ModelType {
+  return isImageModel(modelName) ? 'image' : 'text';
+}
+
+/**
+ * Create a model adapter based on the provider (for text/chat models)
  */
 export function createModelAdapter(config: ModelConfig) {
   const provider = config.provider.toLowerCase();
@@ -36,6 +68,30 @@ export function createModelAdapter(config: ModelConfig) {
         apiKey: config.apiKey,
         baseURL: config.apiEndpoint,
       })(config.name);
+  }
+}
+
+/**
+ * Create an image model adapter based on the provider
+ */
+export function createImageModelAdapter(config: ModelConfig) {
+  const provider = config.provider.toLowerCase();
+
+  switch (provider) {
+    case 'openai':
+      const openaiClient = createOpenAI({
+        apiKey: config.isPreset ? process.env.OPENAI_API_KEY : config.apiKey,
+        baseURL: config.isPreset ? undefined : config.apiEndpoint,
+      });
+      return openaiClient.image(config.name);
+
+    // For other providers using OpenAI-compatible image API
+    default:
+      const client = createOpenAI({
+        apiKey: config.apiKey,
+        baseURL: config.apiEndpoint,
+      });
+      return client.image(config.name);
   }
 }
 

@@ -6,16 +6,20 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { EmptyChatState } from "./empty-chat-state";
-import { ChatInput } from "./chat-input";
+import { ChatInput, type UploadedAttachment } from "./chat-input";
 import { MessageRenderer } from "./message-renderer";
 import type { LanguageModelUsage } from "ai";
+import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 
 interface ChatLayoutProps {
   messages: any[];
   status: string;
   input: string;
   onInputChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (
+    message: PromptInputMessage,
+    attachments: UploadedAttachment[]
+  ) => void;
   model: string;
   onModelChange: (value: string) => void;
   webSearch: boolean;

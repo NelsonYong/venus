@@ -64,6 +64,7 @@ export interface ConversationMessage {
   createdAt: string
   isDeleted: boolean
   citations?: MessageCitation[]
+  uploadedAttachments?: any
 }
 
 export interface CreateConversationRequest {
@@ -173,20 +174,30 @@ export function transformApiMessageToUIMessage(apiMessage: ConversationMessage):
       id: apiMessage.id,
       role: apiMessage.role as 'user' | 'assistant' | 'system',
       parts: Array.isArray(parts) ? parts : [{ type: 'text', text: parts }],
-      createdAt: new Date(apiMessage.createdAt),
-    }
+    } as UIMessage
+
+    // Initialize metadata if needed
+    const metadata: any = {}
 
     // Add citations metadata if available
     if (apiMessage.citations && apiMessage.citations.length > 0) {
-      uiMessage.metadata = {
-        citations: apiMessage.citations.map(citation => ({
-          id: citation.citationId,
-          url: citation.url,
-          title: citation.title,
-          snippet: citation.snippet || undefined,
-          thumbnail: citation.thumbnail || undefined,
-        }))
-      }
+      metadata.citations = apiMessage.citations.map(citation => ({
+        id: citation.citationId,
+        url: citation.url,
+        title: citation.title,
+        snippet: citation.snippet || undefined,
+        thumbnail: citation.thumbnail || undefined,
+      }))
+    }
+
+    // Add uploaded attachments metadata if available
+    if (apiMessage.uploadedAttachments) {
+      metadata.uploadedAttachments = apiMessage.uploadedAttachments
+    }
+
+    // Only set metadata if we have any
+    if (Object.keys(metadata).length > 0) {
+      uiMessage.metadata = metadata
     }
 
     return uiMessage
@@ -196,8 +207,7 @@ export function transformApiMessageToUIMessage(apiMessage: ConversationMessage):
       id: apiMessage.id,
       role: apiMessage.role as 'user' | 'assistant' | 'system',
       parts: [{ type: 'text', text: apiMessage.content }],
-      createdAt: new Date(apiMessage.createdAt),
-    }
+    } as UIMessage
   }
 }
 
@@ -206,6 +216,6 @@ export function transformUIMessageToApiFormat(uiMessage: UIMessage) {
   return {
     role: uiMessage.role,
     parts: uiMessage.parts,
-    createdAt: uiMessage.createdAt || new Date(),
+    createdAt: (uiMessage as any).createdAt || new Date(),
   }
 }

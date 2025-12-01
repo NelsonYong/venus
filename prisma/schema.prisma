@@ -81,32 +81,33 @@ model Conversation {
 }
 
 model Message {
-  id             String       @id @default(cuid())
-  conversationId String
-  userId         String
-  role           String
-  content        String
-  createdAt      DateTime     @default(now())
-  tokenCount     Int?
-  model          String?
-  temperature    Float?
-  finishReason   String?
-  tools          Json?
-  attachments    Json?
-  sources        Json?
-  reasoning      String?
-  isEdited       Boolean      @default(false)
-  editedAt       DateTime?
-  parentId       String?
-  isDeleted      Boolean      @default(false)
-  deletedAt      DateTime?
-  rating         Int?
-  feedback       String?
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  parent         Message?     @relation("MessageThread", fields: [parentId], references: [id])
-  children       Message[]    @relation("MessageThread")
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  citations      MessageCitation[]
+  id                String       @id @default(cuid())
+  conversationId    String
+  userId            String
+  role              String
+  content           String
+  createdAt         DateTime     @default(now())
+  tokenCount        Int?
+  model             String?
+  temperature       Float?
+  finishReason      String?
+  tools             Json?
+  attachments       Json?
+  sources           Json?
+  reasoning         String?
+  isEdited          Boolean      @default(false)
+  editedAt          DateTime?
+  parentId          String?
+  isDeleted         Boolean      @default(false)
+  deletedAt         DateTime?
+  rating            Int?
+  feedback          String?
+  uploadedAttachments Json?
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  parent            Message?     @relation("MessageThread", fields: [parentId], references: [id])
+  children          Message[]    @relation("MessageThread")
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  citations         MessageCitation[]
 
   @@index([conversationId, createdAt])
   @@index([userId, createdAt])

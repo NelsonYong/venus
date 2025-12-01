@@ -16,10 +16,7 @@ import {
 import { PlusIcon, MessageSquareIcon, TrashIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import {
-  ChatSession,
-  ChatSessionListItem,
-} from "@/app/hooks/use-conversations";
+import { ChatSessionListItem } from "@/app/hooks/use-conversations";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { useMobile } from "@/app/hooks/use-mobile";

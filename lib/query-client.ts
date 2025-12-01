@@ -44,7 +44,10 @@ export const queryKeys = {
   // Conversations
   conversations: {
     all: ['conversations'] as const,
-    list: () => [...queryKeys.conversations.all, 'list'] as const,
+    list: (params?: { offset?: number; limit?: number }) =>
+      params
+        ? [...queryKeys.conversations.all, 'list', params] as const
+        : [...queryKeys.conversations.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.conversations.all, 'detail', id] as const,
   },
   

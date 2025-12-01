@@ -6,6 +6,7 @@ export interface SearchResult {
   snippet: string;
   position?: number;
   date?: string;
+  thumbnail?: string;
 }
 
 export interface SearchResponse {
@@ -56,6 +57,7 @@ export async function performWebSearch(
       snippet: result.snippet || '',
       position: result.position,
       date: result.date,
+      thumbnail: result.thumbnail,
     }));
 
     return {
@@ -69,6 +71,19 @@ export async function performWebSearch(
     console.error('Web search error:', error);
     throw new Error(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
+
+export interface Citation {
+  id: number;
+  url: string;
+  title: string;
+  snippet?: string;
+  thumbnail?: string;
+}
+
+export interface FormattedSearchResult {
+  text: string;
+  citations: Citation[];
 }
 
 /**
@@ -98,4 +113,48 @@ export function formatSearchResults(searchResponse: SearchResponse): string {
   });
 
   return formatted;
+}
+
+/**
+ * 格式化搜索结果为带引用的文本（用于流式输出）
+ * @param searchResponse 搜索响应
+ * @returns 格式化的文本和引用列表
+ */
+export function formatSearchResultsWithCitations(searchResponse: SearchResponse): FormattedSearchResult {
+  const citations: Citation[] = [];
+  let formatted = '';
+
+  // 添加答案框（如果有）
+  if (searchResponse.answer_box?.answer) {
+    formatted += `${searchResponse.answer_box.answer}\n\n`;
+  }
+
+  // 添加知识图谱（如果有）
+  if (searchResponse.knowledge_graph?.description) {
+    formatted += `${searchResponse.knowledge_graph.title || ''}：${searchResponse.knowledge_graph.description}\n\n`;
+  }
+
+  // 处理搜索结果并添加引用
+  formatted += `搜索结果（请在回答时使用 [citation:序号] 格式引用相关来源）:\n`;
+  searchResponse.organic_results.forEach((result, index) => {
+    const citationId = index + 1;
+    citations.push({
+      id: citationId,
+      url: result.link,
+      title: result.title,
+      snippet: result.snippet,
+      thumbnail: result.thumbnail,
+    });
+
+    formatted += `[${citationId}] ${result.title}\n`;
+    formatted += `${result.snippet}\n`;
+    formatted += `来源: ${result.link}\n\n`;
+  });
+
+  formatted += `\n重要提示：在你的回答中，请使用 [citation:1], [citation:2] 等格式来标注信息来源。例如："根据搜索结果[citation:1]，..." 或 "最新报道显示[citation:2][citation:3]..."\n`;
+
+  return {
+    text: formatted,
+    citations,
+  };
 }

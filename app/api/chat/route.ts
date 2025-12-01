@@ -7,6 +7,7 @@ import { checkBillingLimit, recordBillingUsage } from '@/lib/chat/billing-checke
 import { saveMessages } from '@/lib/chat/message-saver';
 import { compressContext, truncateMessages } from '@/lib/chat/context-compressor';
 import { getCompressedContext } from '@/lib/redis';
+import { type Citation } from '@/lib/search-tool';
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -95,7 +96,19 @@ export async function POST(req: Request) {
 
     // Context compression logic
     let processedMessages = messages;
-    let systemPrompt = 'you are a helpful assistant that uses ReAct (Reasoning and Acting) decision-making pattern to solve problems systematically.';
+    let systemPrompt = `you are a helpful assistant that uses ReAct (Reasoning and Acting) decision-making pattern to solve problems systematically.
+
+When using web search results, you MUST cite your sources using [citation:number] format in your response. For example:
+- "According to recent reports[citation:1], ..."
+- "Research shows[citation:2][citation:3] that..."
+- "The latest information indicates[citation:1] ..."
+
+Always include citation numbers in your answer to show which sources you're referencing.`;
+
+    // 如果启用了网络搜索，添加引用提示
+    if (webSearch) {
+      systemPrompt += `\n\nIMPORTANT: When you receive search results, they will be numbered [1], [2], etc. You must use the format [citation:1], [citation:2] in your response to cite the sources.`;
+    }
 
     if (conversationId) {
       try {
@@ -126,6 +139,9 @@ Use this summary as context for the current conversation.`;
     // Create model adapter based on configuration
     const model = createModelAdapter(modelConfig);
 
+    // 用于收集所有引用数据
+    const allCitations: Citation[] = [];
+
     const result = streamText({
       model,
       system: systemPrompt,
@@ -137,6 +153,24 @@ Use this summary as context for the current conversation.`;
       // ReAct 模式通常需要多个步骤：思考 -> 行动 -> 观察 -> 思考 -> 回答
       // 使用 stopWhen 控制最大步骤数，支持完整的 ReAct 循环
       stopWhen: stepCountIs(10),
+      onStepFinish: async ({ toolResults }) => {
+        // 当工具调用完成时，收集引用数据
+        toolResults?.forEach((toolResult: any) => {
+          if (toolResult.toolName === 'webSearch' && toolResult.output) {
+            // 访问 output 字段（不是 result）
+            const output = toolResult.output as { text: string; citations: Citation[] };
+            if (output?.citations && output.citations.length > 0) {
+              console.log(`📚 收集到 ${output.citations.length} 个引用`);
+              // 添加到总引用列表（避免重复）
+              output.citations.forEach((citation) => {
+                if (!allCitations.find(c => c.url === citation.url)) {
+                  allCitations.push(citation);
+                }
+              });
+            }
+          }
+        });
+      },
       onFinish: async (result) => {
         // 调试：记录实际执行的步骤数
         // const stepCount = (result as any).steps?.length || 0;
@@ -201,6 +235,7 @@ Use this summary as context for the current conversation.`;
               userId,
               lastUserMessage,
               assistantResponse: result.text,
+              citations: allCitations.length > 0 ? allCitations : undefined,
             });
           } catch (error) {
             console.error('Error saving messages:', error);
@@ -221,7 +256,7 @@ Use this summary as context for the current conversation.`;
             provider: provider,
           };
         }
-        // Send token usage when streaming completes
+        // Send token usage and citations when streaming completes
         if (part.type === 'finish') {
           return {
             totalTokens: part.totalUsage.totalTokens,
@@ -230,6 +265,8 @@ Use this summary as context for the current conversation.`;
             reasoningTokens: part.totalUsage.reasoningTokens,
             cachedInputTokens: part.totalUsage.cachedInputTokens,
             maxTokens,
+            // 添加引用数据
+            citations: allCitations.length > 0 ? allCitations : undefined,
           };
         }
       },

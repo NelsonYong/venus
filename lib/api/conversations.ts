@@ -1,6 +1,36 @@
 import { httpClient } from '@/lib/http-client'
 import { UIMessage } from '@ai-sdk/react'
 
+// 轻量级列表数据 - 用于侧边栏
+export interface ConversationListItem {
+  id: string
+  title: string
+  model: string
+  createdAt: string
+  updatedAt: string
+  isStarred: boolean
+  isPinned: boolean
+  preview: string
+}
+
+// 分页参数
+export interface PaginationParams {
+  offset?: number
+  limit?: number
+}
+
+// 分页响应
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination: {
+    total: number
+    offset: number
+    limit: number
+    hasMore: boolean
+  }
+}
+
+// 完整对话数据 - 用于对话详情
 export interface Conversation {
   id: string
   title: string
@@ -10,6 +40,7 @@ export interface Conversation {
   userId: string
   isDeleted: boolean
   isStarred?: boolean
+  isPinned?: boolean
   messages: ConversationMessage[]
 }
 
@@ -48,12 +79,29 @@ export interface UpdateConversationRequest {
 }
 
 export const conversationsAPI = {
-  async getAll(): Promise<Conversation[]> {
-    const response = await httpClient.get<Conversation[]>('/api/conversations')
+  // 获取轻量级对话列表（用于侧边栏）
+  // 不传参数时获取全部数据，传参数时启用分页
+  async getList(params?: PaginationParams): Promise<ConversationListItem[] | PaginatedResponse<ConversationListItem>> {
+    const queryParams = new URLSearchParams()
+    if (params?.offset !== undefined) {
+      queryParams.append('offset', params.offset.toString())
+    }
+    if (params?.limit !== undefined) {
+      queryParams.append('limit', params.limit.toString())
+    }
+
+    const url = `/api/conversations${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const response = await httpClient.get<ConversationListItem[] | PaginatedResponse<ConversationListItem>>(url)
+
     if (response.status !== 200 || !response.data) {
       throw new Error(response.error || 'Failed to fetch conversations')
     }
     return response.data
+  },
+
+  // 保持向后兼容（后续可以移除）
+  async getAll(params?: PaginationParams): Promise<ConversationListItem[] | PaginatedResponse<ConversationListItem>> {
+    return this.getList(params)
   },
 
   async getById(id: string): Promise<Conversation> {

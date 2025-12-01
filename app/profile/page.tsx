@@ -13,8 +13,9 @@ function ProfileContent() {
   const { t } = useTranslation();
 
   const totalConversations = conversations?.length || 0;
-  const totalMessages =
-    conversations?.reduce((acc, curr) => acc + curr.messages.length, 0) || 0;
+  // 注意：由于优化了 API，列表中不再包含完整的消息数据
+  // 如果需要统计总消息数，应该从后端单独获取统计数据
+  const totalMessages = 0; // TODO: 从专门的统计 API 获取
 
   if (!user) return null;
 

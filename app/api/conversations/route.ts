@@ -6,23 +6,111 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const conversations = await prisma.conversation.findMany({
+    // 获取查询参数
+    const searchParams = request.nextUrl.searchParams;
+    const offset = searchParams.get("offset");
+    const limit = searchParams.get("limit");
+
+    // 构建查询选项
+    const queryOptions: any = {
       where: {
         userId: user.id,
         isDeleted: false,
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true,
+        createdAt: true,
+        isStarred: true,
+        isPinned: true,
+        model: true,
+        // 只获取最后一条消息的预览文本
         messages: {
           where: { isDeleted: false },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            content: true,
+            role: true,
+          },
         },
       },
       orderBy: {
         updatedAt: "desc",
       },
+    };
+
+    // 如果提供了分页参数，添加到查询中
+    if (offset !== null) {
+      queryOptions.skip = parseInt(offset, 10);
+    }
+    if (limit !== null) {
+      queryOptions.take = parseInt(limit, 10);
+    }
+
+    const conversations = await prisma.conversation.findMany(queryOptions);
+
+    // 如果使用分页，同时获取总数
+    let total: number | undefined;
+    if (offset !== null || limit !== null) {
+      total = await prisma.conversation.count({
+        where: {
+          userId: user.id,
+          isDeleted: false,
+        },
+      });
+    }
+
+    // 转换为前端需要的格式
+    const conversationsWithPreview = conversations.map((conv) => {
+      let preview = "暂无消息";
+
+      if (conv.messages.length > 0) {
+        const lastMessage = conv.messages[0];
+        try {
+          const content = JSON.parse(lastMessage.content);
+          if (Array.isArray(content)) {
+            const textPart = content.find((part: any) => part.type === "text");
+            if (textPart?.text) {
+              const text = textPart.text;
+              preview = text.slice(0, 50) + (text.length > 50 ? "..." : "");
+            }
+          } else if (typeof content === 'string') {
+            preview = content.slice(0, 50) + (content.length > 50 ? "..." : "");
+          }
+        } catch {
+          preview = lastMessage.content.slice(0, 50);
+        }
+      }
+
+      return {
+        id: conv.id,
+        title: conv.title,
+        updatedAt: conv.updatedAt,
+        createdAt: conv.createdAt,
+        isStarred: conv.isStarred,
+        isPinned: conv.isPinned,
+        model: conv.model,
+        preview,
+      };
     });
 
-    return NextResponse.json(conversations);
+    // 如果使用分页，返回带分页信息的响应
+    if (total !== undefined) {
+      return NextResponse.json({
+        data: conversationsWithPreview,
+        pagination: {
+          total,
+          offset: offset ? parseInt(offset, 10) : 0,
+          limit: limit ? parseInt(limit, 10) : conversationsWithPreview.length,
+          hasMore: (offset ? parseInt(offset, 10) : 0) + conversationsWithPreview.length < total,
+        },
+      });
+    }
+
+    // 不使用分页时，直接返回数组
+    return NextResponse.json(conversationsWithPreview);
   } catch (error) {
     console.error("Error fetching conversations:", error);
     return NextResponse.json(

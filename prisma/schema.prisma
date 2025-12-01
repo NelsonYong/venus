@@ -106,11 +106,27 @@ model Message {
   parent         Message?     @relation("MessageThread", fields: [parentId], references: [id])
   children       Message[]    @relation("MessageThread")
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  citations      MessageCitation[]
 
   @@index([conversationId, createdAt])
   @@index([userId, createdAt])
   @@index([role, createdAt])
   @@map("messages")
+}
+
+model MessageCitation {
+  id        String   @id @default(cuid())
+  messageId String
+  citationId Int
+  url       String
+  title     String
+  snippet   String?
+  thumbnail String?
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_citations")
 }
 
 model ApiUsage {

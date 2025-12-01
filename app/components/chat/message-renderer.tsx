@@ -26,6 +26,7 @@ import { Loader } from "@/components/ai-elements/loader";
 import { CopyIcon, CheckIcon, RefreshCwIcon } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { UIMessage } from "ai";
+import { Citations } from "./citations";
 
 interface MessageRendererProps {
   messages: UIMessage[];
@@ -308,6 +309,11 @@ export function MessageRenderer({
                 }
               })}
             </MessageContent>
+
+            {/* 显示引用来源 */}
+            {message.role === "assistant" && (message as any).metadata?.citations && (
+              <Citations citations={(message as any).metadata.citations} />
+            )}
           </Message>
 
           {/* Actions for assistant messages */}

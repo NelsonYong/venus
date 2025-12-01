@@ -1,31 +1,44 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { conversationsAPI, transformApiMessageToUIMessage, transformUIMessageToApiFormat, type Conversation, type ConversationMessage } from '@/lib/api/conversations'
+import { conversationsAPI, transformApiMessageToUIMessage, transformUIMessageToApiFormat, type Conversation, type PaginationParams } from '@/lib/api/conversations'
 import { queryKeys } from '@/lib/query-client'
 import { UIMessage } from '@ai-sdk/react'
 import { useState, useCallback } from 'react'
 
-export interface ChatSession {
+
+
+// 轻量级会话列表项（用于侧边栏）
+export interface ChatSessionListItem {
   id: string
   title: string
   timestamp: Date
   preview: string
-  messages: UIMessage[]
-  isStarred?: boolean
+  isStarred: boolean
+  isPinned: boolean
+  model: string
 }
 
-// Hook for fetching all conversations
-export function useConversations() {
+// 完整会话数据（包含消息）- 保留用于兼容性
+export interface ChatSession extends ChatSessionListItem {
+  messages: UIMessage[]
+}
+
+// Hook for fetching lightweight conversation list (sidebar)
+// 可选的分页参数：不传参数获取全部，传参数启用分页
+export function useConversations(params?: PaginationParams) {
   return useQuery({
-    queryKey: queryKeys.conversations.list(),
-    queryFn: conversationsAPI.getAll,
-    select: (conversations: Conversation[]): ChatSession[] => {
+    queryKey: params ? queryKeys.conversations.list(params) : queryKeys.conversations.list(),
+    queryFn: () => conversationsAPI.getList(params),
+    select: (response): ChatSessionListItem[] => {
+      // 处理分页响应和普通数组响应
+      const conversations = Array.isArray(response) ? response : response.data
       return conversations.map((conv) => ({
         id: conv.id,
         title: conv.title,
         timestamp: new Date(conv.updatedAt),
-        preview: generatePreviewFromApiMessages(conv.messages),
-        messages: conv.messages.map(transformApiMessageToUIMessage),
-        isStarred: conv.isStarred || false,
+        preview: conv.preview,
+        isStarred: conv.isStarred,
+        isPinned: conv.isPinned,
+        model: conv.model,
       }))
     },
   })
@@ -108,7 +121,7 @@ export function useDeleteConversation() {
 // Main chat history hook that combines all the functionality
 export function useChatHistory() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
-
+  const queryClient = useQueryClient()
   const conversationsQuery = useConversations()
   const createMutation = useCreateConversation()
   const updateMutation = useUpdateConversation()
@@ -173,17 +186,22 @@ export function useChatHistory() {
     }
   }, [generateChatTitle, saveMutation, createMutation])
 
-  // Load chat session from cache
-  // React Query automatically refetches when cache is invalidated via invalidateQueries
+  // Load chat session - uses React Query cache to avoid duplicate requests
   const loadChatSession = useCallback(async (chatId: string): Promise<UIMessage[] | null> => {
-    const conversations = conversationsQuery.data || []
-    const session = conversations.find(chat => chat.id === chatId)
-    if (session) {
+    try {
+      // Use ensureQueryData to leverage cache if available
+      // This prevents duplicate API calls if the data is already cached
+      const conversation = await queryClient.ensureQueryData({
+        queryKey: queryKeys.conversations.detail(chatId),
+        queryFn: () => conversationsAPI.getById(chatId),
+      })
       setCurrentChatId(chatId)
-      return session.messages
+      return conversation.messages.map(transformApiMessageToUIMessage)
+    } catch (error) {
+      console.error("Failed to load chat session:", error)
+      return null
     }
-    return null
-  }, [conversationsQuery.data])
+  }, [queryClient])
 
   // Delete chat session
   const deleteChatSession = useCallback(async (chatId: string) => {
@@ -203,24 +221,12 @@ export function useChatHistory() {
     setCurrentChatId(null)
   }, [])
 
-  // Get current chat session
-  const getCurrentChat = useCallback((): ChatSession | null => {
+  // Get current chat session (lightweight version without messages)
+  const getCurrentChat = useCallback((): ChatSessionListItem | null => {
     if (!currentChatId) return null
     const conversations = conversationsQuery.data || []
     return conversations.find(chat => chat.id === currentChatId) || null
   }, [currentChatId, conversationsQuery.data])
-
-  // Fetch chat details (for URL-based loading)
-  const fetchChatDetails = useCallback(async (chatId: string): Promise<UIMessage[] | null> => {
-    try {
-      const conversation = await conversationsAPI.getById(chatId)
-      setCurrentChatId(chatId)
-      return conversation.messages.map(transformApiMessageToUIMessage)
-    } catch (error) {
-      console.error("Failed to fetch chat details:", error)
-      return null
-    }
-  }, [])
 
   return {
     chatHistory: conversationsQuery.data || [],
@@ -233,36 +239,9 @@ export function useChatHistory() {
     deleteChatSession,
     startNewChat,
     getCurrentChat,
-    fetchChatDetails,
     // Expose mutation states for UI feedback
     isSaving: createMutation.isPending || updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
   }
 }
 
-// Helper function to generate preview from API messages
-function generatePreviewFromApiMessages(apiMessages: ConversationMessage[]): string {
-  if (apiMessages.length === 0) return "暂无消息"
-
-  const lastMessage = apiMessages[apiMessages.length - 1]
-  if (lastMessage) {
-    try {
-      const content = JSON.parse(lastMessage.content)
-      if (Array.isArray(content)) {
-        const textPart = content.find((part: { type?: string; text?: string }) => part.type === "text")
-        if (textPart && textPart.text) {
-          const text = textPart.text
-          return text.slice(0, 50) + (text.length > 50 ? "..." : "")
-        }
-      }
-      // Fallback for simple string content
-      const text = content?.toString() || lastMessage.content || "..."
-      return text.slice(0, 50) + (text.length > 50 ? "..." : "")
-    } catch {
-      // Fallback for non-JSON content
-      const text = lastMessage.content?.slice(0, 50) || "..."
-      return text + (lastMessage.content?.length > 50 ? "..." : "")
-    }
-  }
-  return "暂无消息"
-}

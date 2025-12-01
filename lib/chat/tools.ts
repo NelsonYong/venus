@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { tool } from 'ai';
-import { performWebSearch, formatSearchResults } from '@/lib/search-tool';
+import { performWebSearch, formatSearchResultsWithCitations, type Citation } from '@/lib/search-tool';
 
 /**
  * Weather tool - simulates weather data
@@ -21,7 +21,7 @@ export const weatherTool = tool({
 });
 
 /**
- * Web search tool
+ * Web search tool - 返回结构化的搜索结果和引用信息
  */
 export const webSearchTool = tool({
   description: 'Search the web for current information, news, facts, or any information that requires up-to-date knowledge. Use this tool when: 1) The user asks about recent events or current information, 2) You need to verify facts or get the latest data, 3) The question requires information beyond your training data. Think carefully about what search query would best help answer the user\'s question.',
@@ -31,9 +31,18 @@ export const webSearchTool = tool({
   execute: async ({ query }) => {
     try {
       const searchResults = await performWebSearch(query, 5);
-      return formatSearchResults(searchResults);
+      const { text, citations } = formatSearchResultsWithCitations(searchResults);
+
+      // 返回结构化数据，包含文本和引用信息
+      return {
+        text,
+        citations,
+      };
     } catch (error) {
-      return `搜索失败: ${error instanceof Error ? error.message : '未知错误'}`;
+      return {
+        text: `搜索失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        citations: [],
+      };
     }
   },
 });

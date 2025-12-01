@@ -16,7 +16,10 @@ import {
 import { PlusIcon, MessageSquareIcon, TrashIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import { ChatSession } from "@/app/hooks/use-conversations";
+import {
+  ChatSession,
+  ChatSessionListItem,
+} from "@/app/hooks/use-conversations";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { useMobile } from "@/app/hooks/use-mobile";
@@ -24,7 +27,7 @@ import { useMobile } from "@/app/hooks/use-mobile";
 interface ChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  chatHistory: ChatSession[];
+  chatHistory: ChatSessionListItem[];
   currentChatId: string | null;
   isLoading?: boolean;
   onNewChat: () => void;
@@ -34,7 +37,7 @@ interface ChatSidebarProps {
 }
 
 interface ChatItemProps {
-  chat: ChatSession;
+  chat: ChatSessionListItem;
   currentChatId: string | null;
   onSelect: (chatId: string) => void;
   onDelete: (chatId: string) => void;

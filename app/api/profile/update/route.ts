@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth";
 
 interface UpdateProfileData {
   name?: string;
-  avatar?: string;
+  image?: string;
 }
 
 function validateUpdateData(data: any): data is UpdateProfileData {
@@ -12,7 +12,7 @@ function validateUpdateData(data: any): data is UpdateProfileData {
     typeof data === 'object' &&
     data !== null &&
     (!data.name || (typeof data.name === 'string' && data.name.trim().length >= 1)) &&
-    (!data.avatar || typeof data.avatar === 'string')
+    (!data.image || typeof data.image === 'string')
   );
 }
 
@@ -35,8 +35,8 @@ export async function PUT(request: NextRequest) {
       updateData.name = body.name.trim();
     }
 
-    if (body.avatar !== undefined) {
-      updateData.avatar = body.avatar || null;
+    if (body.image !== undefined) {
+      updateData.image = body.image || null;
     }
 
     // Check if there's anything to update
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
         id: true,
         name: true,
         email: true,
-        avatar: true,
+        image: true,
         createdAt: true,
         language: true,
         theme: true,

@@ -1,36 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/app/hooks/use-auth";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { Navbar } from "@/app/components/ui/navbar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { profileAPI } from "@/lib/http-client";
-import {
-  UserIcon,
-  MailIcon,
-  // EditIcon,
-  SaveIcon,
-  XIcon,
-  CameraIcon,
-} from "lucide-react";
+import { UserIcon, MailIcon } from "lucide-react";
 import { useConversations } from "../hooks/use-conversations";
 
 function ProfileContent() {
   const { user } = useAuth();
   const { data: conversations } = useConversations();
-
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [editData, setEditData] = useState({
-    name: user?.name ?? "",
-    image: user?.image ?? "",
-  });
 
   const totalConversations = conversations?.length || 0;
   const totalMessages =
@@ -47,99 +27,25 @@ function ProfileContent() {
       .slice(0, 2);
   };
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    setMessage("");
-    setError("");
-
-    try {
-      const response = await profileAPI.updateProfile({
-        name: editData.name.trim(),
-        avatar: editData.image.trim() || undefined,
-      });
-
-      if (response.status === 200 && response.data?.success) {
-        setMessage(response.data.message || "Profile updated successfully");
-        setIsEditing(false);
-      } else {
-        setError(
-          response.message || response.error || "Failed to update profile"
-        );
-      }
-    } catch (error) {
-      console.error("Update profile error:", error);
-      setError("Failed to update profile. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditData({
-      name: user.name ?? "",
-      image: user.image ?? "",
-    });
-    setMessage("");
-    setError("");
-    setIsEditing(false);
-  };
-
   return (
     <div className="flex flex-col h-screen">
       <Navbar />
       <div className="flex-1 max-w-6xl mx-auto p-6 overflow-auto w-full">
         <div className="space-y-6 w-full">
-          {/* Messages */}
-          {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-
-          {message && (
-            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-600 dark:text-green-400">
-                {message}
-              </p>
-            </div>
-          )}
-
           {/* Profile Card */}
           <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-3xl font-bold text-foreground mb-6">
               {t("profile.title")}
             </h1>
             <div className="flex flex-col md:flex-row items-start space-y-6 md:space-y-0 md:space-x-8">
               {/* Avatar Section */}
-              <div className="flex flex-col items-center space-y-4">
-                <div className="relative group">
-                  <Avatar className="w-32 h-32">
-                    <AvatarImage src={editData.image} alt={user.name ?? ""} />
-                    <AvatarFallback className="text-2xl">
-                      {getInitials(user.name ?? "")}
-                    </AvatarFallback>
-                  </Avatar>
-                  {isEditing && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <CameraIcon className="w-8 h-8 text-white" />
-                    </div>
-                  )}
-                </div>
-                {isEditing && (
-                  <div className="space-y-2 w-full max-w-sm">
-                    <label className="text-sm font-medium text-foreground">
-                      {t("profile.avatarUrl")}
-                    </label>
-                    <Input
-                      value={editData.image}
-                      onChange={(e) =>
-                        setEditData({ ...editData, image: e.target.value })
-                      }
-                      placeholder="https://example.com/avatar.jpg"
-                      className="text-center"
-                    />
-                  </div>
-                )}
+              <div className="flex flex-col items-center">
+                <Avatar className="w-32 h-32">
+                  <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
+                  <AvatarFallback className="text-2xl">
+                    {getInitials(user.name ?? "")}
+                  </AvatarFallback>
+                </Avatar>
               </div>
 
               {/* Info Section */}
@@ -151,19 +57,9 @@ function ProfileContent() {
                       <UserIcon className="w-4 h-4 mr-2" />
                       {t("profile.name")}
                     </label>
-                    {isEditing ? (
-                      <Input
-                        value={editData.name}
-                        onChange={(e) =>
-                          setEditData({ ...editData, name: e.target.value })
-                        }
-                        className="w-full"
-                      />
-                    ) : (
-                      <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
-                        {user.name}
-                      </p>
-                    )}
+                    <p className="text-foreground bg-muted/50 rounded-md px-3 py-2">
+                      {user.name}
+                    </p>
                   </div>
 
                   {/* Email */}
@@ -177,40 +73,6 @@ function ProfileContent() {
                     </p>
                   </div>
                 </div>
-
-                {/* Theme */}
-
-                {/* Action Buttons */}
-                {isEditing && (
-                  <div className="flex items-center space-x-3 pt-4">
-                    <Button
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      className="flex items-center space-x-2"
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />
-                          <span>{t("profile.saving")}</span>
-                        </>
-                      ) : (
-                        <>
-                          <SaveIcon className="w-4 h-4" />
-                          <span>{t("profile.save")}</span>
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleCancel}
-                      disabled={isLoading}
-                      className="flex items-center space-x-2"
-                    >
-                      <XIcon className="w-4 h-4" />
-                      <span>{t("profile.cancel")}</span>
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
           </div>

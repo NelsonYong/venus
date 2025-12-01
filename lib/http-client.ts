@@ -135,7 +135,7 @@ export interface AuthResponse {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
     createdAt: string;
     language: string;
     theme: string;
@@ -151,7 +151,7 @@ export interface AuthError {
 // Use signIn() and signOut() from next-auth/react instead
 
 export const profileAPI = {
-  async updateProfile(data: { name?: string; avatar?: string }) {
+  async updateProfile(data: { name?: string; image?: string }) {
     return httpClient.put<AuthResponse>('/api/profile/update', data);
   },
 };

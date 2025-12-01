@@ -322,6 +322,12 @@
       "cacheTokens": "缓存",
       "totalCost": "总成本",
       "tokens": "tokens"
+    },
+    "citations": {
+      "title": "引用来源",
+      "count": "{{count}} 个引用来源",
+      "sources": "个来源",
+      "close": "关闭"
     }
   },
   "billing": {

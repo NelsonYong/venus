@@ -104,7 +104,6 @@ export function ChatLayout({
           <MessageRenderer
             messages={messages}
             status={status}
-            isFinished={status === "finished"}
             onRegenerate={onRegenerate}
           />
         </ConversationContent>

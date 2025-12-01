@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { X, ExternalLink } from "lucide-react";
 import type { Citation } from "./citations";
+import { useTranslation } from "@/app/contexts/i18n-context";
 
 interface CitationsSidebarProps {
   citations: Citation[];
@@ -17,6 +18,7 @@ export function CitationsSidebar({
   onClose,
   highlightedId,
 }: CitationsSidebarProps) {
+  const { t } = useTranslation();
   // 处理 ESC 键关闭
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -64,16 +66,16 @@ export function CitationsSidebar({
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
-              引用来源
+              {t("chat.citations.title")}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {citations.length} 个来源
+              {citations.length} {t("chat.citations.sources")}
             </p>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-accent rounded-lg transition-colors"
-            aria-label="关闭"
+            aria-label={t("chat.citations.close")}
           >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>

@@ -320,6 +320,12 @@
       "cacheTokens": "キャッシュ",
       "totalCost": "総コスト",
       "tokens": "トークン"
+    },
+    "citations": {
+      "title": "引用元",
+      "count": "{{count}} 件の引用",
+      "sources": "件のソース",
+      "close": "閉じる"
     }
   },
   "billing": {

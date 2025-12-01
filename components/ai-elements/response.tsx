@@ -49,13 +49,18 @@ export const Response = memo(
 
       // 匹配 [citation:2] 格式
       const parts = text.split(/(\[citation:\d+\])/g);
+      console.log("parts", parts);
 
       return parts
         .map((part, index) => {
           const citationMatch = part.match(/\[citation:(\d+)\]/);
 
+          console.log("citationMatch", citationMatch);
+
           if (citationMatch) {
             const citationId = parseInt(citationMatch[1]);
+
+            console.log("citationId", citationId);
 
             if (citationId) {
               keyCounterRef.current++;
@@ -65,7 +70,7 @@ export const Response = memo(
                 <Badge
                   key={`citation-${citationId}-${baseKey}-${index}-${keyCounterRef.current}`}
                   variant="outline"
-                  className="mx-1 cursor-pointer hover:bg-accent transition-colors text-xs inline-flex items-center"
+                  className="mx-1 cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs inline-flex items-center"
                   onClick={() => onCitationClick?.(citationId)}
                 >
                   {citationId}
@@ -141,6 +146,7 @@ export const Response = memo(
     };
 
     const CustomText = ({ children, ...textProps }: any) => {
+      console.log("CustomText", children);
       const processedContent = processChildren(children, "span");
       return <span {...textProps}>{processedContent}</span>;
     };
@@ -154,6 +160,10 @@ export const Response = memo(
       const processedContent = processChildren(children, "em");
       return <em {...emProps}>{processedContent}</em>;
     };
+    const CustomLi = ({ children, ...liProps }: any) => {
+      const processedContent = processChildren(children, "li");
+      return <li {...liProps}>{processedContent}</li>;
+    };
 
     const customComponents = useMemo(
       () => ({
@@ -161,6 +171,7 @@ export const Response = memo(
         span: CustomText,
         strong: CustomStrong,
         em: CustomEm,
+        li: CustomLi,
         div: ({ children, ...divProps }: any) => {
           const processedContent = processChildren(children, "div");
           return <div {...divProps}>{processedContent}</div>;

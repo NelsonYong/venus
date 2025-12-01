@@ -320,6 +320,12 @@
       "cacheTokens": "Cache",
       "totalCost": "Total cost",
       "tokens": "tokens"
+    },
+    "citations": {
+      "title": "Citations",
+      "count": "{{count}} citations",
+      "sources": "sources",
+      "close": "Close"
     }
   },
   "billing": {

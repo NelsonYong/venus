@@ -147,9 +147,9 @@ function ChatItem({
 }
 
 function groupChatsByDate(
-  chats: ChatSession[],
+  chats: ChatSessionListItem[],
   t: (key: string) => string
-): { label: string; chats: ChatSession[] }[] {
+): { label: string; chats: ChatSessionListItem[] }[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today);
@@ -159,7 +159,7 @@ function groupChatsByDate(
   const lastMonth = new Date(today);
   lastMonth.setMonth(lastMonth.getMonth() - 1);
 
-  const groups: { label: string; chats: ChatSession[] }[] = [
+  const groups: { label: string; chats: ChatSessionListItem[] }[] = [
     { label: t("sidebar.today"), chats: [] },
     { label: t("sidebar.yesterday"), chats: [] },
     { label: t("sidebar.lastWeek"), chats: [] },

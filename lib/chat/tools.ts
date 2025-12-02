@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { tool } from 'ai';
-import { performWebSearch, formatSearchResultsWithCitations, type Citation } from '@/lib/search-tool';
+import { performWebSearch, formatSearchResultsWithCitations } from '@/lib/search-tool';
 
 /**
  * Weather tool - simulates weather data

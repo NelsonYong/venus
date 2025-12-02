@@ -6,7 +6,7 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { Mail } from "lucide-react";
-import { VenusLogoFull, VenusLogoText } from "@/components/ui/venus-logo";
+import { VenusLogoText } from "@/components/ui/venus-logo";
 
 export default function SignInPage() {
   const { t } = useTranslation();

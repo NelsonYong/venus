@@ -86,7 +86,7 @@ export function useAuth(): AuthContextType {
     name: session.user.name,
     email: session.user.email,
     image: session.user.image,
-    // @ts-ignore - createdAt is added in session callback
+    // @ts-expect-error - createdAt is added in session callback
     createdAt: session.user.createdAt,
   } : null
 

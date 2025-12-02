@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest) {
         id: true,
         name: true,
         email: true,
-        avatar: true,
+        image: true,
         createdAt: true,
         language: true,
         theme: true,

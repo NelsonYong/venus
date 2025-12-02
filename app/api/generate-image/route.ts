@@ -11,10 +11,10 @@ export async function POST(req: Request) {
   const startTime = Date.now();
 
   try {
-    const { 
-      prompt, 
-      userId, 
-      conversationId, 
+    const {
+      prompt,
+      userId,
+      conversationId,
       modelId,
       size,
       aspectRatio,
@@ -91,10 +91,13 @@ export async function POST(req: Request) {
     // Check billing for non-preset models
     if (!isPresetModel) {
       // For image generation, estimate tokens based on prompt length
-      const estimatedTokens = Math.ceil(prompt.length / 4) * n;
       const usageCheck = await checkBillingLimit({
         userId,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{
+          id: 'temp-id',
+          role: 'user',
+          parts: [{ type: 'text', text: prompt }]
+        }] as any,
         provider,
         modelName,
       });
@@ -133,7 +136,7 @@ export async function POST(req: Request) {
 
     // Extract images
     const images = result.images || (result.image ? [result.image] : []);
-    
+
     // Convert images to base64 for response
     const imageData = images.map((image: any) => ({
       base64: image.base64,
@@ -180,11 +183,11 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('Image generation API error:', error);
-    
+
     // Handle specific error types
     if (error.name === 'AI_NoImageGeneratedError') {
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to generate image',
           details: error.message,
           cause: error.cause,
@@ -194,9 +197,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: error.message 
+        details: error.message
       },
       { status: 500 }
     );

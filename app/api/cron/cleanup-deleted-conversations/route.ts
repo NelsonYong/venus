@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       processed: deletedConversations.length,
-      success: successCount,
+      succeeded: successCount,
       failed: failedCount,
       conversationIds,
     });

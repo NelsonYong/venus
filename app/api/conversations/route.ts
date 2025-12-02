@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get("limit");
 
     // 构建查询选项
-    const queryOptions: any = {
+    const queryOptions = {
       where: {
         userId: user.id,
         isDeleted: false,
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         // 只获取最后一条消息的预览文本
         messages: {
           where: { isDeleted: false },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: "desc" as const },
           take: 1,
           select: {
             content: true,
@@ -37,17 +37,11 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: "desc" as const,
       },
+      skip: offset ? parseInt(offset, 10) : undefined,
+      take: limit ? parseInt(limit, 10) : undefined,
     };
-
-    // 如果提供了分页参数，添加到查询中
-    if (offset !== null) {
-      queryOptions.skip = parseInt(offset, 10);
-    }
-    if (limit !== null) {
-      queryOptions.take = parseInt(limit, 10);
-    }
 
     const conversations = await prisma.conversation.findMany(queryOptions);
 
@@ -191,7 +185,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   try {
     const user = await requireAuth();
 

@@ -53,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
-        // @ts-ignore - user from database has createdAt
+        // @ts-expect-error - user from database has createdAt
         session.user.createdAt = user.createdAt;
       }
       return session;

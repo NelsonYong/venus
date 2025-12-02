@@ -47,7 +47,7 @@ function validateMcpServerData(data: any): data is McpServerData {
 }
 
 // GET - 获取用户的所有 MCP 服务器
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await requireAuth();
 

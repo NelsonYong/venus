@@ -78,7 +78,7 @@ interface ChatInputProps {
 
 // 文件上传到服务器的内部组件
 function ChatInputInner({
-  input: _input,
+  input: _,
   onInputChange,
   onSubmit,
   model,

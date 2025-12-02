@@ -35,12 +35,12 @@ function validateMcpServerUpdateData(data: any): data is McpServerUpdateData {
 // PUT - 更新 MCP 服务器
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
 
-    const serverId = params.id;
+    const { id: serverId } = await params;
 
     // 验证服务器是否存在且属于当前用户
     const existingServer = await prisma.mcpServer.findUnique({
@@ -145,12 +145,12 @@ export async function PUT(
 // DELETE - 删除 MCP 服务器
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
 
-    const serverId = params.id;
+    const { id: serverId } = await params;
 
     // 验证服务器是否存在且属于当前用户
     const existingServer = await prisma.mcpServer.findUnique({

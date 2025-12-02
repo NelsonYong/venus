@@ -30,8 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* tab icon */}
-        <link rel="icon" href="/favicon.ico" />
+        {/* tab icon - uses icon.svg by default */}
         <script
           dangerouslySetInnerHTML={{
             __html: `

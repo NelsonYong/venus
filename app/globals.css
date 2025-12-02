@@ -586,34 +586,197 @@ hr {
 }
 
 /* ============================================
-   响应式调整
+   代码块和工具调用宽度限制（防止超长）
    ============================================ */
-@media (max-width: 640px) {
-  .markdown h1 {
-    @apply text-3xl;
-  }
+.markdown pre {
+  @apply max-w-full overflow-x-auto;
+}
 
-  .markdown h2 {
-    @apply text-2xl;
-  }
+.markdown code {
+  @apply break-words;
+}
 
-  .markdown h3 {
-    @apply text-xl;
-  }
+/* 工具调用容器 - 防止超长 */
+.not-prose {
+  @apply max-w-full;
+}
 
-  /* 
-  .markdown pre code {
-    @apply text-xs;
-  } */
+.not-prose [class*="overflow-x-auto"] {
+  @apply max-w-full;
+}
 
-  .markdown table {
-    @apply text-xs;
-  }
+/* ============================================
+   移动端布局专用样式
+   ============================================ */
 
-  .markdown table th,
-  .markdown table td {
-    @apply px-2 py-2;
-  }
+/* 移动端布局容器 - 固定高度计算 */
+.mobile-chat-layout {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 移动端错误提示 */
+.mobile-error-banner {
+  @apply shrink-0 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-3 py-2 rounded-lg mx-2 mb-2 mt-2 text-sm;
+  position: relative;
+  z-index: 1;
+}
+
+/* 移动端滚动区域 - 计算固定高度 
+   总高度 = 100vh - navbar(56px) - input area(140px) 
+*/
+.mobile-scroll-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 140px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 有错误提示时，滚动区域需要从错误提示下方开始 */
+.mobile-chat-layout:has(.mobile-error-banner) .mobile-scroll-area {
+  top: 70px;
+}
+
+/* 移动端输入框区域 - 固定在底部 */
+.mobile-input-area {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  z-index: 10;
+  @apply w-full px-2 pb-2 pt-1 bg-background border-t border-border;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* 防止输入框被滚动 */
+  pointer-events: auto;
+}
+
+/* Markdown 样式 */
+.mobile-chat-layout .markdown {
+  @apply text-xs leading-relaxed;
+}
+
+.mobile-chat-layout .markdown p {
+  @apply my-2 leading-6;
+}
+
+/* 移动端标题样式 - 缩小 */
+.mobile-chat-layout .markdown h1 {
+  @apply text-xl font-bold mt-4 mb-2 pb-1;
+}
+
+.mobile-chat-layout .markdown h2 {
+  @apply text-lg font-bold mt-4 mb-2 pb-1;
+}
+
+.mobile-chat-layout .markdown h3 {
+  @apply text-base font-semibold mt-3 mb-2;
+}
+
+.mobile-chat-layout .markdown h4 {
+  @apply text-sm font-semibold mt-2 mb-1;
+}
+
+.mobile-chat-layout .markdown h5 {
+  @apply text-xs font-semibold mt-2 mb-1;
+}
+
+.mobile-chat-layout .markdown h6 {
+  @apply text-xs font-semibold mt-2 mb-1;
+}
+
+/* 移动端列表 */
+.mobile-chat-layout .markdown ul,
+.mobile-chat-layout .markdown ol {
+  @apply my-2 pl-4 space-y-1;
+}
+
+.mobile-chat-layout .markdown li {
+  @apply leading-6;
+}
+
+.mobile-chat-layout .markdown li>p {
+  @apply my-1;
+}
+
+.mobile-chat-layout .markdown li>ul,
+.mobile-chat-layout .markdown li>ol {
+  @apply my-1;
+}
+
+/* 移动端引用块 */
+.mobile-chat-layout .markdown blockquote {
+  @apply my-2 pl-3 py-1 pr-3;
+}
+
+.mobile-chat-layout .markdown blockquote p {
+  @apply my-1;
+}
+
+/* 移动端表格 */
+.mobile-chat-layout .markdown table {
+  @apply text-xs my-2;
+}
+
+.mobile-chat-layout .markdown table th,
+.mobile-chat-layout .markdown table td {
+  @apply px-2 py-2;
+}
+
+/* 移动端代码块 */
+.mobile-chat-layout .markdown pre {
+  @apply text-xs my-2;
+}
+
+.mobile-chat-layout .markdown code {
+  @apply text-xs;
+}
+
+/* 移动端图片 */
+.mobile-chat-layout .markdown img {
+  @apply my-2;
+}
+
+/* 移动端分割线 */
+.mobile-chat-layout .markdown hr {
+  @apply my-4;
+}
+
+/* 移动端键盘按键 */
+.mobile-chat-layout .markdown kbd {
+  @apply px-1 py-0.5 text-xs;
+}
+
+/* 移动端详情面板 */
+.mobile-chat-layout .markdown details {
+  @apply my-2 p-3;
+}
+
+.mobile-chat-layout .markdown details[open] summary {
+  @apply mb-2 pb-2;
+}
+
+/* 移动端警告提示框 */
+.mobile-chat-layout .markdown .alert {
+  @apply my-2 p-3;
+}
+
+/* 移动端强调文本 */
+.mobile-chat-layout .markdown strong {
+  @apply text-xs;
+}
+
+/* 移动端链接 */
+.mobile-chat-layout .markdown a {
+  @apply text-xs;
 }
 
 /* ============================================

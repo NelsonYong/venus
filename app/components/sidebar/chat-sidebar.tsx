@@ -219,6 +219,8 @@ export function ChatSidebar({
 
   const handleDeleteChat = (chatId: string) => {
     onDeleteChat(chatId);
+    // 跳转到首页
+    router.push(`/`, { scroll: false });
   };
 
   const formatTimestamp = (timestamp: Date) => {

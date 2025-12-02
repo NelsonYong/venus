@@ -212,30 +212,430 @@ hr {
   scrollbar-color: oklch(0.708 0 0 / 0.15) transparent;
 }
 
-.markdown .group div {
-  @apply p-0 m-1.5;
+/* Markdown SDK 样式 - 基于 Tailwind CSS */
+
+/* ============================================
+   基础容器样式
+   ============================================ */
+.markdown {
+  @apply text-base leading-relaxed text-gray-900 dark:text-gray-100;
+  @apply max-w-none;
 }
 
-.markdown .group div pre {
-  @apply p-4
+/* ============================================
+   标题样式
+   ============================================ */
+.markdown h1 {
+  @apply text-4xl font-bold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700;
+  @apply scroll-mt-20;
 }
 
-.markdown .group button {
-  color: #fff;
+.markdown h2 {
+  @apply text-3xl font-bold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700;
+  @apply scroll-mt-20;
 }
 
-.markdown li {
-  @apply list-disc list-inside;
+.markdown h3 {
+  @apply text-2xl font-semibold mt-6 mb-3;
+  @apply scroll-mt-20;
 }
 
+.markdown h4 {
+  @apply text-xl font-semibold mt-5 mb-2;
+  @apply scroll-mt-20;
+}
+
+.markdown h5 {
+  @apply text-lg font-semibold mt-4 mb-2;
+  @apply scroll-mt-20;
+}
+
+.markdown h6 {
+  @apply text-base font-semibold mt-3 mb-2 text-gray-700 dark:text-gray-300;
+  @apply scroll-mt-20;
+}
+
+/* 标题内的锚点链接 */
+.markdown h1 a,
+.markdown h2 a,
+.markdown h3 a,
+.markdown h4 a,
+.markdown h5 a,
+.markdown h6 a {
+  @apply no-underline text-inherit;
+}
+
+/* ============================================
+   段落和文本样式
+   ============================================ */
+.markdown p {
+  @apply my-4 leading-7;
+}
+
+.markdown p:first-child {
+  @apply mt-0;
+}
+
+.markdown p:last-child {
+  @apply mb-0;
+}
+
+.markdown strong {
+  @apply font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.markdown em {
+  @apply italic;
+}
+
+.markdown del {
+  @apply line-through text-gray-500 dark:text-gray-400;
+}
+
+.markdown mark {
+  @apply bg-yellow-200 dark:bg-yellow-800 px-1 rounded;
+}
+
+/* ============================================
+   链接样式
+   ============================================ */
+.markdown a {
+  @apply text-blue-600 dark:text-blue-400 underline decoration-1 underline-offset-2;
+  @apply hover:text-blue-800 dark:hover:text-blue-300;
+  @apply transition-colors duration-200;
+}
+
+.markdown a:hover {
+  @apply decoration-2;
+}
+
+/* ============================================
+   列表样式
+   ============================================ */
 .markdown ul {
-  @apply list-disc list-inside;
+  @apply my-4 pl-6 space-y-2 list-disc;
 }
 
 .markdown ol {
-  @apply list-decimal list-inside;
+  @apply my-4 pl-6 space-y-2 list-decimal;
 }
 
+.markdown li {
+  @apply leading-7;
+}
+
+.markdown li>p {
+  @apply my-2;
+}
+
+.markdown li>ul,
+.markdown li>ol {
+  @apply my-2;
+}
+
+/* 嵌套列表 */
+.markdown ul ul,
+.markdown ol ul {
+  @apply list-disc;
+}
+
+.markdown ul ol,
+.markdown ol ol {
+  @apply list-decimal;
+}
+
+/* 任务列表 */
+.markdown input[type="checkbox"] {
+  @apply mr-2 align-middle cursor-pointer;
+}
+
+.markdown li.task-list-item {
+  @apply list-none;
+}
+
+/* ============================================
+   引用块样式
+   ============================================ */
 .markdown blockquote {
-  @apply border-l-2 border-gray-300 pl-4;
+  @apply my-4 pl-4 border-l-4 border-gray-300 dark:border-gray-600;
+  @apply text-gray-700 dark:text-gray-300 italic;
+  @apply bg-gray-50 dark:bg-gray-800/50 py-2 pr-4 rounded-r;
+}
+
+.markdown blockquote p {
+  @apply my-2;
+}
+
+.markdown blockquote> :first-child {
+  @apply mt-0;
+}
+
+.markdown blockquote> :last-child {
+  @apply mb-0;
+}
+
+/* 嵌套引用 */
+.markdown blockquote blockquote {
+  @apply mt-2 mb-2;
+}
+
+
+/* ============================================
+   表格样式
+   ============================================ */
+.markdown table {
+  @apply w-full my-4 border-collapse;
+  @apply text-sm;
+}
+
+.markdown table thead {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.markdown table th {
+  @apply px-4 py-3 text-left font-semibold;
+  @apply border border-gray-300 dark:border-gray-700;
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.markdown table td {
+  @apply px-4 py-3 border border-gray-300 dark:border-gray-700;
+}
+
+.markdown table tr:nth-child(even) {
+  @apply bg-gray-50 dark:bg-gray-800/30;
+}
+
+.markdown table tr:hover {
+  @apply bg-gray-100 dark:bg-gray-800/50;
+  @apply transition-colors duration-150;
+}
+
+/* 表格容器,支持横向滚动 */
+.markdown .table-wrapper {
+  @apply overflow-x-auto my-4;
+}
+
+/* ============================================
+   水平分割线
+   ============================================ */
+.markdown hr {
+  @apply my-8 border-0 border-t border-gray-300 dark:border-gray-700;
+}
+
+/* ============================================
+   图片样式
+   ============================================ */
+.markdown img {
+  @apply max-w-full h-auto my-4 rounded-lg;
+  @apply border border-gray-200 dark:border-gray-700;
+}
+
+.markdown img[alt] {
+  @apply shadow-md;
+}
+
+/* 图片标题 */
+.markdown figure {
+  @apply my-6;
+}
+
+.markdown figcaption {
+  @apply text-sm text-center text-gray-600 dark:text-gray-400 mt-2 italic;
+}
+
+/* ============================================
+   键盘按键样式
+   ============================================ */
+.markdown kbd {
+  @apply px-2 py-1 text-xs font-mono;
+  @apply bg-gray-100 dark:bg-gray-800;
+  @apply border border-gray-300 dark:border-gray-600;
+  @apply rounded shadow-sm;
+  @apply inline-block;
+}
+
+/* ============================================
+   缩写和上下标
+   ============================================ */
+.markdown abbr {
+  @apply cursor-help border-b border-dotted border-gray-400;
+}
+
+.markdown sup {
+  @apply text-xs align-super;
+}
+
+.markdown sub {
+  @apply text-xs align-sub;
+}
+
+/* ============================================
+   引用、样本和变量
+   ============================================ */
+.markdown cite {
+  @apply italic;
+}
+
+.markdown samp {
+  @apply font-mono text-sm;
+}
+
+.markdown var {
+  @apply font-mono italic;
+}
+
+/* ============================================
+   详情/折叠面板
+   ============================================ */
+.markdown details {
+  @apply my-4 p-4 border border-gray-300 dark:border-gray-700 rounded-lg;
+  @apply bg-gray-50 dark:bg-gray-800/30;
+}
+
+.markdown details summary {
+  @apply cursor-pointer font-semibold select-none;
+  @apply hover:text-blue-600 dark:hover:text-blue-400;
+  @apply transition-colors duration-200;
+}
+
+.markdown details[open] summary {
+  @apply mb-3 pb-3 border-b border-gray-300 dark:border-gray-700;
+}
+
+/* ============================================
+   脚注样式
+   ============================================ */
+.markdown .footnotes {
+  @apply mt-8 pt-4 border-t border-gray-300 dark:border-gray-700;
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.markdown .footnotes ol {
+  @apply pl-4;
+}
+
+.markdown .footnote-ref {
+  @apply text-blue-600 dark:text-blue-400 no-underline;
+  @apply hover:underline;
+}
+
+/* ============================================
+   警告/提示框样式
+   ============================================ */
+.markdown .alert {
+  @apply my-4 p-4 rounded-lg border-l-4;
+}
+
+.markdown .alert-info {
+  @apply bg-blue-50 dark:bg-blue-900/20 border-blue-500;
+  @apply text-blue-900 dark:text-blue-200;
+}
+
+.markdown .alert-warning {
+  @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500;
+  @apply text-yellow-900 dark:text-yellow-200;
+}
+
+.markdown .alert-danger {
+  @apply bg-red-50 dark:bg-red-900/20 border-red-500;
+  @apply text-red-900 dark:text-red-200;
+}
+
+.markdown .alert-success {
+  @apply bg-green-50 dark:bg-green-900/20 border-green-500;
+  @apply text-green-900 dark:text-green-200;
+}
+
+/* ============================================
+   数学公式样式 (如果使用 KaTeX 或 MathJax)
+   ============================================ */
+.markdown .math {
+  @apply overflow-x-auto my-4;
+}
+
+.markdown .math-inline {
+  @apply inline-block;
+}
+
+/* ============================================
+   打印样式
+   ============================================ */
+@media print {
+  .markdown {
+    @apply text-black;
+  }
+
+  .markdown a {
+    @apply text-blue-800 underline;
+  }
+
+  .markdown pre,
+  .markdown blockquote {
+    @apply break-inside-avoid;
+  }
+
+  .markdown h1,
+  .markdown h2,
+  .markdown h3,
+  .markdown h4,
+  .markdown h5,
+  .markdown h6 {
+    @apply break-after-avoid;
+  }
+}
+
+/* ============================================
+   响应式调整
+   ============================================ */
+@media (max-width: 640px) {
+  .markdown h1 {
+    @apply text-3xl;
+  }
+
+  .markdown h2 {
+    @apply text-2xl;
+  }
+
+  .markdown h3 {
+    @apply text-xl;
+  }
+
+  /* 
+  .markdown pre code {
+    @apply text-xs;
+  } */
+
+  .markdown table {
+    @apply text-xs;
+  }
+
+  .markdown table th,
+  .markdown table td {
+    @apply px-2 py-2;
+  }
+}
+
+/* ============================================
+   动画效果
+   ============================================ */
+.markdown-enter {
+  @apply opacity-0 translate-y-2;
+}
+
+.markdown-enter-active {
+  @apply opacity-100 translate-y-0;
+  @apply transition-all duration-300 ease-out;
+}
+
+/* ============================================
+   流式渲染优化
+   ============================================ */
+.markdown.streaming {
+  @apply animate-pulse;
+}
+
+.markdown.streaming::after {
+  content: '▋';
+  @apply animate-pulse ml-1 text-blue-600 dark:text-blue-400;
 }

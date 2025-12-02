@@ -184,16 +184,38 @@ export async function DELETE(
       );
     }
 
-    // Soft delete the conversation
-    await prisma.conversation.update({
-      where: { id },
-      data: {
-        isDeleted: true,
-        updatedAt: new Date(),
-      },
-    });
+    // Check if request wants hard delete (permanent)
+    const { permanent } = await request.json().catch(() => ({ permanent: false }));
 
-    return NextResponse.json({ success: true });
+    if (permanent) {
+      // Hard delete: remove from database and trigger blob cleanup
+      await prisma.conversation.delete({
+        where: { id },
+      });
+
+      // Trigger async blob cleanup (don't wait for it)
+      // In production, use a proper queue system
+      fetch(`${request.nextUrl.origin}/api/cleanup/blobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationIds: [id] }),
+      }).catch(error => {
+        console.error('Failed to trigger blob cleanup:', error);
+      });
+
+      return NextResponse.json({ success: true, deleted: 'permanent' });
+    } else {
+      // Soft delete the conversation
+      await prisma.conversation.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          updatedAt: new Date(),
+        },
+      });
+
+      return NextResponse.json({ success: true, deleted: 'soft' });
+    }
   } catch (error) {
     console.error("Error deleting conversation:", error);
     return NextResponse.json(

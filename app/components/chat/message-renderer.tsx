@@ -115,8 +115,6 @@ export function MessageRenderer({
           messageAttachments = (message as any).metadata.uploadedAttachments;
         }
 
-        console.log("消息附件:", message.id, messageAttachments);
-
         return (
           <div key={message.id} className="group flex flex-col">
             {message.role === "assistant" && (

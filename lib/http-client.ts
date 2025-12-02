@@ -154,6 +154,9 @@ export const profileAPI = {
   async updateProfile(data: { name?: string; image?: string }) {
     return httpClient.put<AuthResponse>('/api/profile/update', data);
   },
+  async getStats() {
+    return httpClient.get<{ totalMessages: number }>('/api/profile/stats');
+  },
 };
 
 export const settingsAPI = {

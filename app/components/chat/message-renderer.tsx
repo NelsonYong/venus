@@ -33,6 +33,8 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 import { UIMessage } from "ai";
 import { Citations } from "./citations";
 import { CitationsSidebar } from "./citations-sidebar";
+import { cn } from "@/lib/utils";
+import { useMobile } from "@/app/hooks/use-mobile";
 
 interface MessageRendererProps {
   messages: UIMessage[];
@@ -51,8 +53,7 @@ export function MessageRenderer({
   const [highlightedCitationId, setHighlightedCitationId] = useState<
     number | undefined
   >();
-
-  console.log("messages", messages);
+  const isMobile = useMobile();
 
   const handleCopy = async (message: any) => {
     const textParts = message.parts
@@ -98,6 +99,9 @@ export function MessageRenderer({
         index === self.findIndex((c: any) => c.id === citation.id)
     );
 
+  const messageClassname = cn("pb-0 max-w-[80%]", {
+    "max-w-[100%]": isMobile,
+  });
   return (
     <>
       {messages.map((message, index) => {
@@ -144,7 +148,11 @@ export function MessageRenderer({
                 })}
               </Sources>
             )}
-            <Message from={message.role} key={message.id} className="pb-0">
+            <Message
+              from={message.role}
+              key={message.id}
+              className={messageClassname}
+            >
               {/* 显示用户上传的文件附件 */}
               {message.role === "user" && messageAttachments.length > 0 && (
                 <MessageAttachments className="mb-2">

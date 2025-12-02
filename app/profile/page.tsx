@@ -6,16 +6,24 @@ import { Navbar } from "@/app/components/ui/navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserIcon, MailIcon } from "lucide-react";
 import { useConversations } from "../hooks/use-conversations";
+import { useQuery } from "@tanstack/react-query";
+import { profileAPI } from "@/lib/http-client";
 
 function ProfileContent() {
   const { user } = useAuth();
   const { data: conversations } = useConversations();
+  const { data: stats } = useQuery({
+    queryKey: ["profile-stats"],
+    queryFn: async () => {
+      const response = await profileAPI.getStats();
+      return response.data;
+    },
+    enabled: !!user,
+  });
   const { t } = useTranslation();
 
   const totalConversations = conversations?.length || 0;
-  // 注意：由于优化了 API，列表中不再包含完整的消息数据
-  // 如果需要统计总消息数，应该从后端单独获取统计数据
-  const totalMessages = 0; // TODO: 从专门的统计 API 获取
+  const totalMessages = stats?.totalMessages || 0;
 
   if (!user) return null;
 

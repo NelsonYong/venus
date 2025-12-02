@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/app/hooks/use-auth";
+import { useAuth, useUpdateSettings } from "@/app/hooks/use-auth";
 import { useI18n, useTranslation } from "@/app/contexts/i18n-context";
 import { Navbar } from "@/app/components/ui/navbar";
 import { Button } from "@/components/ui/button";
@@ -55,8 +55,9 @@ type SettingTab =
 function SettingsContentPage() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { changeLanguage } = useI18n();
+  const { locale, changeLanguage } = useI18n();
   const { t } = useTranslation();
+  const updateSettingsMutation = useUpdateSettings();
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -120,7 +121,7 @@ function SettingsContentPage() {
 
   const [settings, setSettings] = useState({
     theme: user?.theme || theme,
-    language: user?.language || "zh-CN",
+    language: locale,
     notifications: {
       email: true,
       browser: true,
@@ -131,6 +132,11 @@ function SettingsContentPage() {
       activityVisible: false,
     },
   });
+
+  // Update language when locale changes
+  useEffect(() => {
+    setSettings((prev) => ({ ...prev, language: locale }));
+  }, [locale]);
 
   if (!user) return null;
 
@@ -186,7 +192,13 @@ function SettingsContentPage() {
     setError("");
 
     try {
+      // Change language in i18n context (updates localStorage and UI)
       await changeLanguage(newLanguage);
+
+      // Save to backend if user is logged in
+      if (user) {
+        await updateSettingsMutation.mutateAsync({ language: newLanguage });
+      }
     } catch (error) {
       console.error("Update language error:", error);
       setError(t("settings.languages.updateFailedRetry"));

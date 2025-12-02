@@ -254,7 +254,15 @@ export function useChatBot() {
       .map((part: any) => part.text)
       .join("\n");
 
-    if (messageText) {
+    // Extract attachments from data or metadata
+    let attachments = [];
+    if ((lastUserMessage as any).data?.uploadedAttachments) {
+      attachments = (lastUserMessage as any).data.uploadedAttachments;
+    } else if ((lastUserMessage as any).metadata?.uploadedAttachments) {
+      attachments = (lastUserMessage as any).metadata.uploadedAttachments;
+    }
+
+    if (messageText || attachments.length > 0) {
       sendMessage(
         { text: messageText },
         {
@@ -263,9 +271,24 @@ export function useChatBot() {
             webSearch: webSearch,
             userId: user?.id,
             conversationId: currentChatId,
+            uploadedAttachments: attachments,
           },
         }
       );
+
+      // Update message with attachments after sending
+      setTimeout(() => {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastUserMessage = newMessages[newMessages.length - 1];
+          if (lastUserMessage && lastUserMessage.role === 'user') {
+            (lastUserMessage as any).data = {
+              uploadedAttachments: attachments,
+            };
+          }
+          return newMessages;
+        });
+      }, 100);
     }
   };
 

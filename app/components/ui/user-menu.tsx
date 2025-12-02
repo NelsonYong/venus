@@ -114,7 +114,7 @@ export function UserMenu() {
               {t("userMenu.profile")}
             </Button>
 
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full justify-start h-auto p-2"
               onClick={() => {
@@ -123,7 +123,7 @@ export function UserMenu() {
             >
               <CreditCardIcon className="h-4 w-4 mr-2" />
               {t("userMenu.billing")}
-            </Button>
+            </Button> */}
 
             <Button
               variant="ghost"

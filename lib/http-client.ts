@@ -64,20 +64,19 @@ class HTTPClient {
   private handleUnauthorized() {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
-      if (!currentPath.includes('/auth/signin')) {
-        // 触发全局认证失败事件
-        window.dispatchEvent(new CustomEvent('auth-unauthorized'));
-
-        const loginUrl = new URL('/auth/signin', window.location.origin);
-        if (currentPath !== '/') {
-          loginUrl.searchParams.set('callbackUrl', currentPath);
-        }
-
-        // 使用 setTimeout 来避免阻塞当前的 Promise 链
-        setTimeout(() => {
-          window.location.href = loginUrl.toString();
-        }, 100);
+      // 如果已经在公开页面（首页、登录页、隐私政策等），不需要重定向
+      const publicPaths = ['/', '/auth/signin', '/auth/error', '/terms', '/privacy'];
+      if (publicPaths.includes(currentPath)) {
+        return;
       }
+
+      // 触发全局认证失败事件
+      window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+
+      // 重定向到首页，用户可以从那里选择登录或查看内容
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     }
   }
 

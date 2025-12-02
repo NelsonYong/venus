@@ -222,7 +222,7 @@ function SettingsContentPage() {
           queryKey: queryKeys.conversations.list(),
         });
         setTimeout(() => {
-          window.location.href = "/";
+          window.location.href = "/chat";
         }, 1500);
       } else {
         setError(t("settings.dangerZone.clearHistoryFailed"));

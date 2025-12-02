@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 
 // 公开路径，不需要登录
-const publicPaths = ["/auth/signin", "/auth/error", "/api"];
+const publicPaths = ["/", "/auth/signin", "/auth/error", "/api", "/terms", "/privacy"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { status } = useSession();

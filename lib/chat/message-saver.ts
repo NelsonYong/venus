@@ -2,6 +2,7 @@ import { UIMessage } from 'ai';
 import { prisma } from '@/lib/prisma';
 import { cleanReActStepMarkers } from './text-cleaner';
 import { type Citation } from '@/lib/search-tool';
+import { generateConversationTitle, shouldGenerateTitle } from './title-generator';
 
 interface UploadedAttachment {
   url: string;
@@ -121,6 +122,54 @@ export async function saveMessages(options: SaveMessagesOptions) {
       });
 
       console.log(`✅ Saved ${messagesToCreate.length} new message(s) to conversation ${conversationId}${citations && citations.length > 0 ? ` with ${citations.length} citation(s)` : ''}`);
+
+      // 自动生成标题（首次对话后）
+      try {
+        // 获取当前会话的消息数量
+        const messageCount = await prisma.message.count({
+          where: {
+            conversationId,
+            isDeleted: false
+          }
+        });
+
+        // 只在首次对话完成后（消息数 = 2）生成标题
+        if (shouldGenerateTitle(messageCount)) {
+          console.log(`🎯 Auto-generating title for conversation ${conversationId} (${messageCount} messages)`);
+
+          // 获取所有消息用于生成标题
+          const allMessages = await prisma.message.findMany({
+            where: {
+              conversationId,
+              isDeleted: false
+            },
+            orderBy: { createdAt: 'asc' },
+            select: {
+              role: true,
+              content: true
+            }
+          });
+
+          // 准备消息用于标题生成
+          const messagesForTitle = allMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }));
+
+          const generatedTitle = await generateConversationTitle(messagesForTitle);
+
+          // 更新会话标题
+          await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { title: generatedTitle }
+          });
+
+          console.log(`✨ Generated title: "${generatedTitle}"`);
+        }
+      } catch (error) {
+        console.error('❌ Failed to auto-generate title:', error);
+        // 标题生成失败不影响消息保存
+      }
     } else {
       console.log(`ℹ️  No new messages to save (already exists in conversation ${conversationId})`);
     }

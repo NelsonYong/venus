@@ -58,13 +58,13 @@ export function Navbar({
   const pathname = usePathname();
 
   const isShowSidebar = useMemo(() => {
-    return user && pathname === "/";
+    return user && pathname === "/chat";
   }, [pathname, user]);
 
   const redirectChat = () => {
     // 获取当前的路径
     const pathname = window.location.pathname;
-    if (pathname !== "/") navigation.replace("/");
+    if (pathname !== "/chat") navigation.replace("/chat");
   };
 
   const handleStartEdit = () => {

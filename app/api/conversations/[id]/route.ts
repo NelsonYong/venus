@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { generateConversationTitle, shouldGenerateTitle } from "@/lib/chat/title-generator";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth();
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { id } = await params;
     const conversation = await prisma.conversation.findFirst({
@@ -49,7 +58,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth();
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Check if request body is empty to avoid JSON parsing errors
     const contentLength = request.headers.get('content-length');
@@ -104,6 +121,26 @@ export async function PUT(
       }
     }
 
+    // 自动生成标题（如果需要）
+    let finalTitle = title || existingConversation.title;
+    if (shouldGenerateTitle(messages.length)) {
+      console.log('Auto-generating title for conversation:', id);
+      try {
+        // 准备消息用于标题生成
+        const messagesForTitle = messages.map((msg: any) => ({
+          role: msg.role,
+          content: JSON.stringify(msg.parts || msg.content)
+        }));
+
+        const generatedTitle = await generateConversationTitle(messagesForTitle);
+        finalTitle = generatedTitle;
+        console.log('Generated title:', generatedTitle);
+      } catch (error) {
+        console.error('Failed to auto-generate title:', error);
+        // 失败时保持原标题
+      }
+    }
+
     // Update the conversation and replace all messages
     const updatedConversation = await prisma.$transaction(async (tx) => {
       // Delete existing messages
@@ -116,14 +153,14 @@ export async function PUT(
       return await tx.conversation.update({
         where: { id },
         data: {
-          title: title || existingConversation.title,
+          title: finalTitle,
           model: modelName,
           updatedAt: new Date(),
           messages: {
             create: messages.map((msg: { role: string; parts?: unknown; content?: unknown; createdAt?: string | Date }, index: number) => {
               // If createdAt is provided, use it; otherwise generate a proper sequence
               let messageTimestamp: Date;
-              
+
               if (msg.createdAt) {
                 // Preserve the original timestamp
                 messageTimestamp = new Date(msg.createdAt);
@@ -165,7 +202,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth();
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { id } = await params;
 

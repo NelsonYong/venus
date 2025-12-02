@@ -7,6 +7,40 @@
     "login": "ログイン",
     "register": "登録"
   },
+  "landing": {
+    "nav": {
+      "signIn": "サインイン",
+      "signUp": "サインアップ",
+      "goToChat": "チャットへ"
+    },
+    "hero": {
+      "title": "あなたのインテリジェントAIアシスタント",
+      "description": "Venusは、コーディング、ライティング、リサーチなどをサポートする強力なAIチャットボットです。AI会話の未来を体験してください。",
+      "getStarted": "始める",
+      "signIn": "サインイン",
+      "startChatting": "チャットを開始"
+    },
+    "features": {
+      "fast": {
+        "title": "超高速",
+        "description": "最先端のAI技術による即座のレスポンス"
+      },
+      "smart": {
+        "title": "高度なインテリジェンス",
+        "description": "文脈とニュアンスを理解する高度な言語モデル"
+      },
+      "secure": {
+        "title": "安全・プライベート",
+        "description": "会話は暗号化され、データは保護されています"
+      }
+    },
+    "footer": {
+      "message": "Venusを使用することで、以下に同意したことになります",
+      "terms": "利用規約",
+      "and": "および",
+      "privacy": "プライバシーポリシー"
+    }
+  },
   "sidebar": {
     "starred": "お気に入り",
     "chats": "チャット履歴",

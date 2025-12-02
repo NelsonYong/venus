@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { generateConversationTitle } from "@/lib/chat/title-generator";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // 获取查询参数
     const searchParams = request.nextUrl.searchParams;
@@ -116,7 +125,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { title, messages, model, modelId } = await request.json();
 
@@ -141,9 +158,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 自动生成标题（如果需要且消息数量足够）
+    let finalTitle = title || "新对话";
+    if (!title && messages && messages.length >= 2) {
+      console.log('Auto-generating title for new conversation');
+      try {
+        // 准备消息用于标题生成
+        const messagesForTitle = messages.map((msg: any) => ({
+          role: msg.role,
+          content: JSON.stringify(msg.parts || msg.content)
+        }));
+
+        const generatedTitle = await generateConversationTitle(messagesForTitle);
+        finalTitle = generatedTitle;
+        console.log('Generated title:', generatedTitle);
+      } catch (error) {
+        console.error('Failed to auto-generate title:', error);
+        // 失败时使用默认标题
+      }
+    }
+
     const conversation = await prisma.conversation.create({
       data: {
-        title: title || "新对话",
+        title: finalTitle,
         userId: user.id,
         model: modelName,
         messages: {
@@ -185,9 +222,17 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(_request: NextRequest) {
   try {
-    const user = await requireAuth();
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Soft delete all conversations for the user
     // updatedAt will be automatically updated by Prisma's @updatedAt decorator
@@ -213,7 +258,7 @@ export async function DELETE() {
       },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       message: "All conversations deleted successfully"
     });

@@ -7,6 +7,40 @@
     "login": "登录",
     "register": "注册"
   },
+  "landing": {
+    "nav": {
+      "signIn": "登录",
+      "signUp": "注册",
+      "goToChat": "进入聊天"
+    },
+    "hero": {
+      "title": "您的智能 AI 助手",
+      "description": "Venus 是一个强大的 AI 聊天机器人，可以帮助您进行编程、写作、研究等。体验 AI 对话的未来。",
+      "getStarted": "开始使用",
+      "signIn": "登录",
+      "startChatting": "开始聊天"
+    },
+    "features": {
+      "fast": {
+        "title": "闪电般快速",
+        "description": "由尖端 AI 技术驱动，获得即时响应"
+      },
+      "smart": {
+        "title": "高度智能",
+        "description": "先进的语言模型，理解上下文和细微差别"
+      },
+      "secure": {
+        "title": "安全私密",
+        "description": "您的对话经过加密，数据受到保护"
+      }
+    },
+    "footer": {
+      "message": "使用 Venus 即表示您同意我们的",
+      "terms": "服务条款",
+      "and": "和",
+      "privacy": "隐私政策"
+    }
+  },
   "sidebar": {
     "starred": "已收藏",
     "chats": "聊天记录",

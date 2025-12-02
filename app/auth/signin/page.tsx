@@ -16,18 +16,18 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      const callbackUrl = searchParams.get("callbackUrl") || "/chat";
       router.replace(callbackUrl);
     }
   }, [status, router, searchParams]);
 
   const handleGitHubSignIn = () => {
-    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    const callbackUrl = searchParams.get("callbackUrl") || "/chat";
     signIn("github", { callbackUrl });
   };
 
   const handleGoogleSignIn = () => {
-    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    const callbackUrl = searchParams.get("callbackUrl") || "/chat";
     signIn("google", { callbackUrl });
   };
 

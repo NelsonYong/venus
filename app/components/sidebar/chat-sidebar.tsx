@@ -203,13 +203,13 @@ export function ChatSidebar({
   }, [isOpen, onOpen]);
 
   const handleNewChat = () => {
-    router.push(`/`, { scroll: false });
+    router.push(`/chat`, { scroll: false });
     onNewChat();
     onClose();
   };
 
   const handleChatSelect = (chatId: string) => {
-    router.push(`/?chatId=${chatId}`, { scroll: false });
+    router.push(`/chat?chatId=${chatId}`, { scroll: false });
     onLoadChat(chatId);
     if (isMobile) {
       onClose();
@@ -220,7 +220,7 @@ export function ChatSidebar({
   const handleDeleteChat = (chatId: string) => {
     onDeleteChat(chatId);
     // 跳转到首页
-    router.push(`/`, { scroll: false });
+    router.push(`/chat`, { scroll: false });
   };
 
   const formatTimestamp = (timestamp: Date) => {

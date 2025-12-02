@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useChatHistory } from "./use-conversations";
-import { useAutoSummary } from "./use-auto-summary";
 import { useConversationActions } from "./use-conversation-actions";
 import { defaultModel } from "@/app/constants/models";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +38,6 @@ export function useChatBot() {
     isLoading,
     saveChatSession,
     loadChatSession,
-    updateChatTitle,
     deleteChatSession,
     startNewChat,
     getCurrentChat,
@@ -54,15 +52,6 @@ export function useChatBot() {
   const isNewChat = useRef(false);
   const lastSavedMessagesLength = useRef(0);
   const lastLoadedChatId = useRef<string | null>(null);
-
-  // Auto-summary hook for generating titles
-  const { resetSummaryStatus } = useAutoSummary({
-    messages,
-    currentChatId,
-    status,
-    isNewChat: isNewChat.current,
-    updateChatTitle,
-  });
 
   const handleSubmit = (message: any, attachments: any[]) => {
     // 阻止在流式输出时发送新消息
@@ -81,7 +70,7 @@ export function useChatBot() {
           if (chatId) {
             // Mark this chat as loaded to prevent useEffect from reloading it
             lastLoadedChatId.current = chatId;
-            router.push(`/?chatId=${chatId}`, { scroll: false });
+            router.push(`/chat?chatId=${chatId}`, { scroll: false });
 
             sendMessage(
               { text: messageText },
@@ -146,7 +135,6 @@ export function useChatBot() {
     isNewChat.current = true;
     lastSavedMessagesLength.current = 0;
     lastLoadedChatId.current = null;
-    resetSummaryStatus();
     startNewChat();
     setMessages([]);
     setInput("");
@@ -160,7 +148,6 @@ export function useChatBot() {
         isNewChat.current = false;
         lastSavedMessagesLength.current = chatMessages.length;
         lastLoadedChatId.current = chatId;
-        // Don't reset summary status for loaded chats (they likely already have titles)
         setMessages(chatMessages);
       }
     } catch (error) {

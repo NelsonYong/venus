@@ -7,6 +7,40 @@
     "login": "Login",
     "register": "Register"
   },
+  "landing": {
+    "nav": {
+      "signIn": "Sign in",
+      "signUp": "Sign up",
+      "goToChat": "Go to Chat"
+    },
+    "hero": {
+      "title": "Your Intelligent AI Assistant",
+      "description": "Venus is a powerful AI chatbot that helps you with coding, writing, research, and more. Experience the future of AI conversation.",
+      "getStarted": "Get Started",
+      "signIn": "Sign In",
+      "startChatting": "Start Chatting"
+    },
+    "features": {
+      "fast": {
+        "title": "Lightning Fast",
+        "description": "Get instant responses powered by cutting-edge AI technology"
+      },
+      "smart": {
+        "title": "Highly Intelligent",
+        "description": "Advanced language models that understand context and nuance"
+      },
+      "secure": {
+        "title": "Secure & Private",
+        "description": "Your conversations are encrypted and your data is protected"
+      }
+    },
+    "footer": {
+      "message": "By messaging Venus, you agree to our",
+      "terms": "Terms",
+      "and": "and",
+      "privacy": "Privacy Policy"
+    }
+  },
   "sidebar": {
     "starred": "Starred",
     "chats": "Chat History",

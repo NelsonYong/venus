@@ -4,7 +4,7 @@ import { HeroSection } from "./components/landing/hero-section";
 import { LandingFooter } from "./components/landing/landing-footer";
 
 export const metadata: Metadata = {
-  title: "Venus AI - Your Intelligent AI Assistant",
+  title: "Venus AI",
   description:
     "Venus is a powerful AI chatbot that helps you with coding, writing, research, and more. Built with Next.js and powered by advanced language models.",
   keywords: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Venus Team" }],
   openGraph: {
-    title: "Venus AI - Your Intelligent AI Assistant",
+    title: "Venus AI",
     description:
       "Venus is a powerful AI chatbot that helps you with coding, writing, research, and more.",
     type: "website",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Venus AI - Your Intelligent AI Assistant",
+    title: "Venus AI",
     description:
       "Venus is a powerful AI chatbot that helps you with coding, writing, research, and more.",
   },

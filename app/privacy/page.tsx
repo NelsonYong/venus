@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <section>
         <h2>1. Introduction</h2>
         <p>
-          Venus AI ("we," "our," or "us") is committed to protecting your privacy.
+          Venus AI (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy.
           This Privacy Policy explains how we collect, use, disclose, and safeguard
           your information when you use our Service.
         </p>
@@ -167,7 +167,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>8. Children's Privacy</h2>
+        <h2>8. Children&apos;s Privacy</h2>
         <p>
           Our Service is not intended for children under the age of 13. We do not
           knowingly collect personal information from children under 13. If you
@@ -200,7 +200,7 @@ export default function PrivacyPage() {
         <p>
           We may update this Privacy Policy from time to time. We will notify you of
           any material changes by posting the new policy on this page and updating
-          the "Last Updated" date. We encourage you to review this Privacy Policy
+          the &quot;Last Updated&quot; date. We encourage you to review this Privacy Policy
           periodically.
         </p>
       </section>

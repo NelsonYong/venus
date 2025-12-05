@@ -29,7 +29,7 @@ export async function saveMessages(options: SaveMessagesOptions) {
 
   try {
     // Clean ReAct step markers from assistant response
-    const cleanedResponse = cleanReActStepMarkers(assistantResponse);
+    const cleanedResponse = cleanReActStepMarkers(assistantResponse || '');
 
     // Get last message to check for duplicates
     const lastMessage = await prisma.message.findFirst({
@@ -52,7 +52,6 @@ export async function saveMessages(options: SaveMessagesOptions) {
     }> = [];
 
     const userMessageContent = JSON.stringify(lastUserMessage.parts);
-    const assistantMessageContent = JSON.stringify([{ type: 'text', text: cleanedResponse }]);
 
     // Determine if we should save the user message
     const shouldSaveUserMessage = lastUserMessage && (
@@ -62,6 +61,7 @@ export async function saveMessages(options: SaveMessagesOptions) {
     );
 
     if (shouldSaveUserMessage) {
+      console.log(`💾 Saving user message to conversation ${conversationId}`);
       messagesToCreate.push({
         conversationId,
         userId,
@@ -70,17 +70,27 @@ export async function saveMessages(options: SaveMessagesOptions) {
         createdAt: new Date(now),
         uploadedAttachments: uploadedAttachments && uploadedAttachments.length > 0 ? JSON.parse(JSON.stringify(uploadedAttachments)) : undefined,
       });
+    } else {
+      console.log(`ℹ️ User message already exists, checking for assistant message`);
     }
 
-    // Only save assistant message if we saved the user message
-    const shouldSaveAssistantMessage = cleanedResponse && shouldSaveUserMessage;
+    // Save assistant message if:
+    // 1. We're saving a new user message, OR
+    // 2. The last message in DB is a user message (need to add assistant response)
+    const shouldSaveAssistantMessage = shouldSaveUserMessage || (lastMessage && lastMessage.role === 'user');
 
     if (shouldSaveAssistantMessage) {
+      // Save assistant message even if empty (might have tool calls)
+      const finalResponse = cleanedResponse || '';
+      const finalContent = JSON.stringify([{ type: 'text', text: finalResponse }]);
+
+      console.log(`💾 Preparing to save assistant message - length: ${finalResponse.length}`);
+
       messagesToCreate.push({
         conversationId,
         userId,
         role: 'assistant',
-        content: assistantMessageContent,
+        content: finalContent,
         createdAt: new Date(now + 100), // Ensure assistant message comes after user message
       });
     }

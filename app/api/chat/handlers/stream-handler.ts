@@ -38,7 +38,7 @@ export async function handleStreamText({
   const isPresetModel = modelConfig.isPreset;
 
   // Build tools
-  const tools = buildTools({ webSearch });
+  const tools = buildTools({ webSearch, enableThinking: true });
 
   // Create model adapter based on configuration
   const model = createModelAdapter(modelConfig);
@@ -50,13 +50,13 @@ export async function handleStreamText({
     model,
     system: systemPrompt,
     messages: convertToModelMessages(messages),
-    abortSignal: AbortSignal.timeout(60000),
+    abortSignal: AbortSignal.timeout(600000),
     tools,
     // Enable tool calling - set to 'auto' to let model decide when to use tools
     toolChoice: 'auto',
     // ReAct pattern needs multiple steps: Think -> Act -> Observe -> Think -> Answer
     // Use stopWhen to control max steps for complete ReAct loop
-    stopWhen: stepCountIs(10),
+    stopWhen: stepCountIs(20),
     onStepFinish: async ({ toolResults }) => {
       // Collect citations when tool calls complete
       toolResults?.forEach((toolResult: any) => {
@@ -125,11 +125,21 @@ export async function handleStreamText({
       if (conversationId && userId) {
         try {
           const lastUserMessage = messages[messages.length - 1];
+
+          // Debug: log the result to see what we're getting
+          console.log('💾 Saving message - result.text length:', result.text?.length || 0);
+          console.log('💾 Has tool calls:', result.toolCalls?.length || 0);
+          console.log('💾 Response steps:', result.response?.messages?.length || 0);
+
+          // If result.text is empty but we have response, there might be tool calls
+          // We still want to save the message
+          const responseText = result.text || '';
+
           await saveMessages({
             conversationId,
             userId,
             lastUserMessage,
-            assistantResponse: result.text,
+            assistantResponse: responseText,
             citations: allCitations.length > 0 ? allCitations : undefined,
             uploadedAttachments: uploadedAttachments,
           });

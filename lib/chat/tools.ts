@@ -3,6 +3,33 @@ import { tool } from 'ai';
 import { performWebSearch, formatSearchResultsWithCitations } from '@/lib/search-tool';
 
 /**
+ * 思维链步骤工具 - 用于展示 AI 的思考过程
+ */
+export const thinkingStepTool = tool({
+  description: 'Use this tool to show your thinking process step by step. Call this tool when you need to break down a complex problem or show your reasoning. Each call represents one step in your thought process.',
+  inputSchema: z.object({
+    stepType: z.enum(['chain-of-thought', 'task']).describe('Type of thinking: "chain-of-thought" for complex reasoning, "task" for specific operations'),
+    title: z.string().describe('Title of the thinking process or task'),
+    stepId: z.string().describe('Unique ID for this step (e.g., "step1", "step2")'),
+    label: z.string().describe('Label or name of this step'),
+    description: z.string().optional().describe('Optional detailed description of this step'),
+    status: z.enum(['pending', 'active', 'complete']).describe('Status of this step'),
+    searchResults: z.array(z.object({
+      title: z.string(),
+      url: z.string().optional(),
+    })).optional().describe('Optional search results for this step'),
+    files: z.array(z.string()).optional().describe('Optional file names for task steps'),
+  }),
+  execute: async (params) => {
+    // 这个工具只是用于传递思维过程，不需要实际执行
+    return {
+      success: true,
+      step: params,
+    };
+  },
+});
+
+/**
  * Weather tool - simulates weather data
  */
 export const weatherTool = tool({
@@ -50,13 +77,18 @@ export const webSearchTool = tool({
 /**
  * Build tools object based on configuration
  */
-export function buildTools(options: { webSearch?: boolean }) {
+export function buildTools(options: { webSearch?: boolean; enableThinking?: boolean }) {
   const tools: any = {
     weather: weatherTool,
   };
 
   if (options.webSearch) {
     tools.webSearch = webSearchTool;
+  }
+
+  // 默认启用思维链功能
+  if (options.enableThinking !== false) {
+    tools.thinkingStep = thinkingStepTool;
   }
 
   return tools;

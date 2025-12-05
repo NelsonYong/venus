@@ -28,6 +28,21 @@ import {
 } from "@/components/ai-elements/tool";
 import { Actions, Action } from "@/components/ai-elements/actions";
 import { Loader } from "@/components/ai-elements/loader";
+import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+  ChainOfThoughtSearchResults,
+  ChainOfThoughtSearchResult,
+} from "@/components/ai-elements/chain-of-thought";
+import {
+  Task,
+  TaskTrigger,
+  TaskContent,
+  TaskItem,
+  TaskItemFile,
+} from "@/components/ai-elements/task";
 import { CopyIcon, CheckIcon, RefreshCwIcon } from "lucide-react";
 import { useTranslation } from "@/app/contexts/i18n-context";
 import { UIMessage } from "ai";
@@ -105,6 +120,76 @@ function parseHtmlCodeBlocks(text: string): Array<{
   return blocks;
 }
 
+// 聚合思维步骤工具调用
+function aggregateThinkingSteps(parts: any[]): Map<
+  string,
+  {
+    type: "chain-of-thought" | "task";
+    title: string;
+    steps: any[];
+    firstIndex: number;
+    partIndices: number[];
+  }
+> {
+  const thinkingGroups = new Map();
+
+  parts.forEach((part, index) => {
+    // 识别 thinkingStep 工具调用
+    if (
+      part.type === "tool-thinkingStep" ||
+      (part.type === "tool-call" && part.toolName === "thinkingStep")
+    ) {
+      const input = part.input || part.args;
+      if (input && input.title) {
+        const key = `${input.stepType}-${input.title}`;
+
+        if (!thinkingGroups.has(key)) {
+          thinkingGroups.set(key, {
+            type: input.stepType,
+            title: input.title,
+            steps: [],
+            firstIndex: index, // 记录第一次出现的位置
+            partIndices: [],
+          });
+        }
+
+        const group = thinkingGroups.get(key);
+
+        // 检查是否已存在相同 stepId 的步骤
+        const existingStepIndex = group.steps.findIndex(
+          (step: any) => step.id === input.stepId
+        );
+
+        const stepData = {
+          id: input.stepId,
+          label: input.label,
+          description: input.description,
+          status: input.status,
+          searchResults: input.searchResults,
+          files: input.files,
+        };
+
+        if (existingStepIndex >= 0) {
+          // 更新现有步骤（可能状态改变了）
+          group.steps[existingStepIndex] = stepData;
+        } else {
+          // 添加新步骤
+          group.steps.push(stepData);
+        }
+
+        group.partIndices.push(index);
+      }
+    }
+  });
+
+  return thinkingGroups;
+}
+
+// 检查思维组是否全部完成
+function isThinkingGroupComplete(group: any): boolean {
+  return group.steps.every((step: any) => step.status === "complete");
+}
+
 interface MessageRendererProps {
   messages: UIMessage[];
   status: string;
@@ -147,7 +232,12 @@ export function MessageRenderer({
   // 自动打开第一个 artifact（基于 isFinished metadata）
   useEffect(() => {
     // 移动端不自动打开 artifact
-    if (isMobile || !onArtifactOpen || !onAutoOpenComplete || hasAutoOpenedArtifact) {
+    if (
+      isMobile ||
+      !onArtifactOpen ||
+      !onAutoOpenComplete ||
+      hasAutoOpenedArtifact
+    ) {
       return;
     }
 
@@ -199,7 +289,13 @@ export function MessageRenderer({
         break;
       }
     }
-  }, [messages, hasAutoOpenedArtifact, onArtifactOpen, onAutoOpenComplete, isMobile]);
+  }, [
+    messages,
+    hasAutoOpenedArtifact,
+    onArtifactOpen,
+    onAutoOpenComplete,
+    isMobile,
+  ]);
   const handleCopy = async (message: any) => {
     const textParts = message.parts
       .filter((part: any) => part.type === "text")
@@ -279,6 +375,24 @@ export function MessageRenderer({
           messageAttachments = (message as any).metadata.uploadedAttachments;
         }
 
+        // 聚合思维步骤
+        const thinkingGroups =
+          message.role === "assistant"
+            ? aggregateThinkingSteps(message.parts)
+            : new Map();
+
+        // 记录已处理的 part 索引
+        const processedIndices = new Set<number>();
+        thinkingGroups.forEach((group) => {
+          group.partIndices.forEach((idx: number) => processedIndices.add(idx));
+        });
+
+        // 创建索引到思维组的映射（用于在正确位置渲染）
+        const indexToThinkingGroup = new Map<number, [string, any]>();
+        thinkingGroups.forEach((group, key) => {
+          indexToThinkingGroup.set(group.firstIndex, [key, group]);
+        });
+
         return (
           <div key={message.id} className="group flex flex-col">
             {message.role === "assistant" && (
@@ -329,11 +443,103 @@ export function MessageRenderer({
                   ))}
                 </MessageAttachments>
               )}
-              <MessageContent className="w-full">
-                {message.parts.map((part: any, i: number) => {
+              <MessageContent
+                className={message.role === "assistant" ? "w-full" : ""}
+              >
+                {/* 渲染消息部分，并在适当位置插入思维链/任务 */}
+                {message.parts.flatMap((part: any, i: number) => {
+                  const elements: React.ReactElement[] = [];
+
+                  // 检查当前位置是否应该渲染思维组
+                  if (indexToThinkingGroup.has(i)) {
+                    const [key, group] = indexToThinkingGroup.get(i)!;
+                    const isComplete = isThinkingGroupComplete(group);
+                    const shouldOpen = status === "streaming" || !isComplete;
+
+                    if (group.type === "chain-of-thought") {
+                      elements.push(
+                        <ChainOfThought
+                          key={`${message.id}-${key}`}
+                          defaultOpen={shouldOpen}
+                        >
+                          <ChainOfThoughtHeader>
+                            {group.title}
+                          </ChainOfThoughtHeader>
+                          <ChainOfThoughtContent>
+                            {group.steps.map((step: any) => (
+                              <ChainOfThoughtStep
+                                key={`${message.id}-${step.id}`}
+                                label={step.label}
+                                description={step.description}
+                                status={step.status}
+                              >
+                                {step.searchResults &&
+                                  step.searchResults.length > 0 && (
+                                    <ChainOfThoughtSearchResults>
+                                      {step.searchResults.map(
+                                        (result: any, idx: number) => (
+                                          <ChainOfThoughtSearchResult
+                                            key={`${step.id}-result-${idx}`}
+                                            onClick={
+                                              result.url
+                                                ? () =>
+                                                    window.open(
+                                                      result.url,
+                                                      "_blank"
+                                                    )
+                                                : undefined
+                                            }
+                                          >
+                                            {result.title}
+                                          </ChainOfThoughtSearchResult>
+                                        )
+                                      )}
+                                    </ChainOfThoughtSearchResults>
+                                  )}
+                              </ChainOfThoughtStep>
+                            ))}
+                          </ChainOfThoughtContent>
+                        </ChainOfThought>
+                      );
+                    } else if (group.type === "task") {
+                      elements.push(
+                        <Task
+                          key={`${message.id}-${key}`}
+                          defaultOpen={shouldOpen}
+                        >
+                          <TaskTrigger title={group.title} />
+                          <TaskContent>
+                            {group.steps.map((step: any) => (
+                              <TaskItem key={`${message.id}-${step.id}`}>
+                                {step.label}
+                                {step.files && step.files.length > 0 && (
+                                  <div className="mt-1 flex gap-2">
+                                    {step.files.map(
+                                      (file: string, idx: number) => (
+                                        <TaskItemFile
+                                          key={`${step.id}-file-${idx}`}
+                                        >
+                                          {file}
+                                        </TaskItemFile>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </TaskItem>
+                            ))}
+                          </TaskContent>
+                        </Task>
+                      );
+                    }
+                  }
+
+                  // 跳过已聚合的思维步骤
+                  if (processedIndices.has(i)) {
+                    return elements;
+                  }
                   // 忽略 step-start 类型（步骤标记，不需要显示）
                   if (part.type === "step-start") {
-                    return null;
+                    return elements;
                   }
 
                   // 调试：记录未识别的消息部分类型
@@ -343,6 +549,7 @@ export function MessageRenderer({
                       "text",
                       "tool-weather",
                       "tool-webSearch",
+                      "tool-thinkingStep",
                       "reasoning",
                       "tool-call",
                       "tool-result",
@@ -358,9 +565,9 @@ export function MessageRenderer({
 
                   switch (part.type) {
                     case "text":
-                      // 移动端不解析 artifact，直接渲染原始文本
+                      // 移动端不解析 artifact 和 thinking，直接渲染原始文本
                       if (isMobile) {
-                        return (
+                        elements.push(
                           <Response
                             key={`${message.id}-${i}`}
                             shikiTheme={["github-light", "github-dark"]}
@@ -373,12 +580,14 @@ export function MessageRenderer({
                             {part.text}
                           </Response>
                         );
+                        return elements;
                       }
 
                       // 桌面端：Parse HTML/SVG code blocks from the text
+                      // 注意：不再解析思维块，因为现在使用工具调用的流式方式
                       const parsedBlocks = parseHtmlCodeBlocks(part.text);
 
-                      return (
+                      elements.push(
                         <div key={`${message.id}-${i}`} className="w-full">
                           {parsedBlocks.map((block, blockIndex) => {
                             if (
@@ -434,10 +643,12 @@ export function MessageRenderer({
                           })}
                         </div>
                       );
+                      return elements;
+
                     case "tool-weather":
                       // ReAct 模式：显示工具调用的详细信息
                       const weatherToolPart = part as any;
-                      return (
+                      elements.push(
                         <Tool
                           key={`${message.id}-${i}`}
                           defaultOpen={status === "streaming"}
@@ -472,10 +683,12 @@ export function MessageRenderer({
                           </ToolContent>
                         </Tool>
                       );
+                      return elements;
+
                     case "tool-webSearch":
                       // webSearch 工具调用
                       const webSearchToolPart = part as any;
-                      return (
+                      elements.push(
                         <Tool
                           key={`${message.id}-${i}`}
                           defaultOpen={status === "streaming"}
@@ -510,8 +723,10 @@ export function MessageRenderer({
                           </ToolContent>
                         </Tool>
                       );
+                      return elements;
+
                     case "reasoning":
-                      return (
+                      elements.push(
                         <Reasoning
                           key={`${message.id}-${i}`}
                           className="w-full"
@@ -521,11 +736,13 @@ export function MessageRenderer({
                           <ReasoningContent>{part.text}</ReasoningContent>
                         </Reasoning>
                       );
+                      return elements;
+
                     // 兼容其他工具调用格式
                     case "tool-call":
                     case "tool-result":
                       const toolPart = part as any;
-                      return (
+                      elements.push(
                         <Tool
                           key={`${message.id}-${i}`}
                           defaultOpen={status === "streaming"}
@@ -566,6 +783,8 @@ export function MessageRenderer({
                           </ToolContent>
                         </Tool>
                       );
+                      return elements;
+
                     default:
                       // 处理其他可能的工具调用格式（通过 toolCallId 识别）
                       if (part.toolCallId || part.type?.startsWith("tool-")) {
@@ -573,7 +792,13 @@ export function MessageRenderer({
                           part.type?.replace("tool-", "") ||
                           part.toolName ||
                           "tool";
-                        return (
+
+                        // 跳过 thinkingStep（已在上面聚合渲染）
+                        if (toolName === "thinkingStep") {
+                          return elements;
+                        }
+
+                        elements.push(
                           <Tool
                             key={`${message.id}-${i}`}
                             defaultOpen={status === "streaming"}
@@ -610,7 +835,7 @@ export function MessageRenderer({
                           </Tool>
                         );
                       }
-                      return null;
+                      return elements;
                   }
                 })}
               </MessageContent>

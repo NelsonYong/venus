@@ -65,7 +65,7 @@ export function ArtifactPreview({ artifact, onClick }: ArtifactPreviewProps) {
   };
   return (
     <div
-      className="my-2 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer group overflow-hidden"
+      className="w-full my-2 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer group overflow-hidden"
       onClick={() => onClick(previewUrl)}
     >
       <div className="p-4">

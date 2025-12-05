@@ -145,8 +145,9 @@ export function ChatLayout({
     );
   }
 
-  // Show loading state while chat is being loaded or when there's a chatId but no messages yet
-  if (isLoadingChat || (hasChatId && !hasMessages)) {
+  // Show loading state ONLY while actively loading from database
+  // Don't show loading if we have a chatId but already finished loading (even if no messages)
+  if (isLoadingChat) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-gray-500 dark:text-gray-400">加载中...</div>

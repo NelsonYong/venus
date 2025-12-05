@@ -149,6 +149,7 @@ export async function handleStreamText({
           createdAt: Date.now(),
           model: modelName,
           provider: provider,
+          isFinished: false,
         };
       }
       // Send token usage and citations when streaming completes
@@ -162,6 +163,7 @@ export async function handleStreamText({
           maxTokens: MAX_TOKENS,
           // Add citations data
           citations: allCitations.length > 0 ? allCitations : undefined,
+          isFinished: true,
         };
       }
     },

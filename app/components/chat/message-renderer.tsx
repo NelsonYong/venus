@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Message,
   MessageContent,
@@ -45,15 +45,18 @@ function parseHtmlCodeBlocks(text: string): Array<{
   type: "text" | "html" | "svg" | "markdown";
   content: string;
   id?: string;
+  filename?: string;
 }> {
   const blocks: Array<{
     type: "text" | "html" | "svg" | "markdown";
     content: string;
     id?: string;
+    filename?: string;
   }> = [];
 
-  // Regex to match ```html, ```svg, or ```markdown code blocks
-  const regex = /```(html|svg|markdown|md)\n([\s\S]*?)```/g;
+  // Regex to match ```html:filename.html, ```svg:icon.svg, or ```markdown:guide.md code blocks
+  // Also supports ```html, ```svg, ```markdown without filename
+  const regex = /```(html|svg|markdown|md)(?::([^\n]+))?\n([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
 
@@ -72,10 +75,12 @@ function parseHtmlCodeBlocks(text: string): Array<{
     if (blockType === "md") {
       blockType = "markdown";
     }
-    const blockContent = match[2].trim();
+    const filename = match[2]?.trim(); // Extract filename if present
+    const blockContent = match[3].trim();
     blocks.push({
       type: blockType as "html" | "svg" | "markdown",
       content: blockContent,
+      filename: filename,
       id: `${blockType}-${Date.now()}-${Math.random()
         .toString(36)
         .substr(2, 9)}`,
@@ -136,29 +141,40 @@ export function MessageRenderer({
   const [isExternalLinkDialogOpen, setIsExternalLinkDialogOpen] =
     useState(false);
   const isMobile = useMobile();
-  const prevStatusRef = useRef<string>(status);
 
-  // 自动打开第一个 artifact（当流式输出完成时）
+  console.log("status", status);
+
+  // 自动打开第一个 artifact（基于 isFinished metadata）
   useEffect(() => {
-    // 检测流式输出刚完成
-    const streamingJustEnded = prevStatusRef.current === "streaming" && status !== "streaming";
+    // 移动端不自动打开 artifact
+    if (isMobile || !onArtifactOpen || !onAutoOpenComplete || hasAutoOpenedArtifact) {
+      return;
+    }
 
-    if (streamingJustEnded && !hasAutoOpenedArtifact && onArtifactOpen && onAutoOpenComplete) {
-      // 查找最后一条助手消息中的第一个 artifact
-      for (let i = messages.length - 1; i >= 0; i--) {
-        const message = messages[i];
-        if (message.role === "assistant") {
-          // 遍历消息的所有部分
+    // 查找最后一条助手消息，检查是否刚完成
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.role === "assistant") {
+        const metadata = (message as any).metadata;
+
+        // 检查消息是否标记为已完成
+        if (metadata?.isFinished === true) {
+          // 遍历消息的所有部分，查找 artifact
           for (const part of message.parts) {
             if (part.type === "text") {
               const parsedBlocks = parseHtmlCodeBlocks(part.text);
               // 找到第一个 artifact block
               for (const block of parsedBlocks) {
-                if (block.type === "html" || block.type === "svg" || block.type === "markdown") {
+                if (
+                  block.type === "html" ||
+                  block.type === "svg" ||
+                  block.type === "markdown"
+                ) {
                   const artifact: Artifact = {
                     id: block.id || `${block.type}-auto`,
                     type: block.type,
-                    title: `${block.type.toUpperCase()} Preview`,
+                    title:
+                      block.filename || `${block.type.toUpperCase()} Preview`,
                     language: block.type,
                     code: block.content,
                     previewable: true,
@@ -178,16 +194,12 @@ export function MessageRenderer({
               }
             }
           }
-          // 只检查最后一条助手消息
-          break;
         }
+        // 只检查最后一条助手消息
+        break;
       }
     }
-
-    // 更新 prevStatusRef
-    prevStatusRef.current = status;
-  }, [status, hasAutoOpenedArtifact, messages, onArtifactOpen, onAutoOpenComplete]);
-
+  }, [messages, hasAutoOpenedArtifact, onArtifactOpen, onAutoOpenComplete, isMobile]);
   const handleCopy = async (message: any) => {
     const textParts = message.parts
       .filter((part: any) => part.type === "text")
@@ -245,8 +257,9 @@ export function MessageRenderer({
     return false;
   };
 
-  const messageClassname = cn("pb-0 max-w-[80%]", {
+  const messageClassname = cn("pb-0 max-w-[80%] w-[80%]", {
     "max-w-[100%]": isMobile,
+    "w-full": isMobile,
   });
 
   return (
@@ -316,7 +329,7 @@ export function MessageRenderer({
                   ))}
                 </MessageAttachments>
               )}
-              <MessageContent>
+              <MessageContent className="w-full">
                 {message.parts.map((part: any, i: number) => {
                   // 忽略 step-start 类型（步骤标记，不需要显示）
                   if (part.type === "step-start") {
@@ -345,11 +358,28 @@ export function MessageRenderer({
 
                   switch (part.type) {
                     case "text":
-                      // Parse HTML/SVG code blocks from the text
+                      // 移动端不解析 artifact，直接渲染原始文本
+                      if (isMobile) {
+                        return (
+                          <Response
+                            key={`${message.id}-${i}`}
+                            shikiTheme={["github-light", "github-dark"]}
+                            className="markdown"
+                            citations={messageCitations}
+                            onCitationClick={(citationId) =>
+                              handleCitationClick(citationId, messageCitations)
+                            }
+                          >
+                            {part.text}
+                          </Response>
+                        );
+                      }
+
+                      // 桌面端：Parse HTML/SVG code blocks from the text
                       const parsedBlocks = parseHtmlCodeBlocks(part.text);
 
                       return (
-                        <div key={`${message.id}-${i}`}>
+                        <div key={`${message.id}-${i}`} className="w-full">
                           {parsedBlocks.map((block, blockIndex) => {
                             if (
                               block.type === "html" ||
@@ -360,7 +390,9 @@ export function MessageRenderer({
                               const artifact: Artifact = {
                                 id: block.id || `${block.type}-${blockIndex}`,
                                 type: block.type,
-                                title: `${block.type.toUpperCase()} Preview`,
+                                title:
+                                  block.filename ||
+                                  `${block.type.toUpperCase()} Preview`,
                                 language: block.type,
                                 code: block.content,
                                 previewable: true,

@@ -19,9 +19,10 @@ When generating complete, self-contained HTML pages or interactive demos:
 - Add all necessary CSS and JavaScript inline
 - Use modern, responsive design
 - Ensure the code is complete and ready to run
+- **IMPORTANT**: Always specify a filename after the language identifier (e.g., \`\`\`html:filename.html)
 
 Example:
-\`\`\`html
+\`\`\`html:demo.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,12 +47,26 @@ When creating vector graphics, icons, or diagrams:
 - Create standalone SVG elements with proper viewBox
 - Use semantic markup and accessible attributes
 - Include descriptive comments
+- **IMPORTANT**: Always specify a filename after the language identifier (e.g., \`\`\`svg:filename.svg)
 
 Example:
-\`\`\`svg
+\`\`\`svg:icon.svg
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <!-- Your SVG content -->
 </svg>
+\`\`\`
+
+### Markdown Artifacts
+When creating documentation, guides, or formatted text content:
+- Use proper markdown syntax and structure
+- Include headings, lists, and formatting as needed
+- **IMPORTANT**: Always specify a filename after the language identifier (e.g., \`\`\`markdown:filename.md)
+
+Example:
+\`\`\`markdown:guide.md
+# Documentation Title
+
+Your markdown content here...
 \`\`\`
 
 These artifacts will be automatically detected and displayed in an interactive preview window with the ability to view source code.`;

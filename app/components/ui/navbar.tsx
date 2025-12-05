@@ -52,7 +52,11 @@ export function Navbar({
     if (!isEditing) {
       setEditTitle(conversationTitle || "");
       // 修改浏览器 tab 的标题
-      if (conversationTitle) document.title = `Venus - ${conversationTitle}`;
+      if (conversationTitle) {
+        setTimeout(() => {
+          document.title = `Venus - ${conversationTitle}`;
+        }, 200);
+      }
     }
   }, [conversationTitle, isEditing]);
 

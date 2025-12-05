@@ -33,6 +33,7 @@ import { useTranslation } from "@/app/contexts/i18n-context";
 import { UIMessage } from "ai";
 import { Citations } from "./citations";
 import { CitationsSidebar } from "./citations-sidebar";
+import { ExternalLinkDialog } from "./external-link-dialog";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/app/hooks/use-mobile";
 
@@ -53,6 +54,10 @@ export function MessageRenderer({
   const [highlightedCitationId, setHighlightedCitationId] = useState<
     number | undefined
   >();
+  const [activeCitations, setActiveCitations] = useState<any[]>([]);
+  const [externalLinkUrl, setExternalLinkUrl] = useState<string | null>(null);
+  const [isExternalLinkDialogOpen, setIsExternalLinkDialogOpen] =
+    useState(false);
   const isMobile = useMobile();
 
   const handleCopy = async (message: any) => {
@@ -66,17 +71,32 @@ export function MessageRenderer({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleCitationClick = (citationId: number) => {
-    setHighlightedCitationId(citationId);
-    setIsSidebarOpen(true);
-    // 延迟滚动以确保侧边栏已渲染
-    setTimeout(() => {
-      const element = document.getElementById(`citation-${citationId}`);
-      element?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 300);
+  const handleCitationClick = (citationId: number, citations: any[]) => {
+    // 查找点击的引用
+    const citation = citations.find((c) => c.id === citationId);
+    if (citation?.url) {
+      // 检查是否已禁用外部链接确认
+      const disabled =
+        localStorage.getItem("external-link-confirm-disabled") === "true";
+      if (disabled) {
+        // 直接打开链接
+        window.open(citation.url, "_blank", "noopener,noreferrer");
+      } else {
+        // 显示确认弹窗
+        setExternalLinkUrl(citation.url);
+        setIsExternalLinkDialogOpen(true);
+      }
+    }
   };
 
-  const handleOpenSidebar = () => {
+  const handleExternalLinkConfirm = () => {
+    if (externalLinkUrl) {
+      window.open(externalLinkUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleOpenSidebar = (citations: any[]) => {
+    setActiveCitations(citations);
     setHighlightedCitationId(undefined);
     setIsSidebarOpen(true);
   };
@@ -90,21 +110,14 @@ export function MessageRenderer({
     return false;
   };
 
-  // 获取所有消息的引用数据
-  const allCitations = messages
-    .filter((m) => m.role === "assistant")
-    .flatMap((m) => (m as any).metadata?.citations || [])
-    .filter(
-      (citation: any, index: number, self: any[]) =>
-        index === self.findIndex((c: any) => c.id === citation.id)
-    );
-
   const messageClassname = cn("pb-0 max-w-[80%]", {
     "max-w-[100%]": isMobile,
   });
   return (
     <>
       {messages.map((message, index) => {
+        console.log("message", message);
+
         const messageCitations = (message as any).metadata?.citations || [];
 
         // 读取附件：优先从 data（实时消息），然后从 metadata（历史消息）
@@ -204,7 +217,9 @@ export function MessageRenderer({
                           shikiTheme={["github-light", "github-dark"]}
                           className="markdown"
                           citations={messageCitations}
-                          onCitationClick={handleCitationClick}
+                          onCitationClick={(citationId) =>
+                            handleCitationClick(citationId, messageCitations)
+                          }
                         >
                           {part.text}
                         </Response>
@@ -394,7 +409,7 @@ export function MessageRenderer({
               {message.role === "assistant" && messageCitations.length > 0 && (
                 <Citations
                   citations={messageCitations}
-                  onOpenSidebar={handleOpenSidebar}
+                  onOpenSidebar={() => handleOpenSidebar(messageCitations)}
                 />
               )}
             </Message>
@@ -504,13 +519,25 @@ export function MessageRenderer({
 
       {/* 引用侧边栏 */}
       <CitationsSidebar
-        citations={allCitations}
+        citations={activeCitations}
         isOpen={isSidebarOpen}
         onClose={() => {
           setIsSidebarOpen(false);
           setHighlightedCitationId(undefined);
+          setActiveCitations([]);
         }}
         highlightedId={highlightedCitationId}
+      />
+
+      {/* 外部链接确认弹窗 */}
+      <ExternalLinkDialog
+        url={externalLinkUrl}
+        isOpen={isExternalLinkDialogOpen}
+        onClose={() => {
+          setIsExternalLinkDialogOpen(false);
+          setExternalLinkUrl(null);
+        }}
+        onConfirm={handleExternalLinkConfirm}
       />
     </>
   );

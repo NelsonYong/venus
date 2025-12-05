@@ -51,6 +51,8 @@ export function Navbar({
   useEffect(() => {
     if (!isEditing) {
       setEditTitle(conversationTitle || "");
+      // 修改浏览器 tab 的标题
+      if (conversationTitle) document.title = `Venus - ${conversationTitle}`;
     }
   }, [conversationTitle, isEditing]);
 

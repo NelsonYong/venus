@@ -362,6 +362,14 @@
       "count": "{{count}} citations",
       "sources": "sources",
       "close": "Close"
+    },
+    "externalLink": {
+      "title": "Leaving Site",
+      "description": "You are about to visit an external website:",
+      "warning": "Please note that the content and security of external websites are the responsibility of their owners. We are not responsible for their content.",
+      "dontAskAgain": "Don't ask again",
+      "cancel": "Cancel",
+      "continue": "Continue"
     }
   },
   "billing": {

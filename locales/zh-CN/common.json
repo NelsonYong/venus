@@ -364,6 +364,14 @@
       "count": "{{count}} 个引用来源",
       "sources": "个来源",
       "close": "关闭"
+    },
+    "externalLink": {
+      "title": "即将离开本站",
+      "description": "您即将访问外部网站：",
+      "warning": "请注意，外部网站的内容和安全性由其所有者负责，我们不对其内容承担责任。",
+      "dontAskAgain": "下次不再提醒",
+      "cancel": "取消",
+      "continue": "继续访问"
     }
   },
   "billing": {

@@ -66,6 +66,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-i18next": "^15.7.2",
+    "react-resizable-panels": "^3.0.6",
     "react-syntax-highlighter": "^15.6.3",
     "rehype-raw": "^7.0.0",
     "serpapi": "^2.2.1",

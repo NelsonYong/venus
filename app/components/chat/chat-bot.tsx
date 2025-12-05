@@ -182,6 +182,8 @@ export function ChatBot() {
                 onRegenerate={handleRegenerate}
                 onStop={stop}
                 usage={usage}
+                sidebarOpen={sidebarOpen}
+                onSidebarOpenChange={setSidebarOpen}
               />
             </div>
           </div>

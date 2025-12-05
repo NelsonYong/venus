@@ -802,3 +802,10 @@ hr {
   content: '▋';
   @apply animate-pulse ml-1 text-blue-600 dark:text-blue-400;
 }
+
+/* ============================================
+   React Resizable Panels 动画
+   ============================================ */
+[data-panel-resize-handle] {
+  @apply transition-colors duration-200;
+}

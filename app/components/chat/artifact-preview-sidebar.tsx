@@ -59,17 +59,6 @@ export function ArtifactPreviewSidebar({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, fullscreen, onClose]);
 
-  // Prevent background scrolling
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
 
   // Reset code view when artifact changes
   useEffect(() => {
@@ -101,25 +90,21 @@ export function ArtifactPreviewSidebar({
 
   return (
     <>
-      {/* Overlay */}
-      {!fullscreen && (
+      {/* Fullscreen overlay for fullscreen mode */}
+      {fullscreen && (
         <div
-          className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 ${
-            isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+          className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - embedded in layout, not floating */}
       <div
-        className={`fixed ${
+        className={`${
           fullscreen
-            ? "inset-0 w-full h-full"
-            : "top-0 right-0 h-full w-[900px] max-w-[90vw]"
-        } bg-background shadow-2xl z-50 transform transition-all duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+            ? "fixed inset-0 z-50 border-l border-border"
+            : "h-full w-full"
+        } bg-background overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">

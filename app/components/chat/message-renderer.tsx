@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Message,
   MessageContent,
@@ -104,12 +104,26 @@ interface MessageRendererProps {
   messages: UIMessage[];
   status: string;
   onRegenerate?: () => void;
+  onArtifactOpen?: (artifact: Artifact, previewUrl: string) => void;
+  onArtifactClose?: () => void;
+  artifactSidebarState?: {
+    artifact: Artifact | null;
+    isOpen: boolean;
+    previewUrl: string | null;
+  };
+  hasAutoOpenedArtifact?: boolean;
+  onAutoOpenComplete?: () => void;
 }
 
 export function MessageRenderer({
   messages,
   status,
   onRegenerate,
+  onArtifactOpen,
+  onArtifactClose,
+  artifactSidebarState,
+  hasAutoOpenedArtifact = false,
+  onAutoOpenComplete,
 }: MessageRendererProps) {
   const { t } = useTranslation();
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -121,12 +135,58 @@ export function MessageRenderer({
   const [externalLinkUrl, setExternalLinkUrl] = useState<string | null>(null);
   const [isExternalLinkDialogOpen, setIsExternalLinkDialogOpen] =
     useState(false);
-  const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
-  const [isArtifactSidebarOpen, setIsArtifactSidebarOpen] = useState(false);
-  const [activeArtifactPreviewUrl, setActiveArtifactPreviewUrl] = useState<
-    string | null
-  >(null);
   const isMobile = useMobile();
+  const prevStatusRef = useRef<string>(status);
+
+  // 自动打开第一个 artifact（当流式输出完成时）
+  useEffect(() => {
+    // 检测流式输出刚完成
+    const streamingJustEnded = prevStatusRef.current === "streaming" && status !== "streaming";
+
+    if (streamingJustEnded && !hasAutoOpenedArtifact && onArtifactOpen && onAutoOpenComplete) {
+      // 查找最后一条助手消息中的第一个 artifact
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message.role === "assistant") {
+          // 遍历消息的所有部分
+          for (const part of message.parts) {
+            if (part.type === "text") {
+              const parsedBlocks = parseHtmlCodeBlocks(part.text);
+              // 找到第一个 artifact block
+              for (const block of parsedBlocks) {
+                if (block.type === "html" || block.type === "svg" || block.type === "markdown") {
+                  const artifact: Artifact = {
+                    id: block.id || `${block.type}-auto`,
+                    type: block.type,
+                    title: `${block.type.toUpperCase()} Preview`,
+                    language: block.type,
+                    code: block.content,
+                    previewable: true,
+                  };
+
+                  // 创建 preview URL
+                  const blob = new Blob([block.content], {
+                    type: block.type === "svg" ? "image/svg+xml" : "text/html",
+                  });
+                  const previewUrl = URL.createObjectURL(blob);
+
+                  // 自动打开
+                  onArtifactOpen(artifact, previewUrl);
+                  onAutoOpenComplete();
+                  return;
+                }
+              }
+            }
+          }
+          // 只检查最后一条助手消息
+          break;
+        }
+      }
+    }
+
+    // 更新 prevStatusRef
+    prevStatusRef.current = status;
+  }, [status, hasAutoOpenedArtifact, messages, onArtifactOpen, onAutoOpenComplete]);
 
   const handleCopy = async (message: any) => {
     const textParts = message.parts
@@ -173,9 +233,7 @@ export function MessageRenderer({
     artifact: Artifact,
     previewUrl: string
   ) => {
-    setActiveArtifact(artifact);
-    setActiveArtifactPreviewUrl(previewUrl);
-    setIsArtifactSidebarOpen(true);
+    onArtifactOpen?.(artifact, previewUrl);
   };
 
   const isLastAssistantMessage = (index: number) => {
@@ -660,16 +718,15 @@ export function MessageRenderer({
         onConfirm={handleExternalLinkConfirm}
       />
 
-      {/* Artifact 预览侧边栏 */}
-      <ArtifactPreviewSidebar
-        artifact={activeArtifact}
-        isOpen={isArtifactSidebarOpen}
-        previewUrl={activeArtifactPreviewUrl || ""}
-        onClose={() => {
-          setIsArtifactSidebarOpen(false);
-          setActiveArtifact(null);
-        }}
-      />
+      {/* Artifact 预览侧边栏 - 仅在未被父组件管理时显示 */}
+      {!artifactSidebarState && (
+        <ArtifactPreviewSidebar
+          artifact={null}
+          isOpen={false}
+          previewUrl=""
+          onClose={onArtifactClose || (() => {})}
+        />
+      )}
     </>
   );
 }

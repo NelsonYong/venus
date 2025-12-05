@@ -34,8 +34,71 @@ import { UIMessage } from "ai";
 import { Citations } from "./citations";
 import { CitationsSidebar } from "./citations-sidebar";
 import { ExternalLinkDialog } from "./external-link-dialog";
+import { ArtifactPreview } from "./artifact-preview";
+import { ArtifactPreviewSidebar } from "./artifact-preview-sidebar";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/app/hooks/use-mobile";
+import { Artifact } from "@/lib/types/artifact";
+
+// Parse HTML/SVG/Markdown code blocks from markdown text
+function parseHtmlCodeBlocks(text: string): Array<{
+  type: "text" | "html" | "svg" | "markdown";
+  content: string;
+  id?: string;
+}> {
+  const blocks: Array<{
+    type: "text" | "html" | "svg" | "markdown";
+    content: string;
+    id?: string;
+  }> = [];
+
+  // Regex to match ```html, ```svg, or ```markdown code blocks
+  const regex = /```(html|svg|markdown|md)\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before the code block
+    if (match.index > lastIndex) {
+      const textContent = text.slice(lastIndex, match.index).trim();
+      if (textContent) {
+        blocks.push({ type: "text", content: textContent });
+      }
+    }
+
+    // Add the HTML/SVG/Markdown code block
+    let blockType = match[1] as "html" | "svg" | "markdown" | "md";
+    // Normalize 'md' to 'markdown'
+    if (blockType === "md") {
+      blockType = "markdown";
+    }
+    const blockContent = match[2].trim();
+    blocks.push({
+      type: blockType as "html" | "svg" | "markdown",
+      content: blockContent,
+      id: `${blockType}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+    });
+
+    lastIndex = regex.lastIndex;
+  }
+
+  // Add remaining text after the last code block
+  if (lastIndex < text.length) {
+    const textContent = text.slice(lastIndex).trim();
+    if (textContent) {
+      blocks.push({ type: "text", content: textContent });
+    }
+  }
+
+  // If no code blocks found, return the entire text
+  if (blocks.length === 0 && text.trim()) {
+    blocks.push({ type: "text", content: text });
+  }
+
+  return blocks;
+}
 
 interface MessageRendererProps {
   messages: UIMessage[];
@@ -58,6 +121,11 @@ export function MessageRenderer({
   const [externalLinkUrl, setExternalLinkUrl] = useState<string | null>(null);
   const [isExternalLinkDialogOpen, setIsExternalLinkDialogOpen] =
     useState(false);
+  const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
+  const [isArtifactSidebarOpen, setIsArtifactSidebarOpen] = useState(false);
+  const [activeArtifactPreviewUrl, setActiveArtifactPreviewUrl] = useState<
+    string | null
+  >(null);
   const isMobile = useMobile();
 
   const handleCopy = async (message: any) => {
@@ -101,6 +169,15 @@ export function MessageRenderer({
     setIsSidebarOpen(true);
   };
 
+  const handleOpenArtifactPreview = (
+    artifact: Artifact,
+    previewUrl: string
+  ) => {
+    setActiveArtifact(artifact);
+    setActiveArtifactPreviewUrl(previewUrl);
+    setIsArtifactSidebarOpen(true);
+  };
+
   const isLastAssistantMessage = (index: number) => {
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].role === "assistant") {
@@ -113,11 +190,10 @@ export function MessageRenderer({
   const messageClassname = cn("pb-0 max-w-[80%]", {
     "max-w-[100%]": isMobile,
   });
+
   return (
     <>
       {messages.map((message, index) => {
-        console.log("message", message);
-
         const messageCitations = (message as any).metadata?.citations || [];
 
         // 读取附件：优先从 data（实时消息），然后从 metadata（历史消息）
@@ -211,18 +287,62 @@ export function MessageRenderer({
 
                   switch (part.type) {
                     case "text":
+                      // Parse HTML/SVG code blocks from the text
+                      const parsedBlocks = parseHtmlCodeBlocks(part.text);
+
                       return (
-                        <Response
-                          key={`${message.id}-${i}`}
-                          shikiTheme={["github-light", "github-dark"]}
-                          className="markdown"
-                          citations={messageCitations}
-                          onCitationClick={(citationId) =>
-                            handleCitationClick(citationId, messageCitations)
-                          }
-                        >
-                          {part.text}
-                        </Response>
+                        <div key={`${message.id}-${i}`}>
+                          {parsedBlocks.map((block, blockIndex) => {
+                            if (
+                              block.type === "html" ||
+                              block.type === "svg" ||
+                              block.type === "markdown"
+                            ) {
+                              // Render HTML/SVG/Markdown preview card
+                              const artifact: Artifact = {
+                                id: block.id || `${block.type}-${blockIndex}`,
+                                type: block.type,
+                                title: `${block.type.toUpperCase()} Preview`,
+                                language: block.type,
+                                code: block.content,
+                                previewable: true,
+                              };
+                              return (
+                                <ArtifactPreview
+                                  key={
+                                    block.id ||
+                                    `${message.id}-${i}-${blockIndex}`
+                                  }
+                                  artifact={artifact}
+                                  onClick={(previewUrl) =>
+                                    handleOpenArtifactPreview(
+                                      artifact,
+                                      previewUrl
+                                    )
+                                  }
+                                />
+                              );
+                            } else {
+                              // Render text content
+                              return (
+                                <Response
+                                  key={`${message.id}-${i}-${blockIndex}`}
+                                  shikiTheme={["github-light", "github-dark"]}
+                                  className="markdown"
+                                  citations={messageCitations}
+                                  onCitationClick={(citationId) =>
+                                    handleCitationClick(
+                                      citationId,
+                                      messageCitations
+                                    )
+                                  }
+                                >
+                                  {block.content}
+                                </Response>
+                              );
+                            }
+                          })}
+                        </div>
                       );
                     case "tool-weather":
                       // ReAct 模式：显示工具调用的详细信息
@@ -538,6 +658,17 @@ export function MessageRenderer({
           setExternalLinkUrl(null);
         }}
         onConfirm={handleExternalLinkConfirm}
+      />
+
+      {/* Artifact 预览侧边栏 */}
+      <ArtifactPreviewSidebar
+        artifact={activeArtifact}
+        isOpen={isArtifactSidebarOpen}
+        previewUrl={activeArtifactPreviewUrl || ""}
+        onClose={() => {
+          setIsArtifactSidebarOpen(false);
+          setActiveArtifact(null);
+        }}
       />
     </>
   );

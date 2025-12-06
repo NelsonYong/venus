@@ -29,7 +29,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [status, pathname, isPublicPath, router]);
 
-  // 显示加载状态
+  // 对于公开路径（包括首页），不显示加载状态，直接渲染内容以优化首屏体验和 SEO
+  if (isPublicPath) {
+    return <>{children}</>;
+  }
+
+  // 对于需要认证的路径，在加载时显示 loading
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">

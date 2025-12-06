@@ -74,7 +74,7 @@ export interface ThinkingGroup {
     id: string;
     label: string;
     description?: string;
-    status: string;
+    status: "complete" | "active" | "pending";
     searchResults?: Array<{ title: string; url?: string }>;
     files?: string[];
   }>;

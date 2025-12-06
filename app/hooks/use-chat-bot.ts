@@ -18,20 +18,8 @@ export function useChatBot() {
   const [webSearch, setWebSearch] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const { messages, sendMessage, status, setMessages, error, stop } = useChat({
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    api: "/api/chat",
-    onError: (error) => {
-      console.error("Chat stream error:", error);
-      // You can add a toast notification here if needed
-    },
-    onFinish: (message) => {
-      console.log("Chat stream finished:", message);
-    },
-    // ReAct 模式需要更多步骤来完成思考 -> 行动 -> 观察 -> 回答的循环
-    maxSteps: 10,
-  });
+
+
   const {
     chatHistory,
     currentChatId,
@@ -42,6 +30,18 @@ export function useChatBot() {
     startNewChat,
     getCurrentChat,
   } = useChatHistory();
+
+  const { messages, sendMessage, status, setMessages, error, stop } = useChat({
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    api: "/api/chat",
+    onError: (error) => {
+      console.error("Chat stream error:", error);
+      // You can add a toast notification here if needed
+    },
+    // ReAct 模式需要更多步骤来完成思考 -> 行动 -> 观察 -> 回答的循环
+    maxSteps: 10,
+  });
 
   const { toggleStar, updateTitle: updateTitleMutation } =
     useConversationActions();
@@ -303,12 +303,10 @@ export function useChatBot() {
           queryKey: queryKeys.conversations.list()
         });
 
-        // Also invalidate the specific conversation detail cache
         queryClient.invalidateQueries({
           queryKey: queryKeys.conversations.detail(currentChatId)
         });
-
-        console.log("✅ Cache invalidated for conversation:", currentChatId);
+        // handleLoadChat(currentChatId);
       }
     }
   }, [status, messages, currentChatId, queryClient]);

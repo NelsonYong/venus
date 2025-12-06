@@ -303,6 +303,7 @@
   "chat": {
     "loadingHistory": "Loading chat history...",
     "search": "Search",
+    "addFiles": "Add files",
     "placeholder": "What do you want to know?",
     "loadingModels": "Loading models...",
     "selectModel": "Select model",

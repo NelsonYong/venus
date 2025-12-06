@@ -292,9 +292,7 @@ function ChatInputInner({
           <PromptInputActionMenu>
             <PromptInputActionMenuTrigger />
             <PromptInputActionMenuContent>
-              <PromptInputActionAddAttachments
-                label={t("chat.addFiles") || "添加文件"}
-              />
+              <PromptInputActionAddAttachments label={t("chat.addFiles")} />
             </PromptInputActionMenuContent>
           </PromptInputActionMenu>
           <PromptInputButton

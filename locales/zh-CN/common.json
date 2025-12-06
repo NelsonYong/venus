@@ -303,6 +303,7 @@
   "chat": {
     "loadingHistory": "加载聊天记录中...",
     "search": "搜索",
+    "addFiles": "添加文件",
     "placeholder": "请输入问题",
     "loadingModels": "加载模型中...",
     "selectModel": "选择模型",

@@ -1,6 +1,8 @@
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createAnthropic } from '@ai-sdk/anthropic';
+
 
 
 export interface ModelConfig {
@@ -65,6 +67,11 @@ export function createModelAdapter(config: ModelConfig) {
     case 'google':
       return createGoogleGenerativeAI({
         apiKey: config.isPreset ? process.env.GOOGLE_API_KEY : config.apiKey,
+        baseURL: config.isPreset ? undefined : config.apiEndpoint,
+      })(config.name);
+    case 'anthropic':
+      return createAnthropic({
+        apiKey: config.isPreset ? process.env.ANTHROPIC_API_KEY : config.apiKey,
         baseURL: config.isPreset ? undefined : config.apiEndpoint,
       })(config.name);
     // For other providers using OpenAI-compatible API

@@ -1,5 +1,7 @@
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
 
 export interface ModelConfig {
   provider: string;
@@ -60,6 +62,11 @@ export function createModelAdapter(config: ModelConfig) {
         baseURL: config.isPreset ? undefined : config.apiEndpoint,
       })(config.name);
 
+    case 'google':
+      return createGoogleGenerativeAI({
+        apiKey: config.isPreset ? process.env.GOOGLE_API_KEY : config.apiKey,
+        baseURL: config.isPreset ? undefined : config.apiEndpoint,
+      })(config.name);
     // For other providers using OpenAI-compatible API
     // Examples: Groq, Together AI, Perplexity, etc.
     default:

@@ -52,7 +52,7 @@
     "@upstash/redis": "^1.35.7",
     "@vercel/blob": "^2.0.0",
     "@xyflow/react": "^12.9.3",
-    "ai": "6.0.0-beta.94",
+    "ai": "6.0.3",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

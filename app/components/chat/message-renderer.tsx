@@ -13,45 +13,21 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/source"
 import { Loader } from "@/components/ai-elements/loader"
-import { UIMessage } from "ai"
 import { Citations } from "./citations"
 import { CitationsSidebar } from "./citations-sidebar"
 import { ExternalLinkDialog } from "./external-link-dialog"
-import { ArtifactPreviewSidebar } from "./artifact-preview-sidebar"
 import { cn } from "@/lib/utils"
 import { useMobile } from "@/app/hooks/use-mobile"
-import { Artifact } from "@/lib/types/artifact"
+import { useChatContext } from "@/app/contexts/chat-context"
 import { useCitations } from "./hooks/use-citations"
 import { useArtifactAutoOpen } from "./hooks/use-artifact-auto-open"
 import { MessageActions } from "./message-actions"
 import { MessagePartsRenderer } from "./message-parts-renderer"
+import type { ChatMessage, MessagePart, UploadedAttachment, Citation } from "@/lib/types/chat"
 
-interface MessageRendererProps {
-  messages: UIMessage[]
-  status: string
-  onRegenerate?: () => void
-  onArtifactOpen?: (artifact: Artifact, previewUrl: string) => void
-  onArtifactClose?: () => void
-  artifactSidebarState?: {
-    artifact: Artifact | null
-    isOpen: boolean
-    previewUrl: string | null
-  }
-  hasAutoOpenedArtifact?: boolean
-  onAutoOpenComplete?: () => void
-}
-
-export function MessageRenderer({
-  messages,
-  status,
-  onRegenerate,
-  onArtifactOpen,
-  onArtifactClose,
-  artifactSidebarState,
-  hasAutoOpenedArtifact = false,
-  onAutoOpenComplete,
-}: MessageRendererProps) {
+export function MessageRenderer() {
   const isMobile = useMobile()
+  const { messages, status, actions, ui } = useChatContext()
 
   const {
     isSidebarOpen,
@@ -67,11 +43,11 @@ export function MessageRenderer({
   } = useCitations()
 
   useArtifactAutoOpen({
-    messages,
+    messages: messages as any,
     isMobile,
-    hasAutoOpenedArtifact,
-    onArtifactOpen,
-    onAutoOpenComplete,
+    hasAutoOpenedArtifact: ui.hasAutoOpenedArtifact,
+    onArtifactOpen: ui.openArtifact,
+    onAutoOpenComplete: ui.markAutoOpened,
   })
 
   const isLastAssistantMessage = (index: number) => {
@@ -84,35 +60,33 @@ export function MessageRenderer({
   }
 
   const messageClassname = cn("pb-0 max-w-[80%] w-[80%]", {
-    "max-w-[100%]": isMobile,
-    "w-full": isMobile,
+    "max-w-[100%] w-full": isMobile,
   })
 
   return (
     <>
       {messages.map((message, index) => {
-        const messageCitations = (message as any).metadata?.citations || []
+        const messageCitations: Citation[] =
+          (message as ChatMessage).metadata?.citations ?? []
 
-        let messageAttachments = []
-        if ((message as any).data?.uploadedAttachments) {
-          messageAttachments = (message as any).data.uploadedAttachments
-        } else if ((message as any).metadata?.uploadedAttachments) {
-          messageAttachments = (message as any).metadata.uploadedAttachments
-        }
+        const messageAttachments: UploadedAttachment[] =
+          (message as ChatMessage).data?.uploadedAttachments ??
+          (message as ChatMessage).metadata?.uploadedAttachments ??
+          []
 
         return (
           <div key={message.id} className="group flex flex-col">
             {/* Sources from provider */}
             {message.role === "assistant" && (
               <Sources>
-                {message.parts.map((part: any, i: number) => {
+                {message.parts.map((part: MessagePart, i: number) => {
                   if (part.type === "source-url") {
                     return (
                       <span key={`${message.id}-source-${i}`}>
                         <SourcesTrigger
                           count={
                             message.parts.filter(
-                              (p: any) => p.type === "source-url"
+                              (p: MessagePart) => p.type === "source-url"
                             ).length
                           }
                         />
@@ -134,7 +108,7 @@ export function MessageRenderer({
             >
               {message.role === "user" && messageAttachments.length > 0 && (
                 <MessageAttachments className="mb-2">
-                  {messageAttachments.map((attachment: any, idx: number) => (
+                  {messageAttachments.map((attachment, idx) => (
                     <MessageAttachment
                       key={idx}
                       data={{
@@ -151,28 +125,31 @@ export function MessageRenderer({
               <MessageContent
                 className={message.role === "assistant" ? "w-full" : ""}
               >
-                {message.parts.map((part: any, i: number) => {
+                {message.parts.map((part: MessagePart, i: number) => {
                   if (part.type === "step-start" || part.type === "source-url") {
                     return null
                   }
 
-                  const partElements = MessagePartsRenderer({
-                    part,
-                    messageId: message.id,
-                    partIndex: i,
-                    status,
-                    isMobile,
-                    messageCitations,
-                    onCitationClick: (citationId) =>
-                      handleCitationClick(citationId, messageCitations),
-                    onArtifactPreviewClick: (artifact, previewUrl) =>
-                      onArtifactOpen?.(artifact, previewUrl),
-                  })
-
-                  return partElements.length > 0 ? (
-                    <span key={`${message.id}-part-${i}`}>{partElements}</span>
-                  ) : null
+                  return (
+                    <MessagePartsRenderer
+                      key={`${message.id}-part-${i}`}
+                      part={part}
+                      messageId={message.id}
+                      partIndex={i}
+                      messageCitations={messageCitations}
+                      onCitationClick={(citationId: number) =>
+                        handleCitationClick(citationId, messageCitations)
+                      }
+                    />
+                  )
                 })}
+                {/* Streaming cursor on last assistant message */}
+                {status === "streaming" &&
+                  message.role === "assistant" &&
+                  isLastAssistantMessage(index) &&
+                  message.parts.some((p: MessagePart) => p.type === "text") && (
+                    <span className="streaming-cursor" />
+                  )}
               </MessageContent>
 
               {message.role === "assistant" && messageCitations.length > 0 && (
@@ -186,8 +163,6 @@ export function MessageRenderer({
             <MessageActions
               message={message}
               isLastAssistantMessage={isLastAssistantMessage(index)}
-              status={status}
-              onRegenerate={onRegenerate}
             />
           </div>
         )
@@ -208,15 +183,6 @@ export function MessageRenderer({
         onClose={handleCloseExternalLinkDialog}
         onConfirm={handleExternalLinkConfirm}
       />
-
-      {!artifactSidebarState && (
-        <ArtifactPreviewSidebar
-          artifact={null}
-          isOpen={false}
-          previewUrl=""
-          onClose={onArtifactClose || (() => {})}
-        />
-      )}
     </>
   )
 }

@@ -1,0 +1,573 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.8",
+    "lastTouchedAt": "2026-03-24T11:45:56.466Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-12T05:47:25.237Z",
+    "lastRunVersion": "2026.3.8",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "secrets": {
+    "providers": {
+      "lark-secrets": {
+        "source": "file",
+        "path": "~/.openclaw/credentials/lark.secrets.json"
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "minimax-cn:default": {
+        "provider": "minimax-cn",
+        "mode": "api_key"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "minimax-cn": {
+        "baseUrl": "https://api.minimaxi.com/anthropic",
+        "api": "anthropic-messages",
+        "authHeader": true,
+         "models": [
+          {
+            "id": "MiniMax-M2.5",
+            "name": "MiniMax M2.5",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "MiniMax-M2.5-highspeed",
+            "name": "MiniMax M2.5 Highspeed",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "MiniMax-M2.5-Lightning",
+            "name": "MiniMax M2.5 Lightning",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "minimax-portal/MiniMax-M2.5",
+        "fallbacks": [
+          "minimax-portal/MiniMax-M2.5-highspeed",
+          "minimax-portal/MiniMax-M2.5-Lightning",
+          "minimax/MiniMax-M2",
+          "minimax/MiniMax-M2.1",
+          "minimax-cn/MiniMax-M2",
+          "minimax-cn/MiniMax-M2.1",
+          "minimax-cn/MiniMax-M2.5",
+          "minimax/MiniMax-M2.5"
+        ]
+      },
+       "models": {
+        "minimax-portal/MiniMax-M2.5": {
+          "alias": "minimax-m2.5"
+        },
+        "minimax-portal/MiniMax-M2.5-highspeed": {
+          "alias": "minimax-m2.5-highspeed"
+        },
+        "minimax-portal/MiniMax-M2.5-Lightning": {
+          "alias": "minimax-m2.5-lightning"
+        },
+        "minimax-portal/MiniMax-M2.1": {
+          "alias": "minimax-m2.1"
+        },
+        "minimax/MiniMax-M2.5": {},
+        "minimax/MiniMax-M2": {},
+        "minimax/MiniMax-M2.1": {},
+        "minimax-cn/MiniMax-M2": {},
+        "minimax-cn/MiniMax-M2.1": {},
+        "minimax-cn/MiniMax-M2.5": {}
+      },
+      "workspace": "/Users/ugreen2/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "tools": {
+          "alsoAllow": [
+            "feishu_bitable_app",
+            "feishu_bitable_app_table",
+            "feishu_bitable_app_table_field",
+            "feishu_bitable_app_table_record",
+            "feishu_bitable_app_table_view",
+            "feishu_calendar_calendar",
+            "feishu_calendar_event",
+            "feishu_calendar_event_attendee",
+            "feishu_calendar_freebusy",
+            "feishu_chat",
+            "feishu_chat_members",
+            "feishu_create_doc",
+            "feishu_doc_comments",
+            "feishu_doc_media",
+            "feishu_drive_file",
+            "feishu_fetch_doc",
+            "feishu_get_user",
+            "feishu_im_bot_image",
+            "feishu_im_user_fetch_resource",
+            "feishu_im_user_get_messages",
+            "feishu_im_user_get_thread_messages",
+            "feishu_im_user_message",
+            "feishu_im_user_search_messages",
+            "feishu_oauth",
+            "feishu_oauth_batch_auth",
+            "feishu_search_doc_wiki",
+            "feishu_search_user",
+            "feishu_sheet",
+            "feishu_task_comment",
+            "feishu_task_subtask",
+            "feishu_task_task",
+            "feishu_task_tasklist",
+            "feishu_update_doc",
+            "feishu_wiki_space",
+            "feishu_wiki_space_node"
+          ]
+        }
+      },
+      {
+        "id": "timer",
+        "name": "timer",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-timer",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/timer/agent",
+        "model": "minimax-cn/MiniMax-M2.5",
+        "tools": {
+          "alsoAllow": [
+            "feishu_bitable_app",
+            "feishu_bitable_app_table",
+            "feishu_bitable_app_table_field",
+            "feishu_bitable_app_table_record",
+            "feishu_bitable_app_table_view",
+            "feishu_calendar_calendar",
+            "feishu_calendar_event",
+            "feishu_calendar_event_attendee",
+            "feishu_calendar_freebusy",
+            "feishu_chat",
+            "feishu_chat_members",
+            "feishu_create_doc",
+            "feishu_doc_comments",
+            "feishu_doc_media",
+            "feishu_drive_file",
+            "feishu_fetch_doc",
+            "feishu_get_user",
+            "feishu_im_bot_image",
+            "feishu_im_user_fetch_resource",
+            "feishu_im_user_get_messages",
+            "feishu_im_user_get_thread_messages",
+            "feishu_im_user_message",
+            "feishu_im_user_search_messages",
+            "feishu_oauth",
+            "feishu_oauth_batch_auth",
+            "feishu_search_doc_wiki",
+            "feishu_search_user",
+            "feishu_sheet",
+            "feishu_task_comment",
+            "feishu_task_subtask",
+            "feishu_task_task",
+            "feishu_task_tasklist",
+            "feishu_update_doc",
+            "feishu_wiki_space",
+            "feishu_wiki_space_node"
+          ]
+        }
+      },
+      {
+        "id": "tech-pm",
+        "default": true,
+        "name": "tech-pm",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-tech-pm",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/tech-pm/agent",
+         "skills": [
+          "feishu-im-read",
+          "coding-agent",
+          "github"
+        ],
+        "model": "minimax-portal/MiniMax-M2.1",
+        "tools": {
+          "allow": [
+            "file", "read", "write",
+            "sessions_send", "sessions_list", "sessions_history",
+            "sessions_spawn", "session_status"
+          ]
+        }
+      },
+      {
+        "id": "frontend",
+        "name": "frontend",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-frontend",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/frontend/agent",
+         "skills": [
+          "feishu-im-read",
+          "coding-agent",
+          "github"
+        ],
+         "model": "minimax-portal/MiniMax-M2.5",
+         "tools": {
+          "allow": ["file", "read", "write", "edit", "shell", "git"]
+        }
+      },
+      {
+        "id": "backend",
+        "name": "backend",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-backend",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/backend/agent",
+         "skills": [
+          "feishu-im-read",
+          "coding-agent",
+          "github"
+        ],
+        "model": "minimax-portal/MiniMax-M2.5",
+        "tools": {
+          "allow": ["file", "read", "write", "edit", "shell", "exec", "git"]
+        }
+      },
+      {
+        "id": "pm",
+        "name": "pm",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-pm",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/pm/agent",
+         "skills": [
+          "feishu-im-read"
+        ],
+         "tools": {
+          "allow": ["file", "read", "write"],
+          "deny": ["shell", "exec"]
+        }
+      },
+      {
+        "id": "qa",
+        "name": "qa",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-qa",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/qa/agent",
+         "skills": [
+          "feishu-im-read",
+          "coding-agent",
+          "github"
+        ],
+         "tools": {
+          "allow": ["file", "read", "git"],
+          "deny": ["write", "edit", "shell", "exec"]
+        }
+      },
+      {
+        "id": "reviewer",
+        "name": "reviewer",
+        "workspace": "/Users/ugreen2/.openclaw/workspace-reviewer",
+        "agentDir": "/Users/ugreen2/.openclaw/agents/reviewer/agent",
+         "skills": [
+          "feishu-im-read",
+          "coding-agent",
+          "github"
+        ],
+        "tools": {
+          "allow": ["file", "read", "write", "shell", "exec"],
+          "deny": ["edit"]
+        }
+      }
+    ]
+  },
+  "tools": {
+   "profile": "messaging",
+    "sessions": {
+      "visibility": "all"
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["tech-pm", "pm", "frontend", "backend", "reviewer", "qa"]
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "dingtalk",
+        "peer": {
+          "kind": "direct",
+          "id": "2339024867847112"
+        }
+      }
+    },
+    {
+      "agentId": "tech-pm",
+      "match": {
+        "channel": "feishu",
+        "accountId": "tech-pm"
+      }
+    },
+    {
+      "agentId": "frontend",
+      "match": {
+        "channel": "feishu",
+        "accountId": "frontend"
+      }
+    },
+    {
+      "agentId": "backend",
+      "match": {
+        "channel": "feishu",
+        "accountId": "backend"
+      }
+    },
+    {
+      "agentId": "pm",
+      "match": {
+        "channel": "feishu",
+        "accountId": "pm"
+      }
+    },
+    {
+      "agentId": "qa",
+      "match": {
+        "channel": "feishu",
+        "accountId": "qa"
+      }
+    },
+    {
+      "agentId": "reviewer",
+      "match": {
+        "channel": "feishu",
+        "accountId": "reviewer"
+      }
+    }
+  ],
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 10
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "command-logger": {
+          "enabled": true
+        },
+        "session-memory": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "channels": {
+    "dingtalk": {
+      "enabled": false,
+      "clientId": "dingtewvunsqfyyu84ot",
+      "clientSecret": "QsvpgFLVdiv7u79-ZdGWsKgP6wVYqqv434THeXu_KZEU3XZnMo7ZNGnaM-difnP7",
+      "dmPolicy": "open",
+      "groupPolicy": "open",
+      "messageType": "markdown",
+      "maxReconnectCycles": 10,
+      "agentId": 4293051929,
+      "allowFrom": [
+        "*"
+      ]
+    },
+    "feishu": {
+      "enabled": true,
+      "domain": "feishu",
+      "connectionMode": "websocket",
+      "requireMention": true,
+      "accounts": {
+        "tech-pm": {
+          "appId": "cli_a948e63e08a45bda",
+          "appSecret": "RLA4NevpnxGsPzVYfSbHleEFiDdaodRL",
+          "botName": "技术经理",
+          "dmPolicy": "open",
+          "groupPolicy": "open",
+          "allowFrom": [
+            "*"
+          ]
+        },
+        "frontend": {
+          "appId": "cli_a948dcc49439dbc9",
+          "appSecret": "OEEJE39zaSp6pkSoF8s75bHwkiACNKRn",
+          "botName": "前端工程师",
+          "dmPolicy": "open",
+          "groupPolicy": "open",
+          "allowFrom": [
+            "*"
+          ]
+        },
+        "backend": {
+          "appId": "cli_a948de5ee17a9bc9",
+          "appSecret": "EKDDdoIw8NJY4gplGO50zhOcrmvzX1TI",
+          "botName": "后端工程师",
+          "dmPolicy": "open",
+          "groupPolicy": "open",
+          "allowFrom": [
+            "*"
+          ]
+        },
+        "pm": {
+          "appId": "cli_a948df6488bb9bb7",
+          "appSecret": "meo2luop3V6Imi0p4dRitbzMBBGA6JBf",
+          "botName": "产品经理",
+          "dmPolicy": "open",
+          "groupPolicy": "open",
+          "allowFrom": [
+            "*"
+          ]
+        },
+        "qa": {
+          "appId": "cli_a948d8c2da11dbcd",
+          "appSecret": "1qyj4YO9XVZ76gEYcdnIDgftBOhhxM1L",
+          "botName": "测试工程师",
+          "dmPolicy": "open",
+          "groupPolicy": "open",
+          "allowFrom": [
+            "*"
+          ]
+        },
+        "reviewer": {
+          "appId": "cli_a948db3e02fb9bb5",
+          "appSecret": "aCicxGxJvFNp8nfwjEHazbm5s0KZxKjL",
+          "botName": "代码审查员",
+          "dmPolicy": "open",
+          "groupPolicy": "open",
+          "allowFrom": [
+            "*"
+          ]
+        }
+      },
+      "groups": {
+        "*": {
+          "*": {
+            "requireMention": true
+          }
+        }
+      }
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "d4cb1d676abb4b0ef48fffc8417c35965de4309b5db835fe"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "contacts.add",
+        "calendar.add",
+        "reminders.add",
+        "sms.send"
+      ]
+    }
+  },
+  "plugins": {
+    "allow": [
+      "openclaw-lark",
+      "dingtalk"
+    ],
+    "load": {
+      "paths": [
+        "/Users/ugreen2/.openclaw"
+      ]
+    },
+    "entries": {
+      "dingtalk": {
+        "enabled": true
+      },
+      "feishu": {
+        "enabled": false
+      },
+      "openclaw-lark": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "dingtalk": {
+        "source": "npm",
+        "spec": "@soimy/dingtalk",
+        "installPath": "/Users/ugreen2/.openclaw/extensions/dingtalk",
+        "version": "3.2.0",
+        "resolvedName": "@soimy/dingtalk",
+        "resolvedVersion": "3.2.0",
+        "resolvedSpec": "@soimy/dingtalk@3.2.0",
+        "integrity": "sha512-6JDDZit0WPy3xUC0rNQVMQEKMXcbjnN5r0/Rq44xJ3IOFceQnZVhLXgnahQsuw/03GJAxNl6FKb0PTxm1R7ZIw==",
+        "shasum": "9b32caab49d1e1c76ab41d39b15175ff76f0e112",
+        "resolvedAt": "2026-03-12T05:44:23.991Z",
+        "installedAt": "2026-03-12T05:45:27.269Z"
+      },
+      "openclaw-lark": {
+        "source": "npm",
+        "spec": "@larksuite/openclaw-lark@2026.3.18",
+        "installPath": "/Users/ugreen2/.openclaw/extensions/openclaw-lark",
+        "version": "2026.3.18",
+        "resolvedName": "@larksuite/openclaw-lark",
+        "resolvedVersion": "2026.3.18",
+        "resolvedSpec": "@larksuite/openclaw-lark@2026.3.18",
+        "integrity": "sha512-9qqO0a1HQ+2E9jvob/13jf1ZDfe39vzr7SgYFgtNc/ajv+jFaC7sweONyPZbiQ22CF+lIWb4FvSve74ev0Irnw==",
+        "shasum": "5358c445b0fcfc65e99462b2a15c755bf39919f8",
+        "resolvedAt": "2026-03-24T09:30:33.582Z",
+        "installedAt": "2026-03-24T09:30:38.853Z"
+      }
+    }
+  }
+}

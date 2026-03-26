@@ -3,7 +3,7 @@
  * Based on Anthropic Claude Artifacts pattern
  */
 
-export type ArtifactType = 'html' | 'react' | 'svg' | 'mermaid' | 'markdown' | 'code';
+export type ArtifactType = 'html' | 'react' | 'svg' | 'mermaid' | 'markdown' | 'code' | 'a2ui';
 
 export interface Artifact {
   id: string;
@@ -11,8 +11,22 @@ export interface Artifact {
   title?: string;
   language: string;
   code: string;
-  // Whether this artifact should be displayed in a preview
   previewable: boolean;
+  /** A2UI surface data for type='a2ui' */
+  a2uiSurface?: {
+    surfaceId: string;
+    root: string;
+    components: Array<{
+      id: string;
+      component: Record<string, Record<string, unknown>>;
+    }>;
+    data?: Array<{
+      key: string;
+      valueString?: string;
+      valueNumber?: number;
+      valueBoolean?: boolean;
+    }>;
+  };
 }
 
 /**

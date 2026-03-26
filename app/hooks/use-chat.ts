@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { useQueryClient } from "@tanstack/react-query"
@@ -10,7 +10,7 @@ import { useConversationId } from "./use-conversation-id"
 import { useChatHistory } from "./use-conversations"
 import { useConversationActions } from "./use-conversation-actions"
 import { defaultModel } from "@/app/constants/models"
-import type { UploadedAttachment } from "@/app/components/chat/chat-input"
+import type { UploadedAttachment } from "@/lib/types/chat"
 
 /**
  * Simplified chat session hook.
@@ -41,6 +41,19 @@ export function useChatSession() {
   const lastLoadedChatId = useRef<string | null>(null)
   const prevMessageCount = useRef(0)
 
+  // Ref keeps current values accessible inside the static transport closure
+  const dynamicBodyRef = useRef({ modelId, webSearch, userId: user?.id, conversationId })
+  dynamicBodyRef.current = { modelId, webSearch, userId: user?.id, conversationId }
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => dynamicBodyRef.current,
+      }),
+    []
+  )
+
   const {
     messages,
     sendMessage,
@@ -48,16 +61,17 @@ export function useChatSession() {
     setMessages,
     error,
     stop,
+    addToolResult,
+    addToolApprovalResponse,
   } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: {
-        modelId,
-        webSearch,
-        userId: user?.id,
-        conversationId,
-      },
-    }),
+    transport,
+    sendAutomaticallyWhen: ({ messages: msgs }) => {
+      const lastMsg = msgs[msgs.length - 1]
+      if (!lastMsg || lastMsg.role !== "assistant") return false
+      return lastMsg.parts.some(
+        (part: any) => part.state === "approval-responded"
+      )
+    },
     onError: (error) => {
       console.error("Chat stream error:", error)
     },
@@ -101,38 +115,22 @@ export function useChatSession() {
     if (!messageText && attachments.length === 0) return
 
     if (!conversationId) {
-      // Create new conversation first
       saveChatSession([], undefined, modelId).then((chatId) => {
         if (chatId) {
           lastLoadedChatId.current = chatId
           setConversationId(chatId)
+          dynamicBodyRef.current = { ...dynamicBodyRef.current, conversationId: chatId }
 
           sendMessage(
             { text: messageText },
-            {
-              body: {
-                modelId,
-                webSearch,
-                userId: user?.id,
-                conversationId: chatId,
-                uploadedAttachments: attachments,
-              },
-            }
+            { body: { conversationId: chatId, uploadedAttachments: attachments } }
           )
         }
       })
     } else {
       sendMessage(
         { text: messageText },
-        {
-          body: {
-            modelId,
-            webSearch,
-            userId: user?.id,
-            conversationId,
-            uploadedAttachments: attachments,
-          },
-        }
+        { body: { uploadedAttachments: attachments } }
       )
     }
   }, [status, conversationId, modelId, webSearch, user?.id, saveChatSession, setConversationId, sendMessage])
@@ -232,18 +230,10 @@ export function useChatSession() {
     if (messageText || attachments.length > 0) {
       sendMessage(
         { text: messageText },
-        {
-          body: {
-            modelId,
-            webSearch,
-            userId: user?.id,
-            conversationId,
-            uploadedAttachments: attachments,
-          },
-        }
+        { body: { uploadedAttachments: attachments } }
       )
     }
-  }, [messages, conversationId, modelId, webSearch, user?.id, setMessages, sendMessage])
+  }, [messages, conversationId, setMessages, sendMessage])
 
   const isLoadingChat = Boolean(conversationId && messages.length === 0 && isHistoryLoading)
   const lastMessage = messages[messages.length - 1]
@@ -275,6 +265,8 @@ export function useChatSession() {
     handleStarToggle,
     handleRegenerate,
     stop,
+    addToolResult,
+    addToolApprovalResponse,
 
     // Computed
     getCurrentChat,

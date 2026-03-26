@@ -1,16 +1,15 @@
 import { prisma } from '@/lib/prisma'
-import { createModel, createImageModel } from './registry'
-import { getDefaultPreset } from './presets'
-import { isImageModel, type ResolvedModel } from './types'
+import { createModel, createImageModel, isKnownProvider } from './registry'
+import { getDefaultPreset, getPresetForProvider } from './presets'
+import { isImageModel, type ResolvedModel, type ProviderName } from './types'
 
 /**
  * Resolve a model ID to a ready-to-use language model instance.
  *
  * Resolution order:
  * 1. If modelId provided → look up user's discovered model in DB
- * 2. Otherwise → use default preset from env vars
- *
- * Returns the model instance, provider info, and whether it's a preset.
+ * 2. If DB lookup fails → try parsing "provider/model" and use env-var API key
+ * 3. Otherwise → use default preset from env vars
  */
 export async function resolveModel(
   modelId: string | undefined,
@@ -23,6 +22,7 @@ export async function resolveModel(
 }
 
 async function resolveUserModel(modelId: string, userId: string): Promise<ResolvedModel> {
+  // Step 1: try DB lookup (user-configured providers)
   const discoveredModel = await prisma.discoveredModel.findFirst({
     where: {
       modelId,
@@ -37,32 +37,77 @@ async function resolveUserModel(modelId: string, userId: string): Promise<Resolv
     },
   })
 
-  if (!discoveredModel) {
-    throw new ModelNotFoundError(modelId)
+  if (discoveredModel) {
+    const provider = discoveredModel.provider.provider
+    const modelName = discoveredModel.modelName
+    const config = {
+      apiKey: discoveredModel.provider.apiKey,
+      baseURL: discoveredModel.provider.apiEndpoint || undefined,
+    }
+
+    if (isImageModel(modelName)) {
+      return {
+        model: createImageModel(provider, modelName, config) as any,
+        provider,
+        modelName,
+        isPreset: false,
+        isImageModel: true,
+      }
+    }
+
+    return {
+      model: createModel(provider, modelName, config),
+      provider,
+      modelName,
+      isPreset: false,
+      isImageModel: false,
+    }
   }
 
-  const provider = discoveredModel.provider.provider
-  const modelName = discoveredModel.modelName
+  // Step 2: try parsing "provider/modelName" and use env-var preset
+  const resolved = resolveFromModelIdString(modelId)
+  if (resolved) return resolved
+
+  throw new ModelNotFoundError(modelId)
+}
+
+/**
+ * Parse a "provider/modelName" string and create the model using
+ * the env-var API key for that provider.
+ */
+function resolveFromModelIdString(modelId: string): ResolvedModel | null {
+  const slashIndex = modelId.indexOf('/')
+  if (slashIndex === -1) return null
+
+  const providerName = modelId.slice(0, slashIndex)
+  const modelName = modelId.slice(slashIndex + 1)
+
+  if (!providerName || !modelName) return null
+  if (!isKnownProvider(providerName)) return null
+
+  const preset = getPresetForProvider(providerName as ProviderName)
+  if (!preset) return null
+
   const config = {
-    apiKey: discoveredModel.provider.apiKey,
-    baseURL: discoveredModel.provider.apiEndpoint || undefined,
+    apiKey: preset.apiKey,
+    baseURL: preset.baseURL,
   }
 
   if (isImageModel(modelName)) {
     return {
-      model: createImageModel(provider, modelName, config) as any,
-      provider,
+      model: createImageModel(providerName, modelName, config) as any,
+      provider: providerName,
       modelName,
-      isPreset: false,
+      isPreset: true,
       isImageModel: true,
     }
   }
 
   return {
-    model: createModel(provider, modelName, config),
-    provider,
+    model: createModel(providerName, modelName, config),
+    provider: providerName,
     modelName,
-    isPreset: false,
+    isPreset: true,
     isImageModel: false,
   }
 }

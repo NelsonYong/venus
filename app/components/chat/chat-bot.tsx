@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import { Navbar } from "@/app/components/ui/navbar"
 import { ChatSidebar } from "@/app/components/sidebar/chat-sidebar"
 import { ChatLayout } from "./chat-layout"
+import { ChatProvider } from "@/app/contexts/chat-context"
 import { useChatSession } from "@/app/hooks/use-chat"
 import { useTranslation } from "@/app/contexts/i18n-context"
+import type { ChatMessage } from "@/lib/types/chat"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +47,7 @@ export function ChatBot() {
     handleStarToggle,
     handleRegenerate,
     stop,
+    addToolApprovalResponse,
     getCurrentChat,
   } = useChatSession()
 
@@ -119,27 +122,27 @@ export function ChatBot() {
           />
 
           <div className="flex-1 w-full overflow-hidden">
-            <div className="w-full h-full">
+            <ChatProvider
+              messages={messages as ChatMessage[]}
+              status={status as any}
+              error={error}
+              usage={usage}
+              modelId={modelId}
+              onModelChange={setModelId}
+              webSearch={webSearch}
+              onWebSearchChange={setWebSearch}
+              onSend={handleSubmit}
+              onStop={stop}
+              onRegenerate={handleRegenerate}
+              onToolApprovalResponse={addToolApprovalResponse}
+            >
               <ChatLayout
-                messages={messages}
-                status={status}
-                input=""
-                onInputChange={() => {}}
-                onSubmit={handleSubmit}
-                model={modelId}
-                onModelChange={setModelId}
-                webSearch={webSearch}
-                onWebSearchToggle={() => setWebSearch(!webSearch)}
-                error={error}
                 isLoadingChat={isLoadingChat}
                 hasChatId={Boolean(conversationId)}
-                onRegenerate={handleRegenerate}
-                onStop={stop}
-                usage={usage}
                 sidebarOpen={sidebarOpen}
                 onSidebarOpenChange={setSidebarOpen}
               />
-            </div>
+            </ChatProvider>
           </div>
         </div>
       </div>

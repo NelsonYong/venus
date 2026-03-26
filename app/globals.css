@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@source "../node_modules/@a2ui-sdk/react";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -603,6 +605,26 @@ hr {
 
 .not-prose [class*="overflow-x-auto"] {
   @apply max-w-full;
+}
+
+/* ============================================
+   Streaming cursor animation
+   ============================================ */
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: "▋";
+  display: inline-block;
+  animation: blink 1s step-end infinite;
+  color: var(--primary);
+  margin-left: 1px;
+  font-size: 0.875em;
+  vertical-align: baseline;
+  line-height: 1;
 }
 
 /* ============================================

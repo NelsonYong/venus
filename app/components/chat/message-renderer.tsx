@@ -1,61 +1,34 @@
-"use client";
+"use client"
 
 import {
   Message,
   MessageContent,
   MessageAttachment,
   MessageAttachments,
-} from "@/components/ai-elements/message";
+} from "@/components/ai-elements/message"
 import {
   Source,
   Sources,
   SourcesContent,
   SourcesTrigger,
-} from "@/components/ai-elements/source";
-import { Loader } from "@/components/ai-elements/loader";
-import { UIMessage } from "ai";
-import { Citations } from "./citations";
-import { CitationsSidebar } from "./citations-sidebar";
-import { ExternalLinkDialog } from "./external-link-dialog";
-import { ArtifactPreviewSidebar } from "./artifact-preview-sidebar";
-import { cn } from "@/lib/utils";
-import { useMobile } from "@/app/hooks/use-mobile";
-import { Artifact } from "@/lib/types/artifact";
-import { useCitations } from "./hooks/use-citations";
-import { useArtifactAutoOpen } from "./hooks/use-artifact-auto-open";
-import { MessageActions } from "./message-actions";
-import { MessagePartsRenderer } from "./message-parts-renderer";
-import { ThinkingRenderer } from "./thinking-renderer";
-import { aggregateThinkingSteps, isThinkingGroupComplete } from "./utils";
+} from "@/components/ai-elements/source"
+import { Loader } from "@/components/ai-elements/loader"
+import { Citations } from "./citations"
+import { CitationsSidebar } from "./citations-sidebar"
+import { ExternalLinkDialog } from "./external-link-dialog"
+import { cn } from "@/lib/utils"
+import { useMobile } from "@/app/hooks/use-mobile"
+import { useChatContext } from "@/app/contexts/chat-context"
+import { useCitations } from "./hooks/use-citations"
+import { useArtifactAutoOpen } from "./hooks/use-artifact-auto-open"
+import { MessageActions } from "./message-actions"
+import { MessagePartsRenderer } from "./message-parts-renderer"
+import type { ChatMessage, MessagePart, UploadedAttachment, Citation } from "@/lib/types/chat"
 
-interface MessageRendererProps {
-  messages: UIMessage[];
-  status: string;
-  onRegenerate?: () => void;
-  onArtifactOpen?: (artifact: Artifact, previewUrl: string) => void;
-  onArtifactClose?: () => void;
-  artifactSidebarState?: {
-    artifact: Artifact | null;
-    isOpen: boolean;
-    previewUrl: string | null;
-  };
-  hasAutoOpenedArtifact?: boolean;
-  onAutoOpenComplete?: () => void;
-}
+export function MessageRenderer() {
+  const isMobile = useMobile()
+  const { messages, status, actions, ui } = useChatContext()
 
-export function MessageRenderer({
-  messages,
-  status,
-  onRegenerate,
-  onArtifactOpen,
-  onArtifactClose,
-  artifactSidebarState,
-  hasAutoOpenedArtifact = false,
-  onAutoOpenComplete,
-}: MessageRendererProps) {
-  const isMobile = useMobile();
-
-  // Custom hooks
   const {
     isSidebarOpen,
     highlightedCitationId,
@@ -67,95 +40,63 @@ export function MessageRenderer({
     handleOpenSidebar,
     handleCloseSidebar,
     handleCloseExternalLinkDialog,
-  } = useCitations();
+  } = useCitations()
 
   useArtifactAutoOpen({
-    messages,
+    messages: messages as any,
     isMobile,
-    hasAutoOpenedArtifact,
-    onArtifactOpen,
-    onAutoOpenComplete,
-  });
-
-  // Helper functions
-  const handleOpenArtifactPreview = (
-    artifact: Artifact,
-    previewUrl: string
-  ) => {
-    onArtifactOpen?.(artifact, previewUrl);
-  };
+    hasAutoOpenedArtifact: ui.hasAutoOpenedArtifact,
+    onArtifactOpen: ui.openArtifact,
+    onAutoOpenComplete: ui.markAutoOpened,
+  })
 
   const isLastAssistantMessage = (index: number) => {
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].role === "assistant") {
-        return i === index;
+        return i === index
       }
     }
-    return false;
-  };
+    return false
+  }
 
   const messageClassname = cn("pb-0 max-w-[80%] w-[80%]", {
-    "max-w-[100%]": isMobile,
-    "w-full": isMobile,
-  });
+    "max-w-[100%] w-full": isMobile,
+  })
 
   return (
     <>
       {messages.map((message, index) => {
-        const messageCitations = (message as any).metadata?.citations || [];
+        const messageCitations: Citation[] =
+          (message as ChatMessage).metadata?.citations ?? []
 
-        // Read attachments: prioritize data (realtime), then metadata (history)
-        let messageAttachments = [];
-        if ((message as any).data?.uploadedAttachments) {
-          messageAttachments = (message as any).data.uploadedAttachments;
-        } else if ((message as any).metadata?.uploadedAttachments) {
-          messageAttachments = (message as any).metadata.uploadedAttachments;
-        }
-
-        // Aggregate thinking steps
-        const thinkingGroups =
-          message.role === "assistant"
-            ? aggregateThinkingSteps(message.parts)
-            : new Map();
-
-        // Track processed part indices
-        const processedIndices = new Set<number>();
-        thinkingGroups.forEach((group) => {
-          group.partIndices.forEach((idx: number) => processedIndices.add(idx));
-        });
-
-        // Create index to thinking group mapping
-        const indexToThinkingGroup = new Map<number, [string, any]>();
-        thinkingGroups.forEach((group, key) => {
-          indexToThinkingGroup.set(group.firstIndex, [key, group]);
-        });
+        const messageAttachments: UploadedAttachment[] =
+          (message as ChatMessage).data?.uploadedAttachments ??
+          (message as ChatMessage).metadata?.uploadedAttachments ??
+          []
 
         return (
           <div key={message.id} className="group flex flex-col">
-            {/* Sources */}
+            {/* Sources from provider */}
             {message.role === "assistant" && (
               <Sources>
-                {message.parts.map((part: any, i: number) => {
+                {message.parts.map((part: MessagePart, i: number) => {
                   if (part.type === "source-url") {
                     return (
-                      <>
+                      <span key={`${message.id}-source-${i}`}>
                         <SourcesTrigger
                           count={
                             message.parts.filter(
-                              (part: any) => part.type === "source-url"
+                              (p: MessagePart) => p.type === "source-url"
                             ).length
                           }
                         />
-                        <SourcesContent key={`${message.id}-${i}`}>
-                          <Source
-                            key={`${message.id}-${i}`}
-                            href={part.url}
-                            title={part.url}
-                          />
+                        <SourcesContent>
+                          <Source href={part.url} title={part.url} />
                         </SourcesContent>
-                      </>
-                    );
+                      </span>
+                    )
                   }
+                  return null
                 })}
               </Sources>
             )}
@@ -165,10 +106,9 @@ export function MessageRenderer({
               key={message.id}
               className={messageClassname}
             >
-              {/* User uploaded file attachments */}
               {message.role === "user" && messageAttachments.length > 0 && (
                 <MessageAttachments className="mb-2">
-                  {messageAttachments.map((attachment: any, idx: number) => (
+                  {messageAttachments.map((attachment, idx) => (
                     <MessageAttachment
                       key={idx}
                       data={{
@@ -185,77 +125,58 @@ export function MessageRenderer({
               <MessageContent
                 className={message.role === "assistant" ? "w-full" : ""}
               >
-                {/* Render message parts with thinking groups */}
-                {message.parts.flatMap((part: any, i: number) => {
-                  const elements: React.ReactElement[] = [];
+                {(() => {
+                  const isLastAssistant = isLastAssistantMessage(index)
+                  const isStreaming = status === "streaming"
 
-                  // Check if we should render a thinking group at this position
-                  if (indexToThinkingGroup.has(i)) {
-                    const [key, group] = indexToThinkingGroup.get(i)!;
-                    const isComplete = isThinkingGroupComplete(group);
-                    const shouldOpen = status === "streaming" || !isComplete;
+                  // Compute reasoning chain info for this message
+                  const reasoningIndices = message.parts
+                    .map((p: MessagePart, idx: number) => p.type === "reasoning" ? idx : -1)
+                    .filter((idx: number) => idx !== -1)
+                  const totalReasoning = reasoningIndices.length
+                  const lastReasoningIdx = reasoningIndices[reasoningIndices.length - 1]
 
-                    elements.push(
-                      <ThinkingRenderer
-                        key={`${message.id}-${key}`}
-                        group={group}
+                  return message.parts.map((part: MessagePart, i: number) => {
+                    if (part.type === "step-start" || part.type === "source-url") {
+                      return null
+                    }
+
+                    // Only the last reasoning part of the last assistant message streams
+                    const isStreamingPart =
+                      isStreaming && isLastAssistant && part.type === "reasoning" && i === lastReasoningIdx
+
+                    // Chain step number (1-based)
+                    const reasoningStep =
+                      part.type === "reasoning" && totalReasoning > 1
+                        ? reasoningIndices.indexOf(i) + 1
+                        : undefined
+
+                    return (
+                      <MessagePartsRenderer
+                        key={`${message.id}-part-${i}`}
+                        part={part}
                         messageId={message.id}
-                        groupKey={key}
-                        shouldOpen={shouldOpen}
+                        partIndex={i}
+                        messageCitations={messageCitations}
+                        onCitationClick={(citationId: number) =>
+                          handleCitationClick(citationId, messageCitations)
+                        }
+                        isStreamingPart={isStreamingPart}
+                        reasoningStep={reasoningStep}
+                        reasoningStepTotal={totalReasoning > 1 ? totalReasoning : undefined}
                       />
-                    );
-                  }
-
-                  // Skip already aggregated thinking steps
-                  if (processedIndices.has(i)) {
-                    return elements;
-                  }
-
-                  // Ignore step-start type (marker, doesn't need display)
-                  if (part.type === "step-start") {
-                    return elements;
-                  }
-
-                  // Debug: log unrecognized message part types
-                  if (
-                    part.type &&
-                    ![
-                      "text",
-                      "tool-weather",
-                      "tool-webSearch",
-                      "tool-thinkingStep",
-                      "reasoning",
-                      "tool-call",
-                      "tool-result",
-                      "source-url",
-                    ].includes(part.type)
-                  ) {
-                    console.log(
-                      "🔍 Unknown message part type:",
-                      part.type,
-                      part
-                    );
-                  }
-
-                  // Render message part
-                  const partElements = MessagePartsRenderer({
-                    part,
-                    messageId: message.id,
-                    partIndex: i,
-                    status,
-                    isMobile,
-                    messageCitations,
-                    onCitationClick: (citationId) =>
-                      handleCitationClick(citationId, messageCitations),
-                    onArtifactPreviewClick: handleOpenArtifactPreview,
-                  });
-
-                  elements.push(...partElements);
-                  return elements;
-                })}
+                    )
+                  })
+                })()}
+                {/* Streaming cursor on last assistant message */}
+                {status === "streaming" &&
+                  message.role === "assistant" &&
+                  isLastAssistantMessage(index) &&
+                  message.parts.some((p: MessagePart) => p.type === "text") && (
+                    <span className="streaming-cursor" />
+                  )}
               </MessageContent>
 
-              {/* Citations */}
               {message.role === "assistant" && messageCitations.length > 0 && (
                 <Citations
                   citations={messageCitations}
@@ -264,20 +185,16 @@ export function MessageRenderer({
               )}
             </Message>
 
-            {/* Message Actions */}
             <MessageActions
               message={message}
               isLastAssistantMessage={isLastAssistantMessage(index)}
-              status={status}
-              onRegenerate={onRegenerate}
             />
           </div>
-        );
+        )
       })}
 
       {status === "submitted" && <Loader />}
 
-      {/* Citations Sidebar */}
       <CitationsSidebar
         citations={activeCitations}
         isOpen={isSidebarOpen}
@@ -285,23 +202,12 @@ export function MessageRenderer({
         highlightedId={highlightedCitationId}
       />
 
-      {/* External Link Confirmation Dialog */}
       <ExternalLinkDialog
         url={externalLinkUrl}
         isOpen={isExternalLinkDialogOpen}
         onClose={handleCloseExternalLinkDialog}
         onConfirm={handleExternalLinkConfirm}
       />
-
-      {/* Artifact Preview Sidebar - only when not managed by parent */}
-      {!artifactSidebarState && (
-        <ArtifactPreviewSidebar
-          artifact={null}
-          isOpen={false}
-          previewUrl=""
-          onClose={onArtifactClose || (() => {})}
-        />
-      )}
     </>
-  );
+  )
 }

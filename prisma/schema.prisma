@@ -104,6 +104,10 @@ model Message {
   rating            Int?
   feedback          String?
   uploadedAttachments Json?
+  toolInvocations   Json?        // AI SDK tool invocation records [{toolCallId, toolName, state, args, result}]
+  a2uiSurfaces      Json?        // A2UI surface data for generative UI [{surfaceId, root, components, data}]
+  approvalState     String?      // Tool approval state: pending | approved | rejected
+  parts             Json?        // AI SDK UIMessage parts for full-fidelity reconstruction
   conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   parent            Message?     @relation("MessageThread", fields: [parentId], references: [id])
   children          Message[]    @relation("MessageThread")

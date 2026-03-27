@@ -25,6 +25,7 @@ import {
 } from "@/components/ai-elements/web-preview";
 import { Button } from "@/components/ui/button";
 import { Response } from "@/components/ai-elements/response";
+import { GenerateUIView } from "./tool-views/generate-ui-view";
 
 interface ArtifactPreviewSidebarProps {
   artifact: Artifact | null;
@@ -156,9 +157,19 @@ export function ArtifactPreviewSidebar({
             <div className="h-full overflow-y-auto">
               <pre className="p-4 text-sm bg-muted h-full">
                 <code className={`language-${artifact.language}`}>
-                  {artifact.code}
+                  {artifact.type === "a2ui" && artifact.a2uiSurface
+                    ? JSON.stringify(artifact.a2uiSurface, null, 2)
+                    : artifact.code}
                 </code>
               </pre>
+            </div>
+          ) : artifact.type === "a2ui" && artifact.a2uiSurface ? (
+            <div className="h-full overflow-y-auto p-6 bg-background">
+              <GenerateUIView
+                input={{ surfaces: [artifact.a2uiSurface] }}
+                output={{ surfaces: [artifact.a2uiSurface] }}
+                state="output-available"
+              />
             </div>
           ) : artifact.type === "markdown" ? (
             // Render Markdown using Streamdown
@@ -178,18 +189,18 @@ export function ArtifactPreviewSidebar({
               key={previewKey}
               defaultUrl={previewUrl}
               className="h-full"
-              onUrlChange={(url) => console.log("URL changed to:", url)}
+              onUrlChange={() => {}}
             >
               <WebPreviewNavigation>
                 <WebPreviewNavigationButton
-                  onClick={() => console.log("Go back")}
+                  onClick={() => {}}
                   tooltip="Go back"
                   disabled
                 >
                   <ArrowLeftIcon className="size-4" />
                 </WebPreviewNavigationButton>
                 <WebPreviewNavigationButton
-                  onClick={() => console.log("Go forward")}
+                  onClick={() => {}}
                   tooltip="Go forward"
                   disabled
                 >
@@ -203,7 +214,7 @@ export function ArtifactPreviewSidebar({
                 </WebPreviewNavigationButton>
                 <WebPreviewUrl readOnly />
                 <WebPreviewNavigationButton
-                  onClick={() => console.log("Select")}
+                  onClick={() => {}}
                   tooltip="Select element"
                   disabled
                 >

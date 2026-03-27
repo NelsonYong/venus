@@ -17,6 +17,7 @@ interface SaveMessagesOptions {
   userId: string;
   lastUserMessage: UIMessage;
   assistantResponse: string;
+  assistantParts?: any[];
   citations?: Citation[];
   uploadedAttachments?: UploadedAttachment[];
 }
@@ -25,7 +26,7 @@ interface SaveMessagesOptions {
  * Save conversation messages to database
  */
 export async function saveMessages(options: SaveMessagesOptions) {
-  const { conversationId, userId, lastUserMessage, assistantResponse, citations, uploadedAttachments } = options;
+  const { conversationId, userId, lastUserMessage, assistantResponse, assistantParts, citations, uploadedAttachments } = options;
 
   try {
     // Clean ReAct step markers from assistant response
@@ -80,18 +81,25 @@ export async function saveMessages(options: SaveMessagesOptions) {
     const shouldSaveAssistantMessage = shouldSaveUserMessage || (lastMessage && lastMessage.role === 'user');
 
     if (shouldSaveAssistantMessage) {
-      // Save assistant message even if empty (might have tool calls)
       const finalResponse = cleanedResponse || '';
-      const finalContent = JSON.stringify([{ type: 'text', text: finalResponse }]);
 
-      console.log(`💾 Preparing to save assistant message - length: ${finalResponse.length}`);
+      // Save full parts (including tool invocations) when available,
+      // falling back to text-only content
+      let finalContent: string;
+      if (assistantParts && assistantParts.length > 0) {
+        finalContent = JSON.stringify(assistantParts);
+      } else {
+        finalContent = JSON.stringify([{ type: 'text', text: finalResponse }]);
+      }
+
+      console.log(`💾 Preparing to save assistant message - parts: ${assistantParts?.length ?? 0}, text length: ${finalResponse.length}`);
 
       messagesToCreate.push({
         conversationId,
         userId,
         role: 'assistant',
         content: finalContent,
-        createdAt: new Date(now + 100), // Ensure assistant message comes after user message
+        createdAt: new Date(now + 100),
       });
     }
 

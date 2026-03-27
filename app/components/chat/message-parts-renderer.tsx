@@ -1,227 +1,131 @@
-import { Response } from "@/components/ai-elements/response";
+"use client"
+
+import { Response } from "@/components/ai-elements/response"
 import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
-import {
-  Tool,
-  ToolHeader,
-  ToolContent,
-  ToolInput,
-  ToolOutput,
-} from "@/components/ai-elements/tool";
-import { Artifact } from "@/lib/types/artifact";
-import { ArtifactPreview } from "./artifact-preview";
-import { parseHtmlCodeBlocks } from "./utils";
+} from "@/components/ai-elements/reasoning"
+import { Shimmer } from "@/components/ai-elements/shimmer"
+import { useMobile } from "@/app/hooks/use-mobile"
+import { useChatContext } from "@/app/contexts/chat-context"
+import { ArtifactPreview } from "./artifact-preview"
+import { parseHtmlCodeBlocks } from "./utils"
+import { ToolCallRenderer } from "./tool-call-renderer"
+import type { MessagePart, Citation } from "@/lib/types/chat"
+import type { Artifact } from "@/lib/types/artifact"
 
 interface MessagePartsRendererProps {
-  part: any;
-  messageId: string;
-  partIndex: number;
-  status: string;
-  isMobile: boolean;
-  messageCitations: any[];
-  onCitationClick: (citationId: number) => void;
-  onArtifactPreviewClick: (artifact: Artifact, previewUrl: string) => void;
+  part: MessagePart
+  messageId: string
+  partIndex: number
+  messageCitations: Citation[]
+  onCitationClick: (citationId: number) => void
+  /** Whether this specific part is actively being streamed right now */
+  isStreamingPart?: boolean
+  /** 1-based index when message has multiple reasoning parts (for chain display) */
+  reasoningStep?: number
+  /** Total number of reasoning parts in this message */
+  reasoningStepTotal?: number
 }
 
 export function MessagePartsRenderer({
   part,
   messageId,
   partIndex,
-  status,
-  isMobile,
   messageCitations,
   onCitationClick,
-  onArtifactPreviewClick,
+  isStreamingPart = false,
+  reasoningStep,
+  reasoningStepTotal,
 }: MessagePartsRendererProps) {
-  const elements: React.ReactElement[] = [];
+  const isMobile = useMobile()
+  const { ui } = useChatContext()
 
-  switch (part.type) {
-    case "text":
-      // Mobile: render plain text without parsing artifacts
-      if (isMobile) {
-        elements.push(
-          <Response
-            key={`${messageId}-${partIndex}`}
-            shikiTheme={["github-light", "github-dark"]}
-            className="markdown"
-            citations={messageCitations}
-            onCitationClick={onCitationClick}
-          >
-            {part.text}
-          </Response>
-        );
-        return elements;
-      }
-
-      // Desktop: Parse HTML/SVG/Markdown code blocks
-      const parsedBlocks = parseHtmlCodeBlocks(part.text);
-
-      elements.push(
-        <div key={`${messageId}-${partIndex}`} className="w-full">
-          {parsedBlocks.map((block, blockIndex) => {
-            if (
-              block.type === "html" ||
-              block.type === "svg" ||
-              block.type === "markdown"
-            ) {
-              // Render artifact preview
-              const artifact: Artifact = {
-                id: block.id || `${block.type}-${blockIndex}`,
-                type: block.type,
-                title: block.filename || `${block.type.toUpperCase()} Preview`,
-                language: block.type,
-                code: block.content,
-                previewable: true,
-              };
-              return (
-                <ArtifactPreview
-                  key={block.id || `${messageId}-${partIndex}-${blockIndex}`}
-                  artifact={artifact}
-                  onClick={(previewUrl) =>
-                    onArtifactPreviewClick(artifact, previewUrl)
-                  }
-                />
-              );
-            } else {
-              // Render text content
-              return (
-                <Response
-                  key={`${messageId}-${partIndex}-${blockIndex}`}
-                  shikiTheme={["github-light", "github-dark"]}
-                  className="markdown"
-                  citations={messageCitations}
-                  onCitationClick={onCitationClick}
-                >
-                  {block.content}
-                </Response>
-              );
-            }
-          })}
-        </div>
-      );
-      return elements;
-
-    case "tool-weather":
-    case "tool-webSearch":
-      const toolPart = part as any;
-      elements.push(
-        <Tool key={`${messageId}-${partIndex}`} defaultOpen={status === "streaming"}>
-          <ToolHeader
-            type={part.type}
-            state={
-              toolPart.state ||
-              (status === "streaming" ? "input-streaming" : "output-available")
-            }
-          />
-          <ToolContent>
-            {toolPart.input && <ToolInput input={toolPart.input} />}
-            {toolPart.output && (
-              <ToolOutput
-                output={
-                  typeof toolPart.output === "string"
-                    ? toolPart.output
-                    : JSON.stringify(toolPart.output, null, 2)
-                }
-                errorText={toolPart.error}
-              />
-            )}
-          </ToolContent>
-        </Tool>
-      );
-      return elements;
-
-    case "reasoning":
-      elements.push(
-        <Reasoning
-          key={`${messageId}-${partIndex}`}
-          className="w-full"
-          isStreaming={status === "streaming"}
+  // --- Text part ---
+  if (part.type === "text") {
+    if (isMobile) {
+      return (
+        <Response
+          shikiTheme={["github-light", "github-dark"]}
+          className="markdown"
+          citations={messageCitations}
+          onCitationClick={onCitationClick}
         >
-          <ReasoningTrigger />
-          <ReasoningContent>{part.text}</ReasoningContent>
-        </Reasoning>
-      );
-      return elements;
+          {part.text}
+        </Response>
+      )
+    }
 
-    case "tool-call":
-    case "tool-result":
-      const genericToolPart = part as any;
-      elements.push(
-        <Tool key={`${messageId}-${partIndex}`} defaultOpen={status === "streaming"}>
-          <ToolHeader
-            type={genericToolPart.toolName || genericToolPart.toolCallId || "tool"}
-            state={
-              genericToolPart.state ||
-              (status === "streaming" ? "input-streaming" : "output-available")
+    const parsedBlocks = parseHtmlCodeBlocks(part.text)
+    return (
+      <div className="w-full">
+        {parsedBlocks.map((block, blockIndex) => {
+          if (block.type === "html" || block.type === "svg" || block.type === "markdown") {
+            const artifact: Artifact = {
+              id: block.id || `${block.type}-${blockIndex}`,
+              type: block.type,
+              title: block.filename || `${block.type.toUpperCase()} Preview`,
+              language: block.type,
+              code: block.content,
+              previewable: true,
             }
-          />
-          <ToolContent>
-            {(genericToolPart.input || genericToolPart.args) && (
-              <ToolInput input={genericToolPart.input || genericToolPart.args} />
-            )}
-            {(genericToolPart.output || genericToolPart.result) && (
-              <ToolOutput
-                output={
-                  typeof (genericToolPart.output || genericToolPart.result) ===
-                  "string"
-                    ? genericToolPart.output || genericToolPart.result
-                    : JSON.stringify(
-                        genericToolPart.output || genericToolPart.result,
-                        null,
-                        2
-                      )
-                }
-                errorText={genericToolPart.error}
+            return (
+              <ArtifactPreview
+                key={block.id || `${messageId}-${partIndex}-${blockIndex}`}
+                artifact={artifact}
+                onClick={(previewUrl) => ui.openArtifact(artifact, previewUrl)}
               />
-            )}
-          </ToolContent>
-        </Tool>
-      );
-      return elements;
-
-    default:
-      // Handle other tool call formats
-      if (part.toolCallId || part.type?.startsWith("tool-")) {
-        const toolName =
-          part.type?.replace("tool-", "") || part.toolName || "tool";
-
-        // Skip thinkingStep (already aggregated and rendered)
-        if (toolName === "thinkingStep") {
-          return elements;
-        }
-
-        elements.push(
-          <Tool key={`${messageId}-${partIndex}`} defaultOpen={status === "streaming"}>
-            <ToolHeader
-              type={toolName}
-              state={
-                part.state ||
-                (status === "streaming"
-                  ? "input-streaming"
-                  : "output-available")
-              }
-            />
-            <ToolContent>
-              {(part.input || part.args) && (
-                <ToolInput input={part.input || part.args} />
-              )}
-              {(part.output || part.result) && (
-                <ToolOutput
-                  output={
-                    typeof (part.output || part.result) === "string"
-                      ? part.output || part.result
-                      : JSON.stringify(part.output || part.result, null, 2)
-                  }
-                  errorText={part.error}
-                />
-              )}
-            </ToolContent>
-          </Tool>
-        );
-      }
-      return elements;
+            )
+          }
+          return (
+            <Response
+              key={`${messageId}-${partIndex}-${blockIndex}`}
+              shikiTheme={["github-light", "github-dark"]}
+              className="markdown"
+              citations={messageCitations}
+              onCitationClick={onCitationClick}
+            >
+              {block.content}
+            </Response>
+          )
+        })}
+      </div>
+    )
   }
+
+  // --- Reasoning part ---
+  if (part.type === "reasoning") {
+    const tokenCount = part.text.length > 0
+      ? Math.ceil(part.text.length / 4) // rough estimate: ~4 chars per token
+      : undefined
+
+    const hasChain = reasoningStepTotal !== undefined && reasoningStepTotal > 1
+    const stepLabel = hasChain && reasoningStep !== undefined
+      ? ` (${reasoningStep}/${reasoningStepTotal})`
+      : ""
+
+    return (
+      <Reasoning
+        className="w-full"
+        isStreaming={isStreamingPart}
+      >
+        <ReasoningTrigger
+          getThinkingMessage={(isStreaming, duration) => {
+            if (isStreaming) {
+              const tokenLabel = tokenCount ? ` · ${tokenCount.toLocaleString()} tokens` : ""
+              return <Shimmer duration={1}>{`Thinking${stepLabel}...${tokenLabel}`}</Shimmer>
+            }
+            const durationLabel = duration ? `${duration}s` : "a few seconds"
+            const tokenLabel = tokenCount ? ` · ${tokenCount.toLocaleString()} tokens` : ""
+            return <span>Thought{stepLabel} for {durationLabel}{tokenLabel}</span>
+          }}
+        />
+        <ReasoningContent>{part.text}</ReasoningContent>
+      </Reasoning>
+    )
+  }
+
+  // --- Tool parts ---
+  return <ToolCallRenderer part={part} messageId={messageId} partIndex={partIndex} />
 }

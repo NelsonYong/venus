@@ -1,69 +1,33 @@
-import { generateText, UIMessage } from 'ai';
-import { cacheCompressedContext } from '@/lib/redis';
-import { prisma } from '@/lib/prisma';
-import { createModelAdapter } from '@/lib/model-adapter';
+import { generateText, UIMessage } from 'ai'
+import { cacheCompressedContext } from '@/lib/redis'
+import { prisma } from '@/lib/prisma'
+import { createModel } from '@/lib/providers'
+import { getDefaultPreset } from '@/lib/providers'
 
 /**
- * Compresses conversation context using first available user model
+ * Compresses conversation context using first available model
  */
 export async function compressContext(
   messages: UIMessage[],
   conversationId: string,
   userId: string
 ): Promise<string> {
-  // Build conversation text
   const conversationText = messages
     .map((msg) => {
-      const role = msg.role === 'user' ? 'User' : 'Assistant';
-      let content = '';
-
-      if (msg.parts && Array.isArray(msg.parts)) {
-        const textParts = msg.parts
-          .filter((part): part is { type: 'text'; text: string } =>
-            part.type === 'text' && 'text' in part && typeof part.text === 'string'
-          )
-          .map(part => part.text);
-        content = textParts.join('\n');
-      }
-
-      return `${role}: ${content}`;
+      const role = msg.role === 'user' ? 'User' : 'Assistant'
+      const textParts = (msg.parts || [])
+        .filter((part): part is { type: 'text'; text: string } =>
+          part.type === 'text' && 'text' in part && typeof part.text === 'string'
+        )
+        .map(part => part.text)
+      return `${role}: ${textParts.join('\n')}`
     })
-    .join('\n\n');
+    .join('\n\n')
 
-  // Get first available user model
-  const firstModel = await prisma.discoveredModel.findFirst({
-    where: {
-      isEnabled: true,
-      provider: {
-        userId: userId,
-        status: "ACTIVE",
-      },
-    },
-    include: {
-      provider: true,
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-  });
+  // Try user's first available model, fall back to default preset
+  const model = await getCompressionModel(userId)
 
-  if (!firstModel) {
-    throw new Error('No available models found for compression');
-  }
-
-  // Create model adapter for compression
-  const modelConfig = {
-    provider: firstModel.provider.provider,
-    name: firstModel.modelName,
-    apiKey: firstModel.provider.apiKey,
-    apiEndpoint: firstModel.provider.apiEndpoint,
-    isPreset: false,
-  };
-
-  const model = createModelAdapter(modelConfig);
-
-  // Limit conversation text to avoid token limits
-  const limitedText = conversationText.slice(0, 2000);
+  const limitedText = conversationText.slice(0, 2000)
 
   const { text } = await generateText({
     model,
@@ -78,37 +42,64 @@ Provide a summary that captures:
 4. Current state/progress of any ongoing tasks
 
 Summary:`,
-  });
+  })
 
-  // Cache the compressed context
-  await cacheCompressedContext(conversationId, text);
+  await cacheCompressedContext(conversationId, text)
+  return text
+}
 
-  return text;
+async function getCompressionModel(userId: string) {
+  const firstModel = await prisma.discoveredModel.findFirst({
+    where: {
+      isEnabled: true,
+      provider: {
+        userId,
+        status: 'ACTIVE',
+      },
+    },
+    include: { provider: true },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  if (firstModel) {
+    return createModel(
+      firstModel.provider.provider,
+      firstModel.modelName,
+      {
+        apiKey: firstModel.provider.apiKey,
+        baseURL: firstModel.provider.apiEndpoint || undefined,
+      }
+    )
+  }
+
+  // Fallback to default preset
+  const preset = getDefaultPreset()
+  return createModel(preset.provider, preset.modelName, {
+    apiKey: preset.apiKey,
+    baseURL: preset.baseURL,
+  })
 }
 
 /**
- * Truncates messages to keep only recent messages up to last user message
+ * Truncates messages to keep only recent messages
  */
 export function truncateMessages(messages: UIMessage[], keepLast: number = 10): UIMessage[] {
   if (messages.length <= keepLast) {
-    return messages;
+    return messages
   }
 
-  // Find the last user message index
-  let lastUserMessageIndex = -1;
+  let lastUserMessageIndex = -1
   for (let i = messages.length - 1; i >= 0; i--) {
     if (messages[i].role === 'user') {
-      lastUserMessageIndex = i;
-      break;
+      lastUserMessageIndex = i
+      break
     }
   }
 
-  // If no user message found, return last N messages
   if (lastUserMessageIndex === -1) {
-    return messages.slice(-keepLast);
+    return messages.slice(-keepLast)
   }
 
-  // Keep messages from (lastUserMessageIndex - keepLast + 1) to end
-  const startIndex = Math.max(0, lastUserMessageIndex - keepLast + 1);
-  return messages.slice(startIndex);
+  const startIndex = Math.max(0, lastUserMessageIndex - keepLast + 1)
+  return messages.slice(startIndex)
 }

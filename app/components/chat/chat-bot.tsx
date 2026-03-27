@@ -1,12 +1,13 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Navbar } from "@/app/components/ui/navbar";
-import { ChatSidebar } from "@/app/components/sidebar/chat-sidebar";
-import { ChatLayout } from "./chat-layout";
-import { useChatBot } from "@/app/hooks/use-chat-bot";
-import { useTranslation } from "@/app/contexts/i18n-context";
+import { useEffect, useState } from "react"
+import { Navbar } from "@/app/components/ui/navbar"
+import { ChatSidebar } from "@/app/components/sidebar/chat-sidebar"
+import { ChatLayout } from "./chat-layout"
+import { ChatProvider } from "@/app/contexts/chat-context"
+import { useChatSession } from "@/app/hooks/use-chat"
+import { useTranslation } from "@/app/contexts/i18n-context"
+import type { ChatMessage } from "@/lib/types/chat"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,37 +17,26 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
 
 export function ChatBot() {
-  const { t } = useTranslation();
-  const searchParams = useSearchParams();
-  const [showLeaveWarning, setShowLeaveWarning] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<
-    (() => void) | null
-  >(null);
-
-  // Check if there's a chatId in the URL
-  const hasChatId = Boolean(searchParams.get("chatId"));
+  const { t } = useTranslation()
+  const [showLeaveWarning, setShowLeaveWarning] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
 
   const {
-    // State
-    input,
-    model,
-    webSearch,
-    sidebarOpen,
     messages,
     status,
+    error,
+    modelId,
+    webSearch,
+    sidebarOpen,
     chatHistory,
-    currentChatId,
+    conversationId,
     isLoading,
     isLoadingChat,
-    error,
     usage,
-
-    // Actions
-    setInput,
-    setModel,
+    setModelId,
     setWebSearch,
     setSidebarOpen,
     handleSubmit,
@@ -57,79 +47,50 @@ export function ChatBot() {
     handleStarToggle,
     handleRegenerate,
     stop,
-
-    // Computed
+    addToolApprovalResponse,
     getCurrentChat,
-  } = useChatBot();
+  } = useChatSession()
 
   // Prevent page unload during streaming
   useEffect(() => {
-    const isStreaming = status === "streaming";
-
-    if (isStreaming) {
+    if (status === "streaming") {
       const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-        e.preventDefault();
-        return "";
-      };
-
-      window.addEventListener("beforeunload", handleBeforeUnload);
-
-      return () => {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      };
+        e.preventDefault()
+        return ""
+      }
+      window.addEventListener("beforeunload", handleBeforeUnload)
+      return () => window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [status]);
+  }, [status])
 
-  // Handle navigation during streaming
   const handleNavigationAttempt = (navigation: () => void) => {
     if (status === "streaming") {
-      setPendingNavigation(() => navigation);
-      setShowLeaveWarning(true);
-      return false;
+      setPendingNavigation(() => navigation)
+      setShowLeaveWarning(true)
+      return
     }
-    navigation();
-    return true;
-  };
+    navigation()
+  }
 
   const handleConfirmLeave = () => {
-    stop();
-    setShowLeaveWarning(false);
+    stop()
+    setShowLeaveWarning(false)
     if (pendingNavigation) {
-      pendingNavigation();
-      setPendingNavigation(null);
+      pendingNavigation()
+      setPendingNavigation(null)
     }
-  };
-
-  const handleCancelLeave = () => {
-    setShowLeaveWarning(false);
-    setPendingNavigation(null);
-  };
-
-  // Override navigation handlers
-  const wrappedHandleNewChat = () => {
-    handleNavigationAttempt(handleNewChat);
-  };
-
-  const wrappedHandleLoadChat = (chatId: string) => {
-    handleNavigationAttempt(() => handleLoadChat(chatId));
-  };
-
-  // console.log("messages", messages);
+  }
 
   return (
     <>
       <AlertDialog open={showLeaveWarning} onOpenChange={setShowLeaveWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("chat.streamingWarning.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("chat.streamingWarning.description")}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("chat.streamingWarning.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("chat.streamingWarning.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelLeave}>
+            <AlertDialogCancel onClick={() => { setShowLeaveWarning(false); setPendingNavigation(null) }}>
               {t("chat.streamingWarning.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmLeave}>
@@ -140,21 +101,18 @@ export function ChatBot() {
       </AlertDialog>
 
       <div className="flex h-screen">
-        {/* Sidebar - Fixed on the left */}
         <ChatSidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           chatHistory={chatHistory}
-          currentChatId={currentChatId}
+          currentChatId={conversationId || null}
           isLoading={isLoading}
-          onNewChat={wrappedHandleNewChat}
-          onLoadChat={wrappedHandleLoadChat}
+          onNewChat={() => handleNavigationAttempt(handleNewChat)}
+          onLoadChat={(chatId) => handleNavigationAttempt(() => handleLoadChat(chatId))}
           onDeleteChat={handleDeleteChat}
         />
 
-        {/* Right side content area */}
         <div className="flex-1 flex flex-col transition-all duration-300">
-          {/* Navbar */}
           <Navbar
             onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
             conversationTitle={getCurrentChat()?.title}
@@ -163,32 +121,31 @@ export function ChatBot() {
             onStarToggle={handleStarToggle}
           />
 
-          {/* Main Content */}
           <div className="flex-1 w-full overflow-hidden">
-            <div className="w-full h-full">
+            <ChatProvider
+              messages={messages as ChatMessage[]}
+              status={status as any}
+              error={error}
+              usage={usage}
+              modelId={modelId}
+              onModelChange={setModelId}
+              webSearch={webSearch}
+              onWebSearchChange={setWebSearch}
+              onSend={handleSubmit}
+              onStop={stop}
+              onRegenerate={handleRegenerate}
+              onToolApprovalResponse={addToolApprovalResponse}
+            >
               <ChatLayout
-                messages={messages}
-                status={status}
-                input={input}
-                onInputChange={setInput}
-                onSubmit={handleSubmit}
-                model={model}
-                onModelChange={setModel}
-                webSearch={webSearch}
-                onWebSearchToggle={() => setWebSearch(!webSearch)}
-                error={error}
                 isLoadingChat={isLoadingChat}
-                hasChatId={hasChatId}
-                onRegenerate={handleRegenerate}
-                onStop={stop}
-                usage={usage}
+                hasChatId={Boolean(conversationId)}
                 sidebarOpen={sidebarOpen}
                 onSidebarOpenChange={setSidebarOpen}
               />
-            </div>
+            </ChatProvider>
           </div>
         </div>
       </div>
     </>
-  );
+  )
 }

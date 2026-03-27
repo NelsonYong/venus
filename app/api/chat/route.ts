@@ -6,6 +6,7 @@ import { handleStreamText } from './handlers/stream-handler'
 import {
   attachFilesToLastMessage,
   processMessagesWithCompression,
+  sanitizeToolInvocations,
   type UploadedAttachment
 } from './utils/message-processor'
 import { buildSystemPrompt } from './utils/system-prompt'
@@ -77,6 +78,9 @@ export async function POST(req: Request) {
 
     // Process messages: add attachments if present
     let processedMessages = attachFilesToLastMessage(messages, uploadedAttachments || [])
+
+    // Sanitize tool invocations — drop incomplete tool calls from reloaded history
+    processedMessages = sanitizeToolInvocations(processedMessages)
 
     // Apply context compression if available
     processedMessages = await processMessagesWithCompression(processedMessages, conversationId)

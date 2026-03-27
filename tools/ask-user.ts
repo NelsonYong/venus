@@ -7,7 +7,7 @@ import { tool } from 'ai'
  * pause execution and wait for user input.
  */
 export const askUserTool = tool({
-  description: 'When you need user clarification, a choice between options, or additional information to proceed, call this tool. Present clear options when possible. Use this instead of guessing the user\'s intent.',
+  description: 'Ask the user a clarifying question. ONLY use when you genuinely cannot proceed without their input — e.g., the request has 2+ equally valid interpretations, or a critical detail is missing. Do NOT use for yes/no questions, minor ambiguity, or when a reasonable default exists. Keep questions focused: one question at a time, with clear concise options.',
   inputSchema: z.object({
     question: z.string().describe('The question to ask the user'),
     options: z.array(z.object({

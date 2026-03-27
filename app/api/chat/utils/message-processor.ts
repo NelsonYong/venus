@@ -54,6 +54,36 @@ export function attachFilesToLastMessage(
 }
 
 /**
+ * Sanitize messages to ensure all tool-invocation parts have valid args.
+ * Reloaded chat history may contain incomplete tool calls (from partial
+ * streaming state) which cause `convertToModelMessages` to throw:
+ * "Missing required parameter: 'input[N].arguments'"
+ */
+export function sanitizeToolInvocations(messages: UIMessage[]): UIMessage[] {
+  return messages.map((msg) => {
+    if (msg.role !== 'assistant') return msg;
+
+    const sanitizedParts = msg.parts.filter((part) => {
+      if (part.type !== 'tool-invocation') return true;
+
+      const inv = (part as any).toolInvocation;
+      // Drop tool invocations that are still in a partial/incomplete state
+      // or have no args — they will break convertToModelMessages
+      if (!inv || !inv.toolName) return false;
+      if (inv.state === 'partial-call') return false;
+      if (inv.args === undefined || inv.args === null) return false;
+
+      return true;
+    });
+
+    // If nothing was filtered, return original to preserve reference identity
+    if (sanitizedParts.length === msg.parts.length) return msg;
+
+    return { ...msg, parts: sanitizedParts };
+  });
+}
+
+/**
  * Process messages with context compression if available
  */
 export async function processMessagesWithCompression(

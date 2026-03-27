@@ -125,24 +125,49 @@ export function MessageRenderer() {
               <MessageContent
                 className={message.role === "assistant" ? "w-full" : ""}
               >
-                {message.parts.map((part: MessagePart, i: number) => {
-                  if (part.type === "step-start" || part.type === "source-url") {
-                    return null
-                  }
+                {(() => {
+                  const isLastAssistant = isLastAssistantMessage(index)
+                  const isStreaming = status === "streaming"
 
-                  return (
-                    <MessagePartsRenderer
-                      key={`${message.id}-part-${i}`}
-                      part={part}
-                      messageId={message.id}
-                      partIndex={i}
-                      messageCitations={messageCitations}
-                      onCitationClick={(citationId: number) =>
-                        handleCitationClick(citationId, messageCitations)
-                      }
-                    />
-                  )
-                })}
+                  // Compute reasoning chain info for this message
+                  const reasoningIndices = message.parts
+                    .map((p: MessagePart, idx: number) => p.type === "reasoning" ? idx : -1)
+                    .filter((idx: number) => idx !== -1)
+                  const totalReasoning = reasoningIndices.length
+                  const lastReasoningIdx = reasoningIndices[reasoningIndices.length - 1]
+
+                  return message.parts.map((part: MessagePart, i: number) => {
+                    if (part.type === "step-start" || part.type === "source-url") {
+                      return null
+                    }
+
+                    // Only the last reasoning part of the last assistant message streams
+                    const isStreamingPart =
+                      isStreaming && isLastAssistant && part.type === "reasoning" && i === lastReasoningIdx
+
+                    // Chain step number (1-based)
+                    const reasoningStep =
+                      part.type === "reasoning" && totalReasoning > 1
+                        ? reasoningIndices.indexOf(i) + 1
+                        : undefined
+
+                    return (
+                      <MessagePartsRenderer
+                        key={`${message.id}-part-${i}`}
+                        part={part}
+                        messageId={message.id}
+                        partIndex={i}
+                        messageCitations={messageCitations}
+                        onCitationClick={(citationId: number) =>
+                          handleCitationClick(citationId, messageCitations)
+                        }
+                        isStreamingPart={isStreamingPart}
+                        reasoningStep={reasoningStep}
+                        reasoningStepTotal={totalReasoning > 1 ? totalReasoning : undefined}
+                      />
+                    )
+                  })
+                })()}
                 {/* Streaming cursor on last assistant message */}
                 {status === "streaming" &&
                   message.role === "assistant" &&

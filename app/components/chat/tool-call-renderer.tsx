@@ -80,6 +80,16 @@ export function ToolCallRenderer({ part, messageId, partIndex }: ToolCallRendere
           input={input as any}
           output={output as any}
           state={state}
+          onAction={(surfaceId, actionName, data) => {
+            // Send user interaction back to model as a new message
+            actions.send(
+              {
+                text: `[UI Action] Surface "${surfaceId}" → action "${actionName}" with data: ${JSON.stringify(data)}`,
+                files: [],
+              },
+              [],
+            )
+          }}
         />
       )
   }

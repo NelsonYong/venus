@@ -21,6 +21,12 @@ interface MessagePartsRendererProps {
   partIndex: number
   messageCitations: Citation[]
   onCitationClick: (citationId: number) => void
+  /** Whether this specific part is actively being streamed right now */
+  isStreamingPart?: boolean
+  /** 1-based index when message has multiple reasoning parts (for chain display) */
+  reasoningStep?: number
+  /** Total number of reasoning parts in this message */
+  reasoningStepTotal?: number
 }
 
 export function MessagePartsRenderer({
@@ -29,9 +35,12 @@ export function MessagePartsRenderer({
   partIndex,
   messageCitations,
   onCitationClick,
+  isStreamingPart = false,
+  reasoningStep,
+  reasoningStepTotal,
 }: MessagePartsRendererProps) {
   const isMobile = useMobile()
-  const { status, ui } = useChatContext()
+  const { ui } = useChatContext()
 
   // --- Text part ---
   if (part.type === "text") {
@@ -91,20 +100,25 @@ export function MessagePartsRenderer({
       ? Math.ceil(part.text.length / 4) // rough estimate: ~4 chars per token
       : undefined
 
+    const hasChain = reasoningStepTotal !== undefined && reasoningStepTotal > 1
+    const stepLabel = hasChain && reasoningStep !== undefined
+      ? ` (${reasoningStep}/${reasoningStepTotal})`
+      : ""
+
     return (
       <Reasoning
         className="w-full"
-        isStreaming={status === "streaming"}
+        isStreaming={isStreamingPart}
       >
         <ReasoningTrigger
           getThinkingMessage={(isStreaming, duration) => {
             if (isStreaming) {
-              const tokenLabel = tokenCount ? ` (${tokenCount.toLocaleString()} tokens)` : ""
-              return <Shimmer duration={1}>{`Thinking...${tokenLabel}`}</Shimmer>
+              const tokenLabel = tokenCount ? ` · ${tokenCount.toLocaleString()} tokens` : ""
+              return <Shimmer duration={1}>{`Thinking${stepLabel}...${tokenLabel}`}</Shimmer>
             }
             const durationLabel = duration ? `${duration}s` : "a few seconds"
             const tokenLabel = tokenCount ? ` · ${tokenCount.toLocaleString()} tokens` : ""
-            return <span>Thought for {durationLabel}{tokenLabel}</span>
+            return <span>Thought{stepLabel} for {durationLabel}{tokenLabel}</span>
           }}
         />
         <ReasoningContent>{part.text}</ReasoningContent>

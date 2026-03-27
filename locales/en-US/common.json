@@ -338,6 +338,16 @@
       "analysis": "Data Analysis",
       "creative": "Creative Design"
     },
+    "suggestions": {
+      "coding": "Write a Python script to analyze CSV data",
+      "codingPrompt": "Write a Python script that reads a CSV file and generates a summary report with statistics",
+      "writing": "Help me draft a professional email",
+      "writingPrompt": "Help me draft a professional email to my team about the upcoming project deadline",
+      "analysis": "Explain a complex concept simply",
+      "analysisPrompt": "Explain how neural networks work in simple terms with analogies",
+      "creative": "Brainstorm creative project ideas",
+      "creativePrompt": "Brainstorm 5 creative side project ideas for a developer who wants to learn AI"
+    },
     "streamingWarning": {
       "title": "Generating Response",
       "description": "AI is generating a response. Leaving this page will interrupt the process. Are you sure you want to leave?",

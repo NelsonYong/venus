@@ -340,6 +340,16 @@
       "analysis": "数据分析",
       "creative": "创意设计"
     },
+    "suggestions": {
+      "coding": "编写 Python 脚本分析 CSV 数据",
+      "codingPrompt": "编写一个 Python 脚本，读取 CSV 文件并生成包含统计信息的摘要报告",
+      "writing": "帮我起草一封专业邮件",
+      "writingPrompt": "帮我起草一封关于项目截止日期的专业邮件发给团队",
+      "analysis": "用简单的方式解释复杂概念",
+      "analysisPrompt": "用简单的语言和类比解释神经网络是如何工作的",
+      "creative": "头脑风暴创意项目点子",
+      "creativePrompt": "为想学习 AI 的开发者头脑风暴 5 个有创意的副项目点子"
+    },
     "streamingWarning": {
       "title": "正在生成回复",
       "description": "AI 正在生成回复中，离开页面将中断生成过程。确定要离开吗？",
